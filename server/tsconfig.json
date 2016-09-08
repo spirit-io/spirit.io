@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "es2015",
+        "module": "commonjs",
+        "noEmitOnError": true,
+        "noImplicitAny": true,
+        "noUnusedParameters": true,
+        "noUnusedLocals": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "sourceMap": true,
+        "outDir": "dist"             
+    },
+    "filesGlob": [
+        "./**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
