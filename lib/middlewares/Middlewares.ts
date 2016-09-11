@@ -7,15 +7,14 @@ import * as bodyParser from "body-parser";
 const methodOverride = require("method-override");
 
 const mongoose = require('mongoose');
-mongoose.Promise = global.Promise;
 const uniqueValidator = require('mongoose-unique-validator');
 
 import * as restify from 'express-restify-mongoose';
 
 import { DataAccess} from "../core/DataAccess";
+import { Controller } from '../core/Controller';
 
-// var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
+
 
 const router = express.Router();
 
@@ -41,7 +40,7 @@ export class Middlewares {
                 name: "Express application"
             })
         });
-
+/*
         app.use((err: Error & { status: number }, request: express.Request, response: express.Response, _: _): void => {
 
             response.status(err.status || 500);
@@ -49,20 +48,18 @@ export class Middlewares {
                 error: "Server error"
             })
         });
-
+*/
+        app.use(express.Router());
         return app;
     }
 
 
-    static get models() {
-        var app = express();
-        const router = express.Router();
-        // publish models APIs
-        DataAccess.models.forEach(function(model) {
-            restify.serve(router, model);
-        });
+    static setupModel = (app: express.Application, classModule: any) => {
+        let modelCtrl = new Controller(classModule._model, classModule);
+        console.log("Register route: "+`/${classModule._collectionName}`);
+        router.get(`/${classModule._collectionName}`, modelCtrl.find);
+        router.get(`/${classModule._collectionName}/:_id`, modelCtrl.findById);
         app.use(router);
-        return app;
     }
 }
 Object.seal(Middlewares);

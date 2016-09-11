@@ -1,4 +1,9 @@
 import "reflect-metadata";
+import { _ } from 'streamline-runtime';
+import { Schema, Model } from 'mongoose';
+const uniqueValidator = require('mongoose-unique-validator');
+
+const mongoose = require('mongoose');
 
 
 export function log() {
@@ -18,20 +23,46 @@ export function log() {
   }
 }
 
-export function collection(name?:string, test?:string):any {
-    return function(target:any, propertyKey:string, descriptor:TypedPropertyDescriptor<any>) {
-        let collectionName = name || target.name.toLowerCase() + 's';
-        target._collectionName = collectionName;
-        target.prototype._collectionName = collectionName;
 
-        // setupDocument(target)
+
+
+
+
+export function collection(name?:string):any {
+    return function(target:any, propertyKey:string, descriptor:TypedPropertyDescriptor<any>) {
+        
+        function reduceProperties(obj: any) {
+            let keep: any = {};
+            Object.keys(obj).forEach(function(key) {
+                keep[key] = obj[key];
+            });
+            return keep;
+        }
+        
+        
+        
+        // _model is computed by SchemaCompiler
+        target.find = function(_:_, filter: any){
+            return this._model.find(filter, this._properties.join(' '), _);
+        }
+
+        target.findById = function(_:_, id: any){
+            return this._model.findById(id, _);
+        }
     };
+}
+
+export function unique(target: Object, propertyKey: string | symbol) {
+    console.log("Unique called on: ", target, propertyKey);
+}
+
+export function required(target: Object, propertyKey: string | symbol) {
+    console.log("Required called on: ", target, propertyKey);
 }
 
 export function property() {
   return function(target: any, key: string) {
-    console.log("Target:", target);
     var t = Reflect.getMetadata("design:type", target, key);
-    console.log(`${key} type: ${t && t.name}`);
+   // console.log(`${key} type: ${t && t.name}`);
   }
 }

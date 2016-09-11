@@ -2,9 +2,9 @@
   "name": "spirit.io",
   "version": "1.0.0",
   "description": "Typescript ORM framework with streamline, mongoose and express",
-  "main": "server/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server"
+    "start": "node ."
   },
   "author": "Teddy Chambard",
   "license": "MIT",

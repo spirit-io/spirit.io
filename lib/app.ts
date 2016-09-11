@@ -3,13 +3,15 @@ import 'reflect-metadata';
 import { _ } from 'streamline-runtime';
 
 import express = require ('express');
-// require('express-streamline');
+require('express-streamline');
 import { json, urlencoded } from "body-parser";
+
+const SchemaCompiler = require("./core/SchemaCompiler");
+import { DataAccess} from "./core/DataAccess";
 import { Middlewares } from './middlewares/Middlewares';
-import { Controller } from './controllers/Controller';
 
 import { User } from './models/User';
-import { DataAccess} from "./core/DataAccess";
+
 
 export class Server {
 
@@ -20,17 +22,15 @@ export class Server {
         
     }
     init(_: _) {
-        DataAccess.registerSchemas();
+        // defines configuration middlewares
+        this._app.use(Middlewares.configuration);
+        SchemaCompiler.registerModels(this._app);
         DataAccess.connect();
         this.startServer(_);
     }
 
     private startServer(_: _) {
         var self = this;
-        // defines configuration middlewares
-        this._app.use(Middlewares.configuration);
-        // defines models middlewares
-        this._app.use(Middlewares.models);
         // start http server
         (function(cb: any) {
             self._app.listen(self._port, function () {
