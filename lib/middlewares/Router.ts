@@ -59,9 +59,13 @@ export class Router {
 
     setupModel = (classModule: any) => {
         let modelCtrl = new Controller(classModule._model, classModule);
+        let name = classModule._collectionName;
         console.log("Register route: "+`/${classModule._collectionName}`);
-        router.get(`/${classModule._collectionName}`, modelCtrl.find);
-        router.get(`/${classModule._collectionName}/:_id`, modelCtrl.findById);
+        router.get(`/${name}`, modelCtrl.find);
+        router.get(`/${name}/:_id`, modelCtrl.findById);
+        router.post(`/${name}`, modelCtrl.create);
+        router.put(`/${name}/:_id`, modelCtrl.update);
+        router.delete(`/${name}/:_id`, modelCtrl.remove);
         this.app.use(router);
     }
 
@@ -72,7 +76,7 @@ export class Router {
             }
             console.error("error: ",err.stack);
             res.status(500);
-            res.json({ error: err.message });
+            res.json({ error: err.toString() });
         });
     }
 }

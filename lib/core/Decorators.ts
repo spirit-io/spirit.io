@@ -42,12 +42,24 @@ export function collection(name?:string):any {
         
         
         // _model is computed by SchemaCompiler
-        target.find = function(_:_, filter: any){
-            return this._model.find(filter, this._properties.join(' '), _);
+        target.find = (_:_, filter: any) => {
+            return target._model.find(filter, target._properties.join(' '), _);
         }
 
-        target.findById = function(_:_, id: any){
-            return this._model.findById(id, _);
+        target.findById = (_:_, id: any) => {
+            return target._model.findById(id, _);
+        }
+
+        target.create = (_:_, item: any) => {
+            return target._model.create(item, _);
+        }
+
+        target.update = (_:_, _id: any, item: any) => {
+            return target._model.update({_id: _id}, item, _);
+        }
+
+        target.remove = (_:_, _id: any) => {
+            return target._model.remove({_id: _id}, _);
         }
     };
 }
