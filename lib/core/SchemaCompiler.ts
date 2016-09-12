@@ -99,7 +99,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
             
             console.log(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
 
-            schema.plugin(uniqueValidator);
+         //   schema.plugin(uniqueValidator);
             myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
         }
         return myClass;

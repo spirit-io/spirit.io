@@ -30,6 +30,15 @@ export class Server {
         this.startServer(_);
         this._router.setErrorHandler(this._app);
 
+/*
+        try {
+                let u = new User({userName: "Ted2", email: "teddy.chambard@gmail.com", firstName: "Teddy"});
+                let res = u.save(_);
+                console.log("Res: ",res);
+        }catch(e) {
+            console.error("test:",e.toString());
+        }
+*/
     }
 
     private startServer(_: _) {
