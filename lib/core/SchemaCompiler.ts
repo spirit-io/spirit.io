@@ -2,16 +2,15 @@ import * as ts from "typescript";
 import * as fs from "fs";
 import * as path from 'path';
 import * as qs from "querystring";
-import { Application } from 'express';
 import { Schema }from 'mongoose';
 import { Contract } from "../contract";
-import { Middlewares } from '../middlewares/Middlewares';
+import { Router } from '../middlewares/Router';
 
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 
-function generateMongooseSchema(app: Application, fileNames: string[], options: ts.CompilerOptions): any[] {
+function generateMongooseSchema(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
     let program = ts.createProgram(fileNames, options);
 
@@ -40,7 +39,7 @@ function generateMongooseSchema(app: Application, fileNames: string[], options: 
         if (node.kind === ts.SyntaxKind.ClassDeclaration) {
             // This is a top level class, get its symbol
             let modelClass = inspectClass((<ts.ClassDeclaration>node));
-            if (modelClass) Middlewares.setupModel(app, modelClass);
+            if (modelClass) router.setupModel(modelClass);
             // No need to walk any further, class expressions/inner declarations
             // cannot be exported
         }
@@ -216,12 +215,12 @@ function generateMongooseSchema(app: Application, fileNames: string[], options: 
     }
 }
 
-export function registerModels(app: Application){
+export function registerModels(router: Router){
     let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
         return path.resolve(path.join(__dirname, `../models/${m}.ts`));
     });
 
-    generateMongooseSchema(app, modelFiles, {
+    generateMongooseSchema(router, modelFiles, {
         target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
     });
 }

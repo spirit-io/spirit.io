@@ -8,25 +8,28 @@ import { json, urlencoded } from "body-parser";
 
 const SchemaCompiler = require("./core/SchemaCompiler");
 import { DataAccess} from "./core/DataAccess";
-import { Middlewares } from './middlewares/Middlewares';
+import { Router } from './middlewares/Router';
 
 import { User } from './models/User';
 
 
 export class Server {
 
-    private _app: express.Application;
+    public _app: express.Application;
 
     constructor(private _port: Number) {
         this._app = express();
+        this._router = new Router(this._app);
         
     }
-    init(_: _) {
+    init = (_: _) => {
         // defines configuration middlewares
-        this._app.use(Middlewares.configuration);
-        SchemaCompiler.registerModels(this._app);
+        this._router.configure();
+        SchemaCompiler.registerModels(this._router);
         DataAccess.connect();
         this.startServer(_);
+        this._router.setErrorHandler(this._app);
+
     }
 
     private startServer(_: _) {
