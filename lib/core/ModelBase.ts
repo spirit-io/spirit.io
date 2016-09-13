@@ -23,9 +23,11 @@ export abstract class ModelBase {
     static update = (_:_, _id: string, item: any): any => {}
     static createOrUpdate = (_: _, _id: any, item: any) => {}
     static remove = (_: _, _id: any) => {}
+    static fetchInstance = (_, _id: string): ModelBase => {return;}
     // real orm methods
     save = (_) => {
-        return this.constructor.createOrUpdate(_, this._id, JSON.parse(JSON.stringify(this)));
+        return this.constructor['createOrUpdate'](_, this._id, JSON.parse(JSON.stringify(this)));
     }
+    
 }
 Object.seal(ModelBase);

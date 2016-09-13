@@ -67,6 +67,17 @@ export function collection(name?: string): any {
             return target._model.remove({ _id: _id }, _);
         }
 
+        target.fetchInstance = (_:_, _id: any) => {
+            /*
+            console.log("FETCH INSTANCE CALL:"+_id);
+            let j = target.findById(_, _id);
+            console.log("j:",j);
+            console.log("TARGET: ",target);
+            return new target.constructor(j);
+            */
+        }
+    }
+
         return target;
     };
 }
