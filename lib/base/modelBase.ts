@@ -1,5 +1,3 @@
-import * as read from "./interfaces/ReadController";
-import * as write from "./interfaces/WriteController";
 import { _ } from 'streamline-runtime';
 
 const mongoose = require('mongoose');

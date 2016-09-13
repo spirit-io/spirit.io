@@ -5,7 +5,7 @@ import { ModelBase } from '../base/modelBase';
  * User class
  */
 @collection("User")
-export class User extends Model {
+export class User extends ModelBase {
     
     @unique @required
     userName: String;

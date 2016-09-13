@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from 'path';
 import * as qs from "querystring";
 import { Schema }from 'mongoose';
-import { Contract } from "../contract";
+import { Contract } from "../application/contract";
 import { Router } from '../middlewares/router';
 
 const mongoose = require('mongoose');
