@@ -1,20 +1,10 @@
 import { _ } from 'streamline-runtime';
-
 import express = require ('express');
 require('express-streamline');
-
 import * as bodyParser from "body-parser";
 const methodOverride = require("method-override");
-
-const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
-
-import * as restify from 'express-restify-mongoose';
-
-import { DataAccess} from "../core/DataAccess";
+//
 import { Controller } from '../core/Controller';
-
-
 
 const router = express.Router();
 

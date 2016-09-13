@@ -2,8 +2,11 @@ import mongoose = require("mongoose");
 import { collection, unique, required } from '../core/decorators';
 import { ModelBase } from '../core/ModelBase';
 export interface IUser extends mongoose.Document {
+  userName: string;
+  password: string;
   firstName: string;
   lastName: string;
+  email: string;
 }
 
 

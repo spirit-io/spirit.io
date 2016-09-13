@@ -85,6 +85,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
         }
 
         if (node.members) {
+            myClass._properties = ['_id', '_createdAt', '_updatedAt'];
             let members = node.members.map(inspectMembers);
             let schemaTree = members && members.reduce(function(prev: any, curr: any) {
                 if (curr) {
@@ -95,7 +96,10 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                 }
                 return prev;
             }, {});
-            let schema = new Schema(schemaTree);
+            schemaTree._id = Schema.Types.ObjectId;
+            schemaTree._createdAt = Date;
+            schemaTree._updatedAt = Date;
+            let schema = new Schema(schemaTree,{_id: false});
             
             console.log(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
 
