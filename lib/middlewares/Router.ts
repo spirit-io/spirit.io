@@ -4,7 +4,7 @@ require('express-streamline');
 import * as bodyParser from "body-parser";
 const methodOverride = require("method-override");
 //
-import { Controller } from '../core/Controller';
+import { Controller } from '../core/controller';
 
 const router = express.Router();
 

@@ -4,14 +4,14 @@
   "description": "Typescript ORM framework with streamline, mongoose and express",
   "main": "index.js",
   "scripts": {
-    "start": "node ."
+    "start": "node sample",
+    "test": "node test"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
-    "express-restify-mongoose": "^4.1.1",
     "express-streamline": "^0.5.3",
     "ez-streams": "^3.0.10",
     "method-override": "^2.3.6",
@@ -22,5 +22,9 @@
     "streamline": "^2.0.10",
     "streamline-node": "^1.0.4",
     "streamline-runtime": "^1.0.31"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
   }
 }

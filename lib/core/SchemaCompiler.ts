@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as qs from "querystring";
 import { Schema }from 'mongoose';
 import { Contract } from "../contract";
-import { Router } from '../middlewares/Router';
+import { Router } from '../middlewares/router';
 
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
@@ -24,10 +24,6 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
         // Walk the tree to search for classes
         ts.forEachChild(sourceFile, visit);
     }
-
-    // print out the definition
-    // fs.writeFileSync("classes.json", JSON.stringify(output, undefined, 4));
-
     return classes;
 
     function visit(node: ts.Node) {
@@ -39,7 +35,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
         if (node.kind === ts.SyntaxKind.ClassDeclaration) {
             // This is a top level class, get its symbol
             let modelClass = inspectClass((<ts.ClassDeclaration>node));
-            if (modelClass) router.setupModel(modelClass);
+            if (modelClass) classes.push(modelClass);
             // No need to walk any further, class expressions/inner declarations
             // cannot be exported
         }
@@ -52,7 +48,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
     /** Inspect a class symbol infomration */
     function inspectClass(node: ts.ClassDeclaration): any {
         let sf: ts.SourceFile = <ts.SourceFile>node.parent;
-        if (sf.fileName.indexOf('ModelBase.ts') !== -1) return;
+        if (sf.fileName.indexOf('modelBase.ts') !== -1) return;
         let symbol = checker.getSymbolAtLocation(node.name);
         let className = symbol.getName();
 
@@ -221,11 +217,13 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
 
 export function registerModels(router: Router){
     let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
-        return path.resolve(path.join(__dirname, `../models/${m}.ts`));
+        return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
     });
 
     generateMongooseSchema(router, modelFiles, {
         target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
+    }).forEach(function(c) {
+        router.setupModel(c);
     });
 }
        

@@ -4,8 +4,18 @@ import express = require("express");
 import mongoose = require("mongoose");
 
 
+interface IWrite {
+     create: express.RequestHandler;
+     update: express.RequestHandler;
+     remove: express.RequestHandler;
+}
 
-export class Controller {
+interface IRead {
+    find: express.RequestHandler;
+    findById: express.RequestHandler;
+}
+
+export class Controller implements IWrite, IRead{
 
     constructor (private _model: mongoose.Model<mongoose.Document>, private _class: any) {}
 

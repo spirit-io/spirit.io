@@ -4,7 +4,6 @@ import { _ } from 'streamline-runtime';
 
 const mongoose = require('mongoose');
 
-
 export abstract class ModelBase {
     protected _id: string;
 
