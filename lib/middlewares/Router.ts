@@ -6,6 +6,8 @@ const methodOverride = require("method-override");
 //
 import { Controller } from '../core/controller';
 
+let trace; // = console.log;
+
 const router = express.Router();
 
 function errorHandler(err: Error, req: express.Request, res: express.Response, _:_) {
@@ -50,7 +52,7 @@ export class Router {
     setupModel = (classModule: any) => {
         let modelCtrl = new Controller(classModule._model, classModule);
         let name = classModule._collectionName;
-        console.log("Register route: "+`/${classModule._collectionName}`);
+        trace && trace("Register route: "+`/${classModule._collectionName}`);
         router.get(`/${name}`, modelCtrl.find);
         router.get(`/${name}/:_id`, modelCtrl.findById);
         router.post(`/${name}`, modelCtrl.create);

@@ -6,8 +6,7 @@ export function collection(name?: string): any {
 
         function ensureId(item: any) {
             if (item._id && typeof item._id === "string") {
-                console.log("Convert to object ID");
-                item._id = mongoose.Types.ObjectId(item._id)
+                item._id = mongoose.Types.ObjectId(item._id);
             } else {
                 item._id = item._id || mongoose.Types.ObjectId();
             }
@@ -26,24 +25,31 @@ export function collection(name?: string): any {
             ensureId(item);
             item._createdAt = Date.now();
             item._updatedAt = Date.now();
-            return target._model.create(item, _);
+            let doc = target._model.create(item, _);
+            return doc && doc.toObject();
         }
 
-        target.update = (_: _, _id: any, item: any) => {
+        target.update = (_: _, _id: any, item: any, options?: any) => {
             item._updatedAt = Date.now();
-            return target._model.update({ _id: _id }, item, _);
+            let data: any = {$set: item};
+            if (options && options.deleteMissing) {
+                for (let key of target._properties) {
+                    if (!item.hasOwnProperty(key)) {
+                        data.$unset = data.$unset || {};
+                        data.$unset[key] = 1;
+                    }
+                }
+            }
+            let doc = target._model.findOneAndUpdate(_id, data, {runValidators: true, new: true, context: 'query'}, _);
+            return doc && doc.toObject();
         }
 
-        target.createOrUpdate = function (_: _, _id: any, item: any) {
+        target.createOrUpdate = function (_: _, _id: any, item: any, options?: any) {
             let doc = target.findById(_, _id);
             if (doc) {
-                item._updatedAt = Date.now();
-                return target._model.update({ _id: _id }, item, _);
+                return target.update(_, _id , item, options);
             } else {
-                ensureId(item);
-                item._createdAt = Date.now();
-                item._updatedAt = Date.now();
-                return target._model.create(item, _);
+                return target.create(_, item);
             }
         };
 
@@ -52,7 +58,9 @@ export function collection(name?: string): any {
         }
 
         target.fetchInstance = (_:_, _id: any) => {
-            return new target.prototype.constructor(target.findById(_, _id).toObject());
+            let doc = target.findById(_, _id);
+            if (!doc) return;
+            return new target.prototype.constructor(doc.toObject());
         }
 
         target.fetchInstances = (_, filter?: any) => {

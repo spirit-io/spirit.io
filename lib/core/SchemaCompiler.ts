@@ -2,13 +2,15 @@ import * as ts from "typescript";
 import * as fs from "fs";
 import * as path from 'path';
 import * as qs from "querystring";
-import { Schema }from 'mongoose';
+import { Schema } from 'mongoose';
 import { Contract } from "../application/contract";
 import { Router } from '../middlewares/router';
 
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const immutableValidator = require('mongoose-immutable');
 
+let trace; // = console.log;
 
 function generateMongooseSchema(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
@@ -95,11 +97,12 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
             schemaTree._id = Schema.Types.ObjectId;
             schemaTree._createdAt = Date;
             schemaTree._updatedAt = Date;
-            let schema = new Schema(schemaTree,{_id: false});
+            let schema = new Schema(schemaTree,{_id: false, versionKey: false});
             
-            console.log(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
+            trace && trace(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
 
-         //   schema.plugin(uniqueValidator);
+            schema.plugin(uniqueValidator);
+            schema.plugin(immutableValidator);
             myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
         }
         return myClass;
@@ -163,6 +166,9 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                         break;
                     case "required":
                         metadata.required = true;
+                        break;
+                    case "immutable":
+                        metadata.immutable = true;
                         break;
                     default:
                         break;

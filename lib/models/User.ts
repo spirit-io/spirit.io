@@ -1,4 +1,4 @@
-import { collection, unique, required } from '../decorators';
+import { collection, unique, required, immutable } from '../decorators';
 import { ModelBase } from '../base/modelBase';
 
 /**
@@ -7,9 +7,10 @@ import { ModelBase } from '../base/modelBase';
 @collection("User")
 export class User extends ModelBase {
     
-    @unique @required
+    @unique @required @immutable
     userName: String;
     
+    @required
     password: String;
     
     @required
