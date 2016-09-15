@@ -8,7 +8,6 @@ import { Router } from '../middlewares/router';
 
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
-const immutableValidator = require('mongoose-immutable');
 
 let trace = console.log;
 
@@ -102,7 +101,6 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
             trace && trace(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
 
             schema.plugin(uniqueValidator);
-            schema.plugin(immutableValidator);
             myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
         }
         return myClass;
@@ -166,9 +164,6 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                         break;
                     case "required":
                         metadata.required = true;
-                        break;
-                    case "immutable":
-                        metadata.immutable = true;
                         break;
                     default:
                         break;
