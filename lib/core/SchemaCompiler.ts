@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 const immutableValidator = require('mongoose-immutable');
 
-let trace; // = console.log;
+let trace = console.log;
 
 function generateMongooseSchema(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames

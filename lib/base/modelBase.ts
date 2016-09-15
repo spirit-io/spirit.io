@@ -42,10 +42,11 @@ export abstract class ModelBase {
     save = (_: _, options?: any) => {
         let item = this.constructor['createOrUpdate'](_, this._id, this.toObject(), options);
         this.populate(item, {deleteMissing: true});
-        return this.toObject();
+        if (options && options.returnInstance) return this;
+        return;
     }
 
-    private toObject = () => {
+    public toObject = () => {
         let obj: any = {};
         for (let key of this.constructor['_properties']) {
             if (this[key]) obj[key] = this[key];

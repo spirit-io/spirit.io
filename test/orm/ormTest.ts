@@ -38,10 +38,10 @@ describe('User Model Unit Tests:', () => {
 
             let data = objectHelper.clone(users.data.u1);
             let u1: User = new User(data);
-            let saveRes = u1.save(_);
-            expect(saveRes).to.have.all.keys(users.keys);
+            u1.save(_);
+            expect(u1.toObject()).to.have.all.keys(users.keys);
             // store _id to be able to remove all documents at the end
-            userIds.push(saveRes._id);
+            userIds.push(u1.id);
 
             expect(u1.id).to.be.a('object');
             expect(u1.id).to.not.be.null;
@@ -59,69 +59,63 @@ describe('User Model Unit Tests:', () => {
             expect(u1.email).to.equal(data.email);
         });
 
-        it('save user instance changing immutable value should not work', (_) => {
-
-            // test immutable username property validator
-            let data = objectHelper.clone(users.data.u2);
-            data.userName = users.data.u1.userName;
-            try {
-                new User(data).save(_);
-            } catch (e) {
-                expect(e.toString()).to.equal("ValidationError: Error, expected `userName` to be unique. Value: `user1`");
-            }
-        });
-
         it('save user instance forgetting required value should not work', (_) => {
             // remove email value but change username
             let data = objectHelper.clone(users.data.u2);
             delete data.email;
+            let error: Error;
             try {
                 new User(data).save(_);
             } catch (e) {
-                expect(e.toString()).to.equal("ValidationError: Path `email` is required.");
+                error = e;
+            } finally {
+                expect(error).to.not.null;
+                expect(error.toString()).to.equal("ValidationError: Path `email` is required.");
             }
         });
 
         it('save user instance using already existing unique value should not work', (_) => {
             let data = objectHelper.clone(users.data.u2);
             data.userName = users.data.u1.userName;
+            let error: Error;
             try {
                 new User(data).save(_);
             } catch (e) {
-                expect(e.toString()).to.equal("ValidationError: Error, expected `userName` to be unique. Value: `user1`");
+                error = e;
+            } finally {
+                expect(error).to.not.null;
+                expect(error.toString()).to.equal("ValidationError: Error, expected `userName` to be unique. Value: `user1`");
             }
         });
 
         it('save user instance forgetting required and immutable value should not work', (_) => {
             let data = objectHelper.clone(users.data.u2);
             delete data.userName;
+            let error: Error;
             try {
                 new User(data).save(_);
             } catch (e) {
-                expect(e.toString()).to.equal("ValidationError: Path `userName` is required.");
+                error = e;
+            } finally {
+                expect(error).to.not.null;
+                expect(error.toString()).to.equal("ValidationError: Path `userName` is required.");
             }
         });
 
-        it('save (update) user instance using existing _id value should not work', (_) => {
+        it('update user instance using existing _id and valid values should work', (_) => {
             let data = objectHelper.clone(users.data.u2);
             data._id = userIds[0];
-            try {
-                new User(data).save(_);
-            } catch (e) {
-                console.log("EEE: " + e.stack);
-                // Do nothing because error message is too complex
-                // ''' WriteError({"code":11000,"index":0,"errmsg":"insertDocument :: 
-                // ... caused by :: 11000 E11000 duplicate key error index ...'''
-            }
+            data.firstName = "u1_firstname_updated";
+            let u1: User = new User(data)
+            u1.save(_);
+            expect(u1.firstName).to.be.a('string');
+            expect(u1.firstName).to.equal(data.firstName);
         });
-
-
 
         it('update user instance with valid values should work', (_) => {
             // use same data, but reuse existing document id in order to use update
             let data = objectHelper.clone(users.data.u1);
             data._id = userIds[0];
-            data.firstName = "u1_firstname_updated";
             data.lastName = "u1_lastname_updated";
             data.email = "u1@spirit.com";
             data.password = "u1pwd_updated";
@@ -148,12 +142,33 @@ describe('User Model Unit Tests:', () => {
             let data = objectHelper.clone(users.data.u1);
             data._id = userIds[0];
             delete data.userName;
+            let error: Error;
             try {
-                new User(data).save(_, { deleteMissing: true });
+                let u1: User = new User(data);
+                u1.save(_, { deleteMissing: true });
             } catch (e) {
-                expect(e.toString()).to.equal("ValidationError: Path `userName` is required.");
+                error = e;
+            } finally {
+                expect(error).to.not.null;
+                expect(error.toString()).to.equal("ValidationError: Path `userName` is required.");
             }
+        });
 
+        it('update user instance changing immutable value should not work', (_) => {
+            // use same data, but reuse existing document id in order to use update
+            let data = objectHelper.clone(users.data.u1);
+            data._id = userIds[0];
+            data.userName = "user1_updated";
+            let error: Error;
+            try {
+                let u1: User = new User(data);
+                u1.save(_);
+            } catch (e) {
+                error = e;
+            } finally {
+                expect(error).to.not.null;
+                expect(error.toString()).to.equal("ValidationError: Path `userName` is required.");
+            }
         });
 
         it('delete users should work', (_) => {
