@@ -154,23 +154,6 @@ describe('User Model Unit Tests:', () => {
             }
         });
 
-        it('update user instance changing immutable value should not work', (_) => {
-            // use same data, but reuse existing document id in order to use update
-            let data = objectHelper.clone(users.data.u1);
-            data._id = userIds[0];
-            data.userName = "user1_updated";
-            let error: Error;
-            try {
-                let u1: User = new User(data);
-                u1.save(_);
-            } catch (e) {
-                error = e;
-            } finally {
-                expect(error).to.not.null;
-                expect(error.toString()).to.equal("ValidationError: Path `userName` is required.");
-            }
-        });
-
         it('delete users should work', (_) => {
             for (let id of userIds) {
                 let result = User.remove(_, id).result;
@@ -180,49 +163,6 @@ describe('User Model Unit Tests:', () => {
 
 
         });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // it('create valid user should work', (_) => {
-        //         User.remove(_, "57d7b8ef3b161925b0c565a2");
-        //         let u1: User = new User({
-        //             _id: "57d7b8ef3b161925b0c565a2",
-        //             userName: "User1",
-        //             firstName: "myName",
-        //             lastName: "Chambard",
-        //             email: "teddy.chambard@sage.com"
-        //         });
-        //         u1.save(_);
-        //         console.log("U1: ",JSON.stringify(u1));
-
-        //         let u2: User = <User>User.fetchInstance(_,"57d6b1bf2f643b2c7cb2da42");
-        //         console.log("U2:",JSON.stringify(u2));
-        //         u2.firstName = "Aurelien";
-        //         u2.lastName = "Pisu";
-
-        //         console.log(u2.hello());
-        //         u2.save(_);
-
-        //         let u3: User = <User>User.fetchInstance(_,"57d6b1bf2f643b2c7cb2da42");
-        //         console.log("U3:",JSON.stringify(u3));
-
-        //         let users: User[] = <User[]>User.fetchInstances(_, {lastName:"Chambard"});
-        //         console.log("Users: "+JSON.stringify(users,null,2));
-
-        // });
 
     });
 });

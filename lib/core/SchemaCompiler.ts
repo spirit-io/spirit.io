@@ -2,6 +2,7 @@ import * as ts from "typescript";
 import * as fs from "fs";
 import * as path from 'path';
 import * as qs from "querystring";
+import { helper as objectHelper } from '../utils/object';
 import { Schema } from 'mongoose';
 import { Contract } from "../application/contract";
 import { Router } from '../middlewares/router';
@@ -9,10 +10,11 @@ import { Router } from '../middlewares/router';
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
-let trace = console.log;
+let trace;// = console.log;
 
 function generateMongooseSchema(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
+    let __currentClassName;
     let program = ts.createProgram(fileNames, options);
 
     // Get the checker, we will use it to find more about classes
@@ -49,11 +51,12 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
     /** Inspect a class symbol infomration */
     function inspectClass(node: ts.ClassDeclaration): any {
         let sf: ts.SourceFile = <ts.SourceFile>node.parent;
+        // Do not consider ModelBase class
         if (sf.fileName.indexOf('modelBase.ts') !== -1) return;
-        let symbol = checker.getSymbolAtLocation(node.name);
-        let className = symbol.getName();
-
         
+        let symbol = checker.getSymbolAtLocation(node.name);
+        let className = __currentClassName = symbol.getName();
+
         // console.log("class: "+require('util').inspect(node,null,1));
         const r = require(sf.fileName);
         let myClass = r[className];
@@ -70,6 +73,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
             decorators && decorators.forEach(function(d) {
                 switch(d.name) {
                     case "collection":
+                        console.log("Handle collection decorator in schema compiler");
                         myClass._collectionName = (d.args && d.args.name).toLowerCase() || className.toLowerCase();
                         break;
                     default:
@@ -77,31 +81,42 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                 }
             });
         } else {
-            console.log(`Class ${className} ignored because it doesn't contains 'collection' decorator`);
+            //
+            trace && trace(`Class ${className} ignored because it doesn't contains 'collection' decorator`);
             return;
         }
+
+        //console.log("Shema declared when executing compiler:" , myClass._schemaDef);
 
         if (node.members) {
             myClass._properties = ['_id', '_createdAt', '_updatedAt'];
             let members = node.members.map(inspectMembers);
-            let schemaTree = members && members.reduce(function(prev: any, curr: any) {
+            members && members.reduce(function(prev: any, curr: any) {
                 if (curr) {
-                    prev[curr.name] = curr.value;
+                    if (prev[curr.name]) {
+                        if (typeof curr.value === 'string') {
+                            objectHelper.merge({type: curr.value}, prev[curr.name]);
+                        } else {
+                            objectHelper.merge(curr.value, prev[curr.name]);
+                        }
+                    } else {
+                        prev[curr.name] = curr.value;
+                    }
                     // store properties name that would be used for filtering returned properties
                     myClass._properties = myClass._properties || [];
                     myClass._properties.push(curr.name);
                 }
                 return prev;
-            }, {});
-            schemaTree._id = Schema.Types.ObjectId;
-            schemaTree._createdAt = Date;
-            schemaTree._updatedAt = Date;
-            let schema = new Schema(schemaTree,{_id: false, versionKey: false});
-            
-            trace && trace(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(schemaTree,null,2)}`)
+            }, myClass._schemaDef);
 
-            schema.plugin(uniqueValidator);
-            myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
+            trace && trace(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(myClass._schemaDef,null,2)}`)
+
+            if (Object.keys(myClass._schemaDef).length) {
+                let schema = new Schema(myClass._schemaDef, {_id: false, versionKey: false});
+                schema.plugin(uniqueValidator);
+                myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
+            }
+
         }
         return myClass;
     }
@@ -110,11 +125,11 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
        // console.log("member: "+require('util').inspect(member,null,1));
 
         function log(prefix: String, obj: any) {
-           //console.log(`${prefix}: ${require('util').inspect(obj,null,1)}`);
+          // console.log(`${prefix}: ${require('util').inspect(obj,null,1)}`);
         }
 
         let symbol: ts.Symbol;
-        let type: String;
+        let type: string;
         
         switch(member && member.kind) {
             case ts.SyntaxKind.VariableDeclaration:
@@ -138,7 +153,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                 log("Property",member);
                 type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
                 log("type", type);
-
+                //if (!isAllowedType(type)) throw new Error(`Invalid type has been declared on property '${symbol.getName()}' in class '${__currentClassName}'. You should probably use '@ref' decorator`);
                 let metadata = computePropertyMetadata(symbol.getName(), member);
                 if (metadata) metadata.type = type;
 
@@ -152,6 +167,9 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
         
     }
 
+    function isAllowedType(type: string): boolean {
+        return ['string', 'number', 'date', 'buffer', 'boolean', 'mixed', 'objectid', 'array'].indexOf(type.toLowerCase()) !== -1;
+    }
 
     function computePropertyMetadata(name: string, node: ts.Node) {
         if (node.decorators) {
@@ -159,12 +177,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
             let metadata: any = {};
             decorators && decorators.forEach(function(d) {
                 switch(d.name) {
-                    case "unique":
-                        metadata.unique = true;
-                        break;
-                    case "required":
-                        metadata.required = true;
-                        break;
+
                     default:
                         break;
                 }

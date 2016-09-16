@@ -1,6 +1,6 @@
-import { collection, unique, required } from '../decorators';
+import { collection, unique, required, ref } from '../decorators';
 import { ModelBase } from '../base/modelBase';
-
+import { Role } from './role';
 /**
  * User class
  */
@@ -21,7 +21,8 @@ export class User extends ModelBase {
     @required
     email: String;
 
-
+    @ref('Role')
+    role: Role
 
     get fullName(): String {
         return `${this.firstName} ${this.lastName}`;
