@@ -1,16 +1,25 @@
 import { Schema } from 'mongoose';
-const helper = require('./helpers');
+import { ICollection } from './interfaces';
+const helpers = require('./helpers');
 
-export function collection(name?: string): any {
+export function collection(options?: ICollection): any {
+    options = options || {};
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
-        
+        // set collection name
+        target._collectionName = options.name || getClassName(target);
         // defines principal properties
-        helper.addMetadata(target, '_id', Schema.Types.ObjectId);
-        helper.addMetadata(target, '_createdAt', Date);
-        helper.addMetadata(target,'_updatedAt', Date);
+        helpers.addMetadata(target, '_id', Schema.Types.ObjectId);
+        helpers.addMetadata(target, '_createdAt', Date);
+        helpers.addMetadata(target,'_updatedAt', Date);
         // define CRUD ORM methods
-        helper.defineCRUD(target);
-
+        helpers.defineMethods(target);
+        //
         return target;
     };
+}
+
+function getClassName(target: any) {
+    let regex = /^function ([^ (){]{1,})/;
+    let res = (regex).exec(target.toString());
+    return (res && res.length > 1) ? res[1] : null;
 }

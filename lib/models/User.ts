@@ -21,7 +21,7 @@ export class User extends ModelBase {
     @required
     email: String;
 
-    @ref('Role')
+    @ref('role')
     role: Role
 
     get fullName(): String {

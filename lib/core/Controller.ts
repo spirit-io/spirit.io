@@ -28,13 +28,15 @@ export class Controller implements IWrite, IRead{
                 throw new Error(`Invalid where filter: ${where}`);
             }
         }
-        let result = this._class.find(_, where);
+        let includes: any = req.query['includes'];
+        let result = this._class.find(_, where, {includes: includes});
         res.json(result);
     }
 
     findById = (req: express.Request, res: express.Response, _:_): void  => {
         let _id: string = req.params['_id'];
-        let result = this._class.findById(_, _id);
+        let includes: any = req.query['includes'];
+        let result = this._class.findById(_, _id, {includes: includes});
         if (!result) res.sendStatus(404);
         else res.json(result);
     }

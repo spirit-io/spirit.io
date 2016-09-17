@@ -8,7 +8,9 @@ import { ModelBase } from '../base/modelBase';
 export class Role extends ModelBase {
     
     @unique @required
-    title: String;
+    title: string;
+
+    description: string
 
 
 }

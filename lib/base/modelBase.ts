@@ -1,5 +1,6 @@
 import { _ } from 'streamline-runtime';
 import { Schema } from 'mongoose';
+import { IPopulate } from '../decorators/interfaces';
 
 export abstract class ModelBase {
     protected _id: Schema.Types.ObjectId;
@@ -8,7 +9,7 @@ export abstract class ModelBase {
 
     constructor(item: any = {}) {
         //console.log("Constructor base called: ",item);
-        this.populate(item);
+        this.updateValues(item);
     }
 
     get id(): Schema.Types.ObjectId {
@@ -28,6 +29,7 @@ export abstract class ModelBase {
     static update = (_: _, _id: string, item: any): any => { }
     static createOrUpdate = (_: _, _id: any, item: any): any => { }
     static remove = (_: _, _id: any): any => { }
+    static populate = (_: _, docs: any, options: IPopulate) => { }
     static fetchInstance = (_, _id: string): ModelBase => { return; }
     static fetchInstances = (_, filter?: any): ModelBase[] => { return; }
     // real orm methods
@@ -41,7 +43,7 @@ export abstract class ModelBase {
      */
     save = (_: _, options?: any) => {
         let item = this.constructor['createOrUpdate'](_, this._id, this.toObject(), options);
-        this.populate(item, {deleteMissing: true});
+        this.updateValues(item, {deleteMissing: true});
         if (options && options.returnInstance) return this;
         return;
     }
@@ -54,7 +56,7 @@ export abstract class ModelBase {
         return obj;
     }
 
-    private populate = (item: any, options?: any) => {
+    private updateValues = (item: any, options?: any) => {
         // update new values
         for (let key of Object.keys(item)) {
             if (this.constructor['_properties'].indexOf(key) !== -1) this[key] = item[key];

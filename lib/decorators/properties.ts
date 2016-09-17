@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { IReference } from './interfaces';
 import { helper as objectHelper } from '../utils/object';
 const helpers = require('./helpers');
 
@@ -7,7 +8,7 @@ const helpers = require('./helpers');
 // !!!!!!!!!!!!!!!
 
 
-export function unique(target: Object, propertyKey: string | symbol) {
+export function unique(target: any, propertyKey: string | symbol) {
     helpers.addMetadata(target.constructor, propertyKey, {unique: true});
 }
 
@@ -19,8 +20,13 @@ export function index(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, {index: true});
 }
 
-export function ref(refName: string, options?: any) {
-    options = options || {};
+export function ref(refName: string, options?: IReference) {
+    let defaultOpts = { type: Schema.Types.ObjectId, ref: refName };
+    if (options) {
+        objectHelper.extend(options, defaultOpts)
+    } else {
+        options = defaultOpts;
+    } 
     objectHelper.extend(options, { type: Schema.Types.ObjectId, ref: refName });
     return helpers.getFieldDecorator(options);
 }
