@@ -12,6 +12,12 @@ export function getFieldDecorator (options: any): any {
 }
 
 export function addMetadata(target: any, key: string, meta: any, force?: boolean) {
+    // store properties names
+    target._properties = target._properties || [];
+    target._properties.push(key);
+    
+    // add field to schemaDef
+    // Note: the schemaDef is post processed by the schema compiler !!!
     target._schemaDef = target._schemaDef || {};
     if (target._schemaDef[key]) {
         objectHelper.merge(meta, target._schemaDef[key]);

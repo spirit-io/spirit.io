@@ -12,7 +12,7 @@ const uniqueValidator = require('mongoose-unique-validator');
 
 let trace;// = console.log;
 
-function generateMongooseSchema(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
+function generateSchemaDefinitions(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
     let __currentClassName;
     let program = ts.createProgram(fileNames, options);
@@ -51,72 +51,63 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
     /** Inspect a class symbol infomration */
     function inspectClass(node: ts.ClassDeclaration): any {
         let sf: ts.SourceFile = <ts.SourceFile>node.parent;
-        // Do not consider ModelBase class
-        if (sf.fileName.indexOf('modelBase.ts') !== -1) return;
-        
         let symbol = checker.getSymbolAtLocation(node.name);
         let className = __currentClassName = symbol.getName();
 
-        // console.log("class: "+require('util').inspect(node,null,1));
-        const r = require(sf.fileName);
-        let myClass = r[className];
-        if (!myClass) {
-            console.log(`Class ${className} not found in module ${sf.fileName}. Please check it correctly exported`);
-            return;
-        }
-        myClass._collectionName = className.toLowerCase();
-        myClass._documentation = ts.displayPartsToString(symbol.getDocumentationComment());
-
+        let _isModelClass = false;
         // get decorators
         if (node.decorators) {
             let decorators = node.decorators.map(inspectDecorator);
             decorators && decorators.forEach(function(d) {
-                switch(d.name) {
-                    case "collection":
-                        console.log("Handle collection decorator in schema compiler");
-                        myClass._collectionName = (d.args && d.args.name).toLowerCase() || className.toLowerCase();
-                        break;
-                    default:
-                        break;
-                }
+                if (d.name.indexOf("collection(") !== -1) _isModelClass = true;
             });
-        } else {
-            //
-            trace && trace(`Class ${className} ignored because it doesn't contains 'collection' decorator`);
+        } 
+        
+        // consider only classes with @collection(...) decorator
+        if (!_isModelClass) return;
+
+        const r = require(sf.fileName);
+        let myClass = r[className];
+        if (!myClass) {
+            console.log(`Class ${className} not found in module ${sf.fileName}. Please check it is correctly exported`);
             return;
         }
+
+        // Normally, the collection name is already set in the collection decorator
+        myClass._collectionName = myClass._collectionName.toLowerCase() || className.toLowerCase();
+        myClass._documentation = ts.displayPartsToString(symbol.getDocumentationComment());
+
 
         //console.log("Shema declared when executing compiler:" , myClass._schemaDef);
 
         if (node.members) {
-            myClass._properties = ['_id', '_createdAt', '_updatedAt'];
             let members = node.members.map(inspectMembers);
             members && members.reduce(function(prev: any, curr: any) {
                 if (curr) {
+                    // the field is maybe already existing in the schemaDef because the a decorator set it.
                     if (prev[curr.name]) {
+                        // if it is a string, only the type is already a part of the field value
                         if (typeof curr.value === 'string') {
                             objectHelper.merge({type: curr.value}, prev[curr.name]);
-                        } else {
+                        }
+                        // else we need to merge
+                        else {
                             objectHelper.merge(curr.value, prev[curr.name]);
                         }
-                    } else {
+                    } 
+                    // but some properties can have no decorator at all
+                    else {
                         prev[curr.name] = curr.value;
                     }
                     // store properties name that would be used for filtering returned properties
+                    // some of them have already been set by decorators
                     myClass._properties = myClass._properties || [];
-                    myClass._properties.push(curr.name);
+                    if (myClass._properties.indexOf(curr.name) ==-1 ) {
+                        myClass._properties.push(curr.name);
+                    }
                 }
                 return prev;
             }, myClass._schemaDef);
-
-            trace && trace(`Schema registered for collection ${myClass._collectionName}: ${JSON.stringify(myClass._schemaDef,null,2)}`)
-
-            if (Object.keys(myClass._schemaDef).length) {
-                let schema = new Schema(myClass._schemaDef, {_id: false, versionKey: false});
-                schema.plugin(uniqueValidator);
-                myClass._model = mongoose.model(myClass._collectionName, schema, myClass._collectionName);
-            }
-
         }
         return myClass;
     }
@@ -125,7 +116,7 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
        // console.log("member: "+require('util').inspect(member,null,1));
 
         function log(prefix: String, obj: any) {
-          // console.log(`${prefix}: ${require('util').inspect(obj,null,1)}`);
+           //console.log(`${prefix}: ${require('util').inspect(obj,null,1)}`);
         }
 
         let symbol: ts.Symbol;
@@ -150,16 +141,19 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
                 break;
             case ts.SyntaxKind.PropertyDeclaration:
                 symbol = checker.getSymbolAtLocation(member.name);
-                log("Property",member);
+                let propertyName = symbol.getName();
+                //console.log("Property",member);
+
+                // !!! IMPORTANT !!!
+                // retrieve the real type. this part explains essentially why using this schema compiler
+                // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                 type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
-                log("type", type);
-                //if (!isAllowedType(type)) throw new Error(`Invalid type has been declared on property '${symbol.getName()}' in class '${__currentClassName}'. You should probably use '@ref' decorator`);
-                let metadata = computePropertyMetadata(symbol.getName(), member);
-                if (metadata) metadata.type = type;
+                validatePropertyType(propertyName, member, type);
+
 
                 return {
-                    name: symbol.getName(),
-                    value: metadata || type
+                    name: propertyName,
+                    value: type
                 };
             default: 
                 console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
@@ -171,20 +165,19 @@ function generateMongooseSchema(router: Router, fileNames: string[], options: ts
         return ['string', 'number', 'date', 'buffer', 'boolean', 'mixed', 'objectid', 'array'].indexOf(type.toLowerCase()) !== -1;
     }
 
-    function computePropertyMetadata(name: string, node: ts.Node) {
+    function validatePropertyType(name: string, node: ts.Node, type: any) {
+        if (isAllowedType(type)) return true;
         if (node.decorators) {
+            let _isReference = false;
             let decorators = node.decorators.map(inspectDecorator);
-            let metadata: any = {};
             decorators && decorators.forEach(function(d) {
-                switch(d.name) {
-
-                    default:
-                        break;
+                if (d.name.indexOf('ref(') !== -1) {
+                    _isReference = true;
                 }
             });
-
-            return Object.keys(metadata).length > 0 ? metadata : null;
+            if (!_isReference) throw new Error(`Invalid type has been declared on property '${name}' in class '${__currentClassName}'. '@ref' decorator is probably missing.`);
         }
+        return true;
     }
 
 
@@ -234,10 +227,21 @@ export function registerModels(router: Router){
         return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
     });
 
-    generateMongooseSchema(router, modelFiles, {
+    generateSchemaDefinitions(router, modelFiles, {
         target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-    }).forEach(function(c) {
-        router.setupModel(c);
+    }).forEach(function(aClass) {
+
+
+        trace && trace(`Schema registered for collection ${aClass._collectionName}: ${JSON.stringify(aClass._schemaDef,null,2)}`)
+
+        if (Object.keys(aClass._schemaDef).length) {
+            let schema = new Schema(aClass._schemaDef, {_id: false, versionKey: false});
+            schema.plugin(uniqueValidator);
+            aClass._model = mongoose.model(aClass._collectionName, schema, aClass._collectionName);
+        }
+
+
+        router.setupModel(aClass);
     });
 }
        
