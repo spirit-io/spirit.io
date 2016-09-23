@@ -43,10 +43,11 @@ describe('User Model Unit Tests:', () => {
             let u1: User = new User();
             db.updateValues(u1, data);
             db.saveInstance(_, u1);
+            // store _id to be able to remove all documents at the end
             userInstances.push(u1);
 
             expect(db.serialize(u1)).to.have.all.keys(users.keys);
-            // store _id to be able to remove all documents at the end
+           
             let _id = db.getMetadata(u1, '_id');
             let _createdAt = db.getMetadata(u1, '_createdAt');
             
@@ -139,11 +140,14 @@ describe('User Model Unit Tests:', () => {
 
             let _id = db.getMetadata(u1, '_id');
             let _createdAt = db.getMetadata(u1, '_createdAt');
+            let _updatedAt = db.getMetadata(u1, '_createdAt');
 
             expect(_id).to.be.a('object');
             expect(_id).to.not.be.null;
             expect(_createdAt).to.be.a('date');
             expect(_createdAt).to.not.null;
+            expect(_updatedAt).to.be.a('date');
+            expect(_updatedAt).to.not.null;
             expect(u1.userName).to.be.a('string');
             expect(u1.userName).to.equal(data.userName);
             expect(u1.firstName).to.be.a('string');
@@ -174,6 +178,34 @@ describe('User Model Unit Tests:', () => {
             }
         });
 
+        it('save user instance using ModelBase methods should work', (_) => {
+
+            
+            let data = objectHelper.clone(users.data.u2);
+            let u2: User = new User(data);
+            u2.save(_);
+            // store _id to be able to remove all documents at the end
+            userInstances.push(u2);
+
+            expect(u2.serialize()).to.have.all.keys(users.keys);
+            
+            expect(u2.id).to.be.a('object');
+            expect(u2.id).to.not.be.null;
+            expect(u2.createdAt).to.be.a('date');
+            expect(u2.createdAt).to.not.null;
+            expect(u2.userName).to.be.a('string');
+            expect(u2.userName).to.equal(data.userName);
+            expect(u2.firstName).to.be.a('string');
+            expect(u2.firstName).to.equal(data.firstName);
+            expect(u2.lastName).to.be.a('string');
+            expect(u2.lastName).to.equal(data.lastName);
+            expect(u2.password).to.be.a('string');
+            expect(u2.password).to.equal(data.password);
+            expect(u2.email).to.be.a('string');
+            expect(u2.email).to.equal(data.email);
+        });
+
+
         it('delete users should work', (_) => {
             let db = AdminHelper.model(User);
             for (let inst of userInstances) {
@@ -181,8 +213,6 @@ describe('User Model Unit Tests:', () => {
                 expect(result.ok).to.equal(1);
                 expect(result.n).to.equal(1);
             }
-
-
         });
 
     });
