@@ -1,10 +1,11 @@
 import { _ } from 'streamline-runtime';
+
 import express = require ('express');
 require('express-streamline');
 import * as bodyParser from "body-parser";
 const methodOverride = require("method-override");
 //
-import { Controller } from '../core/controller';
+import { IModelFactory } from '../interfaces';
 
 let trace; // = console.log;
 
@@ -19,7 +20,7 @@ function errorHandler(err: Error, req: express.Request, res: express.Response, _
   res.json({ error: err.message });
 }
 
-export class Router {
+export class Middleware {
 
     router: express.Router;
     constructor(private app: express.Application) {
@@ -48,18 +49,11 @@ export class Router {
         this.app.use(express.Router());
     }
 
-
-    setupModel = (classModule: any) => {
-        let modelCtrl = new Controller(classModule._model, classModule);
-        let name = classModule._collectionName;
-        trace && trace("Register route: "+`/${classModule._collectionName}`);
-        router.get(`/${name}`, modelCtrl.find);
-        router.get(`/${name}/:_id`, modelCtrl.findById);
-        router.post(`/${name}`, modelCtrl.create);
-        router.put(`/${name}/:_id`, modelCtrl.update);
-        router.delete(`/${name}/:_id`, modelCtrl.remove);
+    useRouter = (router: express.Router) => {
         this.app.use(router);
     }
+
+    
 
     setErrorHandler = () => {
         this.app.use(function(err: Error, req: express.Request, res: express.Response, _:_) {
@@ -72,4 +66,4 @@ export class Router {
         });
     }
 }
-Object.seal(Router);
+Object.seal(Middleware);

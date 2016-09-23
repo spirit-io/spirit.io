@@ -1,6 +1,5 @@
 import { _ } from 'streamline-runtime';
 import { Schema } from 'mongoose';
-import { IPopulate } from '../decorators/interfaces';
 
 export abstract class ModelBase {
     protected _id: Schema.Types.ObjectId;
@@ -29,7 +28,6 @@ export abstract class ModelBase {
     static update = (_: _, _id: string, item: any): any => { }
     static createOrUpdate = (_: _, _id: any, item: any): any => { }
     static remove = (_: _, _id: any): any => { }
-    static populate = (_: _, docs: any, options: IPopulate) => { }
     static fetchInstance = (_, _id: string): ModelBase => { return; }
     static fetchInstances = (_, filter?: any): ModelBase[] => { return; }
     // real orm methods

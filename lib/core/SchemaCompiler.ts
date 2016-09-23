@@ -3,16 +3,13 @@ import * as fs from "fs";
 import * as path from 'path';
 import * as qs from "querystring";
 import { helper as objectHelper } from '../utils/object';
-import { Schema } from 'mongoose';
 import { Contract } from "../application/contract";
-import { Router } from '../middlewares/router';
-
-const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
+import { Middleware, ModelRegistry } from './';
+import { IModelFactory } from '../interfaces';
 
 let trace;// = console.log;
 
-function generateSchemaDefinitions(router: Router, fileNames: string[], options: ts.CompilerOptions): any[] {
+function generateSchemaDefinitions(middleware: Middleware, fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
     let __currentClassName;
     let program = ts.createProgram(fileNames, options);
@@ -73,12 +70,10 @@ function generateSchemaDefinitions(router: Router, fileNames: string[], options:
             return;
         }
 
-        // Normally, the collection name is already set in the collection decorator
-        myClass._collectionName = myClass._collectionName.toLowerCase() || className.toLowerCase();
         myClass._documentation = ts.displayPartsToString(symbol.getDocumentationComment());
 
-
-        //console.log("Shema declared when executing compiler:" , myClass._schemaDef);
+        // Get model factory
+        let modelFactory: IModelFactory = ModelRegistry.get(myClass);
 
         if (node.members) {
             let members = node.members.map(inspectMembers);
@@ -101,15 +96,14 @@ function generateSchemaDefinitions(router: Router, fileNames: string[], options:
                     }
                     // store properties name that would be used for filtering returned properties
                     // some of them have already been set by decorators
-                    myClass._properties = myClass._properties || [];
-                    if (myClass._properties.indexOf(curr.name) ==-1 ) {
-                        myClass._properties.push(curr.name);
+                    if (modelFactory.properties.indexOf(curr.name) ==-1 ) {
+                        modelFactory.properties.push(curr.name);
                     }
                 }
                 return prev;
-            }, myClass._schemaDef);
+            }, modelFactory.schemaDef);
         }
-        return myClass;
+        return modelFactory;
     }
 
     function inspectMembers(member: ts.Declaration | ts.VariableDeclaration) {
@@ -222,26 +216,21 @@ function generateSchemaDefinitions(router: Router, fileNames: string[], options:
     }
 }
 
-export function registerModels(router: Router){
-    let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
-        return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
-    });
+export class SchemaCompiler {
+    static registerModels = (middleware: Middleware, contract: Contract) => {
+        let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
+            return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
+        });
 
-    generateSchemaDefinitions(router, modelFiles, {
-        target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-    }).forEach(function(aClass) {
+        generateSchemaDefinitions(middleware, modelFiles, {
+            target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
+        }).forEach(function(modelFactory: IModelFactory) {
 
-
-        trace && trace(`Schema registered for collection ${aClass._collectionName}: ${JSON.stringify(aClass._schemaDef,null,2)}`)
-
-        if (Object.keys(aClass._schemaDef).length) {
-            let schema = new Schema(aClass._schemaDef, {_id: false, versionKey: false});
-            schema.plugin(uniqueValidator);
-            aClass._model = mongoose.model(aClass._collectionName, schema, aClass._collectionName);
-        }
-
-
-        router.setupModel(aClass);
-    });
+            // setup model actions
+            let modelRouter = modelFactory.setup(middleware.router);
+            middleware.useRouter(modelRouter);
+        });
+    }
 }
+
        

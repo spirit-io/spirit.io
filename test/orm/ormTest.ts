@@ -1,6 +1,7 @@
 import { _ } from 'streamline-runtime';
 import { User } from '../../lib/models';
 import { helper as objectHelper } from '../../lib/utils/object';
+import { AdminHelper } from '../../lib/core/adminHelper';
 
 const expect = require('chai').expect;
 
@@ -23,8 +24,9 @@ const users: any = {
         }
     }
 }
-let userIds = [];
+let userInstances = [];
 
+let db = AdminHelper.model(User);
 /**
  * Unit tests
  */
@@ -36,17 +38,22 @@ describe('User Model Unit Tests:', () => {
 
         it('save user instance with valid values should work', (_) => {
 
+            
             let data = objectHelper.clone(users.data.u1);
-            let u1: User = new User(data);
-            u1.save(_);
-            expect(u1.toObject()).to.have.all.keys(users.keys);
-            // store _id to be able to remove all documents at the end
-            userIds.push(u1.id);
+            let u1: User = new User();
+            db.updateValues(u1, data);
+            db.saveInstance(_, u1);
+            userInstances.push(u1);
 
-            expect(u1.id).to.be.a('object');
-            expect(u1.id).to.not.be.null;
-            expect(u1.createdAt).to.be.a('date');
-            expect(u1.createdAt).to.not.null;
+            expect(db.serialize(u1)).to.have.all.keys(users.keys);
+            // store _id to be able to remove all documents at the end
+            let _id = db.getMetadata(u1, '_id');
+            let _createdAt = db.getMetadata(u1, '_createdAt');
+            
+            expect(_id).to.be.a('object');
+            expect(_id).to.not.be.null;
+            expect(_createdAt).to.be.a('date');
+            expect(_createdAt).to.not.null;
             expect(u1.userName).to.be.a('string');
             expect(u1.userName).to.equal(data.userName);
             expect(u1.firstName).to.be.a('string');
@@ -65,7 +72,9 @@ describe('User Model Unit Tests:', () => {
             delete data.email;
             let error: Error;
             try {
-                new User(data).save(_);
+                let u1 = new User();
+                db.updateValues(u1, data);
+                db.saveInstance(_, u1);
             } catch (e) {
                 error = e;
             } finally {
@@ -79,7 +88,9 @@ describe('User Model Unit Tests:', () => {
             data.userName = users.data.u1.userName;
             let error: Error;
             try {
-                new User(data).save(_);
+                let u1 = new User();
+                db.updateValues(u1, data);
+                db.saveInstance(_, u1);
             } catch (e) {
                 error = e;
             } finally {
@@ -93,7 +104,9 @@ describe('User Model Unit Tests:', () => {
             delete data.userName;
             let error: Error;
             try {
-                new User(data).save(_);
+                let u1 = new User();
+                db.updateValues(u1, data);
+                db.saveInstance(_, u1);
             } catch (e) {
                 error = e;
             } finally {
@@ -104,10 +117,11 @@ describe('User Model Unit Tests:', () => {
 
         it('update user instance using existing _id and valid values should work', (_) => {
             let data = objectHelper.clone(users.data.u2);
-            data._id = userIds[0];
+            data._id = userInstances[0]._id;
             data.firstName = "u1_firstname_updated";
-            let u1: User = new User(data)
-            u1.save(_);
+            let u1 = new User();
+            db.updateValues(u1, data);
+            db.saveInstance(_, u1);
             expect(u1.firstName).to.be.a('string');
             expect(u1.firstName).to.equal(data.firstName);
         });
@@ -115,16 +129,21 @@ describe('User Model Unit Tests:', () => {
         it('update user instance with valid values should work', (_) => {
             // use same data, but reuse existing document id in order to use update
             let data = objectHelper.clone(users.data.u1);
-            data._id = userIds[0];
+            data._id = userInstances[0]._id;
             data.lastName = "u1_lastname_updated";
             data.email = "u1@spirit.com";
             data.password = "u1pwd_updated";
-            let u1 = new User(data)
-            u1.save(_);
-            expect(u1.id).to.be.a('object');
-            expect(u1.id).to.not.be.null;
-            expect(u1.createdAt).to.be.a('date');
-            expect(u1.createdAt).to.not.null;
+            let u1 = new User();
+            db.updateValues(u1, data);
+            db.saveInstance(_, u1);
+
+            let _id = db.getMetadata(u1, '_id');
+            let _createdAt = db.getMetadata(u1, '_createdAt');
+
+            expect(_id).to.be.a('object');
+            expect(_id).to.not.be.null;
+            expect(_createdAt).to.be.a('date');
+            expect(_createdAt).to.not.null;
             expect(u1.userName).to.be.a('string');
             expect(u1.userName).to.equal(data.userName);
             expect(u1.firstName).to.be.a('string');
@@ -140,12 +159,13 @@ describe('User Model Unit Tests:', () => {
         it('update user instance with invalid values should not work', (_) => {
             // use same data, but reuse existing document id in order to use update
             let data = objectHelper.clone(users.data.u1);
-            data._id = userIds[0];
+            data._id = userInstances[0]._id;
             delete data.userName;
             let error: Error;
             try {
-                let u1: User = new User(data);
-                u1.save(_, { deleteMissing: true });
+                let u1 = new User();
+                db.updateValues(u1, data);
+                db.saveInstance(_, u1, { deleteMissing: true });
             } catch (e) {
                 error = e;
             } finally {
@@ -155,8 +175,9 @@ describe('User Model Unit Tests:', () => {
         });
 
         it('delete users should work', (_) => {
-            for (let id of userIds) {
-                let result = User.remove(_, id).result;
+            let db = AdminHelper.model(User);
+            for (let inst of userInstances) {
+                let result = db.deleteInstance(_, inst).result;
                 expect(result.ok).to.equal(1);
                 expect(result.n).to.equal(1);
             }

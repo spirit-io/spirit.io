@@ -5,7 +5,7 @@ import { Role } from './role';
  * User class
  */
 @collection("User")
-export class User extends ModelBase {
+export class User {
     
     @unique @required
     userName: String;
