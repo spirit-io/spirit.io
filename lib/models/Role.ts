@@ -4,7 +4,9 @@ import { ModelBase } from '../base/modelBase';
 /**
  * User class
  */
-@collection("Role")
+@collection({
+    name: "role"
+})
 export class Role {
     
     @unique @required
@@ -14,4 +16,4 @@ export class Role {
 
 
 }
-//Object.seal(User);
+Object.seal(Role);

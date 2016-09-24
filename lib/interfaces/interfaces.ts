@@ -12,13 +12,14 @@ export interface IController {
 export interface IModelFactory {
     targetClass: any;
     collectionName: string;
+    datasource: string;
     properties: string[];
     schemaDef: Object;
     schema: Object;
     model: Object;
     actions: IModelActions;
     helper: IModelHelper;
-    setup(router: express.Router): express.Router;
+    setup(router: express.Application);
 }
 
 export interface IModelActions {
@@ -42,7 +43,7 @@ export interface IModelHelper {
 
 
 export interface IConnector {
-    connect(dbUrl: string): any;
+    connect(datasourceKey: string, parameters: any): any;
     createModelFactory(myClass: any): IModelFactory;
 }
 
@@ -55,6 +56,7 @@ export interface IQueryParameters {
  */
 export interface ICollection {
     name?: string;
+    datasource?: string;
 }
 
 /**

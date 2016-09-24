@@ -46,7 +46,6 @@ export class Middleware {
             })
         });
 
-        this.app.use(express.Router());
     }
 
     useRouter = (router: express.Router) => {

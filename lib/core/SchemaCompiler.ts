@@ -7,9 +7,11 @@ import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
 import { IModelFactory } from '../interfaces';
 
+import express = require ('express');
+
 let trace;// = console.log;
 
-function generateSchemaDefinitions(middleware: Middleware, fileNames: string[], options: ts.CompilerOptions): any[] {
+function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): any[] {
 // Build a program using the set of root file names in fileNames
     let __currentClassName;
     let program = ts.createProgram(fileNames, options);
@@ -217,18 +219,17 @@ function generateSchemaDefinitions(middleware: Middleware, fileNames: string[], 
 }
 
 export class SchemaCompiler {
-    static registerModels = (middleware: Middleware, contract: Contract) => {
+    static registerModels = (app: express.Application, contract: Contract) => {
         let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
             return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
         });
 
-        generateSchemaDefinitions(middleware, modelFiles, {
+        generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function(modelFactory: IModelFactory) {
 
             // setup model actions
-            let modelRouter = modelFactory.setup(middleware.router);
-            middleware.useRouter(modelRouter);
+            let modelRouter = modelFactory.setup(app);
         });
     }
 }

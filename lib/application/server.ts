@@ -2,7 +2,7 @@ import { _ } from 'streamline-runtime';
 import express = require ('express');
 require('express-streamline');
 import { json, urlencoded } from "body-parser";
-import { SchemaCompiler, ConnectorHelper, Middleware } from "../core";
+import { SchemaCompiler, Middleware } from "../core";
 import { Contract } from "./contract";
 
 export class Server {
@@ -18,8 +18,8 @@ export class Server {
         // configure middleware standard rules
         this._middleware.configure();
         // register model and configure model routes
-        SchemaCompiler.registerModels(this._middleware, this._contract);
-        // set default erro handler
+        SchemaCompiler.registerModels(this.app, this._contract);
+        // set default error handler
         this._middleware.setErrorHandler();
     }
 

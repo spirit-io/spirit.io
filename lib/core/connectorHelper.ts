@@ -1,10 +1,15 @@
 import { IModelFactory, IConnector } from '../interfaces';
+import { synchronize } from '../utils';
+
+
+var globals = require('streamline-runtime').globals;
+globals.context.connectors = new Map<string, IConnector>();
 
 export class ConnectorHelper {
-    private static connectors: Map<string, IConnector> = new Map();
 
+    @synchronize()
     public static getConnector(ds: string): IConnector {
-        let c = this.connectors.get(ds);
+        let c = globals.context.connectors.get(ds);
         if (!c) {
             let type = ds.indexOf(':') !== -1 ? ds.split(':')[0] : ds;
             switch (type) {
@@ -12,7 +17,7 @@ export class ConnectorHelper {
                     try {
                         let RedisConnector = require('spirit.io-redis-connector');
                         c = new RedisConnector();
-                    } catch(e) {
+                    } catch (e) {
                         throw new Error("spirit.io-redis-connector is not available.\nPlease use 'npm install spirit.io-redis-connector'.");
                     }
                     break;
@@ -21,18 +26,18 @@ export class ConnectorHelper {
                     try {
                         let MongodbConnector = require('spirit.io-mongodb-connector');
                         c = new MongodbConnector();
-                    } catch(e) {
+                    } catch (e) {
                         throw new Error("spirit.io-mongodb-connector is not available.\nPlease use 'npm install spirit.io-mongodb-connector'.");
                     }
                     break;
             }
-            this.connectors.set(type, c);
+            globals.context.connectors.set(type, c);
         }
         return c;
     }
-    
+
     static createModelFactory(modelClass: any): IModelFactory {
         let datasource: string = modelClass._datasource || 'mongodb';
-        return this.getConnector(datasource).createModelFactory(modelClass);
+        return ConnectorHelper.getConnector(datasource).createModelFactory(modelClass);
     }
 }

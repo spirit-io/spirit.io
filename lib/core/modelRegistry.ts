@@ -7,6 +7,10 @@ export class ModelRegistry {
         this.factories.set(modelFactory.collectionName, modelFactory);
     }
 
+    public static getByName(collectionName: any): IModelFactory {
+        return this.factories.get(collectionName);
+    }
+    
     public static get(target: any): IModelFactory {
         let collectionName = target._collectionName;
         let f = this.factories.get(collectionName);
