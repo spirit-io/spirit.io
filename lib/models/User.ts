@@ -34,4 +34,3 @@ export class User extends ModelBase {
 
 
 }
-//Object.seal(User);

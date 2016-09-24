@@ -16,4 +16,3 @@ export class Role {
 
 
 }
-Object.seal(Role);
