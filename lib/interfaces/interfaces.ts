@@ -7,6 +7,8 @@ export interface IController {
     delete: express.RequestHandler;
     read: express.RequestHandler;
     query: express.RequestHandler;
+    executeService?: express.RequestHandler;
+    executeMethod?: express.RequestHandler;
 }
 
 export interface IModelFactory {
@@ -14,6 +16,8 @@ export interface IModelFactory {
     collectionName: string;
     datasource: string;
     properties: string[];
+    statics: string[];
+    methods: string[];
     schemaDef: Object;
     schema: Object;
     model: Object;

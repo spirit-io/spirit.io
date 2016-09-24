@@ -1,3 +1,4 @@
+import { _ } from 'streamline-runtime';
 import { collection, unique, required, ref } from '../decorators';
 import { ModelBase } from '../base/modelBase';
 import { Role } from './role';
@@ -29,7 +30,13 @@ export class User extends ModelBase {
     }
 
     hello(): String {
-        return `Hello ${this.fullName}`;
+        return `I said hello to ${this.fullName}`;
+    }
+
+    private static authenticate(): String {
+        let req = _.context['request'];
+        let body = req.body;
+        return `Authenticate ${body.username} with password ${body.password}`;
     }
 
 

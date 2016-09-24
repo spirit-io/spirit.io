@@ -1,7 +1,7 @@
 import { _ } from 'streamline-runtime';
-
 import express = require ('express');
 require('express-streamline');
+
 import * as bodyParser from "body-parser";
 const methodOverride = require("method-override");
 //
@@ -39,6 +39,9 @@ export class Middleware {
         this.app.use(methodOverride("X-Method-Override"));      
         this.app.use(methodOverride("_method"));
 
+        this.app.use(function (req: express.Request, res: express.Response, _: _) {
+            _.context['request'] = req;
+        });
 
         this.app.get("/", (request: express.Request, response: express.Response) => {
             response.json({

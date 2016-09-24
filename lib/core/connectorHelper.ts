@@ -1,15 +1,15 @@
+import { _ } from 'streamline-runtime';
 import { IModelFactory, IConnector } from '../interfaces';
 import { synchronize } from '../utils';
 
 
-var globals = require('streamline-runtime').globals;
-globals.context.connectors = new Map<string, IConnector>();
+_.context.connectors = new Map<string, IConnector>();
 
 export class ConnectorHelper {
 
     @synchronize()
     public static getConnector(ds: string): IConnector {
-        let c = globals.context.connectors.get(ds);
+        let c = _.context.connectors.get(ds);
         if (!c) {
             let type = ds.indexOf(':') !== -1 ? ds.split(':')[0] : ds;
             switch (type) {
@@ -31,7 +31,7 @@ export class ConnectorHelper {
                     }
                     break;
             }
-            globals.context.connectors.set(type, c);
+            _.context.connectors.set(type, c);
         }
         return c;
     }
