@@ -19,11 +19,10 @@ export interface IModelFactory {
     statics: string[];
     methods: string[];
     schemaDef: Object;
-    schema: Object;
     model: Object;
     actions: IModelActions;
     helper: IModelHelper;
-    setup(router: express.Application);
+    setup(mid: Map<string, express.Router>);
 }
 
 export interface IModelActions {
@@ -47,6 +46,7 @@ export interface IModelHelper {
 
 
 export interface IConnector {
+    datasource: string;
     connect(datasourceKey: string, parameters: any): any;
     createModelFactory(myClass: any): IModelFactory;
 }

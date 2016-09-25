@@ -22,9 +22,10 @@ function errorHandler(err: Error, req: express.Request, res: express.Response, _
 
 export class Middleware {
 
-    router: express.Router;
+    routers: Map<string, express.Router>;
     constructor(private app: express.Application) {
-        this.router = express.Router();
+        this.routers = new Map();
+        this.routers.set('v1', express.Router());        
     }
 
     configure = () => {
@@ -49,13 +50,15 @@ export class Middleware {
             })
         });
 
+
+        
     }
 
-    useRouter = (router: express.Router) => {
-        this.app.use(router);
+    setApiRoutes = () => {
+        for (var [key, router] of this.routers) {
+            this.app.use(`/api/${key}`, router);
+        }
     }
-
-    
 
     setErrorHandler = () => {
         this.app.use(function(err: Error, req: express.Request, res: express.Response, _:_) {

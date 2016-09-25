@@ -55,7 +55,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
             // console.log("member: "+require('util').inspect(member,null,1));
 
             function log(prefix: String, obj: any) {
-                console.log(`${prefix}: ${require('util').inspect(obj, null, 1)}`);
+                //console.log(`${prefix}: ${require('util').inspect(obj, null, 1)}`);
             }
 
             let symbol: ts.Symbol;
@@ -67,10 +67,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     log("Variable", member);
                     break;
                 case ts.SyntaxKind.MethodDeclaration:
-                    // log("Member",member);
+                    log("Member",member);
                     symbol = checker.getSymbolAtLocation(member.name);
-                    // log("Symbol",symbol);
-
                     if (!isPrivate(member)) {
                         if (isStatic(member)) {
                             modelFactory.statics.push(symbol.name);
@@ -78,9 +76,6 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                             modelFactory.methods.push(symbol.name);
                         }
                     }
-
-
-
                     break;
                 case ts.SyntaxKind.FunctionDeclaration:
                     log("Function", member);
@@ -112,8 +107,6 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
             }
 
         }
-
-
 
         //////////////////////////////////////////
         function inspectDecorator(decorator: ts.Decorator): any {
@@ -166,10 +159,6 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
             }
             return true;
         }
-
-
-
-
 
         //////////////////////////////////////////////////
         let sf: ts.SourceFile = <ts.SourceFile>node.parent;
@@ -231,16 +220,9 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         return modelFactory;
     }
 
-
-
     function isAllowedType(type: string): boolean {
         return ['string', 'number', 'date', 'buffer', 'boolean', 'mixed', 'objectid', 'array'].indexOf(type.toLowerCase()) !== -1;
     }
-
-
-
-
-
 
     /** True if this is visible outside this file, false otherwise */
     function isNodeExported(node: ts.Node): boolean {
@@ -263,7 +245,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 }
 
 export class SchemaCompiler {
-    static registerModels = (app: express.Application, contract: Contract) => {
+    static registerModels = (routers: Map<string, express.Router>, contract: Contract) => {
         let modelFiles = Object.keys(Contract.MODELS).map(function (m) {
             return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
         });
@@ -273,9 +255,7 @@ export class SchemaCompiler {
         }).forEach(function (modelFactory: IModelFactory) {
 
             // setup model actions
-            let modelRouter = modelFactory.setup(app);
+            modelFactory.setup(routers);
         });
     }
 }
-
-
