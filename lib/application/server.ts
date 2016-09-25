@@ -26,6 +26,7 @@ export class Server {
         this._middleware.setApiRoutes();
         // set default error handler
         this._middleware.setErrorHandler();
+        return this;
     }
 
     start = (_: _) => {

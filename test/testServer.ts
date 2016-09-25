@@ -1,4 +1,5 @@
 "use strict";
+import { MongodbConnector } from 'spirit.io-mongodb-connector';
 const Mocha = require('mocha'),
     fs = require('fs'),
     path = require('path'),
@@ -28,6 +29,8 @@ exports.runTests = function(_) {
 
     let testFiles = [];
     let server = require('../index')('3001');
+    server.addConnector(new MongodbConnector());
+    server.init();
     server.start(_);
 
     // wait 2 seconds before running test scripts
