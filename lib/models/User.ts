@@ -33,7 +33,7 @@ export class User extends ModelBase {
         return `I said hello to ${this.fullName}`;
     }
 
-    private static authenticate(): String {
+    static authenticate(): String {
         let req = _.context['request'];
         let body = req.body;
         return `Authenticate ${body.username} with password ${body.password}`;

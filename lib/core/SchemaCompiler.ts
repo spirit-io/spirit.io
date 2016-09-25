@@ -7,12 +7,12 @@ import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
 import { IModelFactory } from '../interfaces';
 
-import express = require ('express');
+import express = require('express');
 
 let trace;// = console.log;
 
 function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): any[] {
-// Build a program using the set of root file names in fileNames
+    // Build a program using the set of root file names in fileNames
     let __currentClassName;
     let program = ts.createProgram(fileNames, options);
 
@@ -52,41 +52,44 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         //////////////////////////////////////////
         function inspectMembers(member: ts.Declaration | ts.VariableDeclaration) {
-        // console.log("member: "+require('util').inspect(member,null,1));
+            // console.log("member: "+require('util').inspect(member,null,1));
 
             function log(prefix: String, obj: any) {
-            console.log(`${prefix}: ${require('util').inspect(obj,null,1)}`);
+                console.log(`${prefix}: ${require('util').inspect(obj, null, 1)}`);
             }
 
             let symbol: ts.Symbol;
             let type: string;
-            
-            switch(member && member.kind) {
+
+            switch (member && member.kind) {
                 case ts.SyntaxKind.VariableDeclaration:
                 case ts.SyntaxKind.VariableDeclarationList:
-                    log("Variable",member);
+                    log("Variable", member);
                     break;
                 case ts.SyntaxKind.MethodDeclaration:
-                   // log("Member",member);
+                    // log("Member",member);
                     symbol = checker.getSymbolAtLocation(member.name);
-                   // log("Symbol",symbol);
+                    // log("Symbol",symbol);
 
-                    if (isStatic(member)) {
-                        modelFactory.statics.push(symbol.name);
+                    if (!isPrivate(member)) {
+                        if (isStatic(member)) {
+                            modelFactory.statics.push(symbol.name);
+                        } else {
+                            modelFactory.methods.push(symbol.name);
+                        }
                     }
 
-                   
-                    
+
 
                     break;
                 case ts.SyntaxKind.FunctionDeclaration:
-                    log("Function",member);
+                    log("Function", member);
                     break;
                 case ts.SyntaxKind.GetAccessor:
-                // log("Getter",member);
+                    // log("Getter",member);
                     break;
                 case ts.SyntaxKind.SetAccessor:
-                    log("Setter",member);
+                    log("Setter", member);
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
                     symbol = checker.getSymbolAtLocation(member.name);
@@ -104,10 +107,10 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                         name: propertyName,
                         value: type
                     };
-                default: 
+                default:
                     console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
             }
-            
+
         }
 
 
@@ -119,14 +122,14 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
             switch (decorator.kind) {
                 case ts.SyntaxKind.Decorator:
-                // console.log("Decorator: "+require('util').inspect(decorator,null,1));
+                    // console.log("Decorator: "+require('util').inspect(decorator,null,1));
                     expression = <ts.Identifier>decorator.expression;
                     return {
                         name: expression.getText()
                     };
 
                 case ts.SyntaxKind.CallExpression:
-                // console.log("Call expression: "+require('util').inspect(decorator,null,1));
+                    // console.log("Call expression: "+require('util').inspect(decorator,null,1));
                     expression = <ts.CallExpression>decorator.expression;
                     if (!expression) return;
                     let symbol = checker.getSymbolAtLocation(expression.getFirstToken());
@@ -136,7 +139,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     var params: ts.Symbol[] = callSig.getParameters();
                     return {
                         name: symbol.getName(),
-                        args: args.reduce(function(prev: any, curr: ts.Node, idx: number) {
+                        args: args.reduce(function (prev: any, curr: ts.Node, idx: number) {
                             var paramName = params[idx].getName();
                             prev[paramName] = curr.getText().replace(/\"/g, '');
                             return prev;
@@ -154,7 +157,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
             if (node.decorators) {
                 let _isReference = false;
                 let decorators = node.decorators.map(inspectDecorator);
-                decorators && decorators.forEach(function(d) {
+                decorators && decorators.forEach(function (d) {
                     if (d.name.indexOf('ref(') !== -1) {
                         _isReference = true;
                     }
@@ -177,11 +180,11 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         // get decorators
         if (node.decorators) {
             let decorators = node.decorators.map(inspectDecorator);
-            decorators && decorators.forEach(function(d) {
+            decorators && decorators.forEach(function (d) {
                 if (d.name.indexOf("collection(") !== -1) _isModelClass = true;
             });
-        } 
-        
+        }
+
         // consider only classes with @collection(...) decorator
         if (!_isModelClass) return;
 
@@ -199,26 +202,26 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         if (node.members) {
             let members = node.members.map(inspectMembers);
-            members && members.reduce(function(prev: any, curr: any) {
+            members && members.reduce(function (prev: any, curr: any) {
                 if (curr) {
                     // the field is maybe already existing in the schemaDef because the a decorator set it.
                     if (prev[curr.name]) {
                         // if it is a string, only the type is already a part of the field value
                         if (typeof curr.value === 'string') {
-                            objectHelper.merge({type: curr.value}, prev[curr.name]);
+                            objectHelper.merge({ type: curr.value }, prev[curr.name]);
                         }
                         // else we need to merge
                         else {
                             objectHelper.merge(curr.value, prev[curr.name]);
                         }
-                    } 
+                    }
                     // but some properties can have no decorator at all
                     else {
                         prev[curr.name] = curr.value;
                     }
                     // store properties name that would be used for filtering returned properties
                     // some of them have already been set by decorators
-                    if (modelFactory.properties.indexOf(curr.name) ==-1 ) {
+                    if (modelFactory.properties.indexOf(curr.name) == -1) {
                         modelFactory.properties.push(curr.name);
                     }
                 }
@@ -253,7 +256,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
     }
 
     function hasModifier(node: ts.Node, kind: ts.SyntaxKind) {
-        return node.modifiers && node.modifiers.some(function(m) {
+        return node.modifiers && node.modifiers.some(function (m) {
             return m.kind === kind;
         });
     }
@@ -261,13 +264,13 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
 export class SchemaCompiler {
     static registerModels = (app: express.Application, contract: Contract) => {
-        let modelFiles = Object.keys(Contract.MODELS).map(function(m) {
+        let modelFiles = Object.keys(Contract.MODELS).map(function (m) {
             return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
         });
 
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-        }).forEach(function(modelFactory: IModelFactory) {
+        }).forEach(function (modelFactory: IModelFactory) {
 
             // setup model actions
             let modelRouter = modelFactory.setup(app);
@@ -275,4 +278,4 @@ export class SchemaCompiler {
     }
 }
 
-       
+
