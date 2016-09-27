@@ -6,7 +6,7 @@ import { AdminHelper } from '../../lib/core/adminHelper';
 const expect = require('chai').expect;
 
 const users: any = {
-    keys: ['_id', '_createdAt', '_updatedAt', 'userName', 'password', 'firstName', 'lastName', 'email'],
+    keys: ['_id', '_createdAt', '_updatedAt', 'userName', 'password', 'firstName', 'lastName', 'email', 'role', 'groups'],
     data: {
         u1: {
             userName: "user1",
@@ -117,7 +117,7 @@ describe('User Model Unit Tests:', () => {
         });
 
         it('update user instance using existing _id and valid values should work', (_) => {
-            let data = objectHelper.clone(users.data.u2);
+            let data = objectHelper.clone(users.data.u1);
             data._id = userInstances[0]._id;
             data.firstName = "u1_firstname_updated";
             let u1 = new User();

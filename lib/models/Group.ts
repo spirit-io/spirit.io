@@ -2,12 +2,10 @@ import { collection, unique, required } from '../decorators';
 import { ModelBase } from '../base/modelBase';
 
 /**
- * Role class
+ * Group class
  */
-@collection({
-    name: "role"
-})
-export class Role {
+@collection()
+export class Group {
     
     @unique @required
     title: string;

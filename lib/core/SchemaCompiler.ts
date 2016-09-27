@@ -6,6 +6,7 @@ import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
 import { IModelFactory } from '../interfaces';
+import { Schema } from 'mongoose'; // use Schema only for ObjectID type. Maybe simple uuid would be better...
 
 import express = require('express');
 
@@ -71,9 +72,9 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     symbol = checker.getSymbolAtLocation(member.name);
                     if (!isPrivate(member)) {
                         if (isStatic(member)) {
-                            modelFactory.statics.push(symbol.name);
+                            modelFactory.$statics.push(symbol.name);
                         } else {
-                            modelFactory.methods.push(symbol.name);
+                            modelFactory.$methods.push(symbol.name);
                         }
                     }
                     break;
@@ -95,12 +96,21 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     // retrieve the real type. this part explains essentially why using this schema compiler
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
-                    validatePropertyType(propertyName, member, type);
-
+                    let _isArray = type.indexOf('[]') !== -1;
+                    if (_isArray) {
+                        type = type.substring(0, type.length - 2);
+                    }
+                    let _isReference = false;
+                    if (!isNativeType(type)) {
+                        type = transformPropertyType(propertyName, member, type);
+                        _isReference = true;
+                    }
 
                     return {
                         name: propertyName,
-                        value: type
+                        value: type,
+                        _isArray: _isArray,
+                        _isReference: _isReference
                     };
                 default:
                     console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
@@ -145,19 +155,11 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         }
 
         //////////////////////////////////////////
-        function validatePropertyType(name: string, node: ts.Node, type: any) {
-            if (isAllowedType(type)) return true;
-            if (node.decorators) {
-                let _isReference = false;
-                let decorators = node.decorators.map(inspectDecorator);
-                decorators && decorators.forEach(function (d) {
-                    if (d.name.indexOf('ref(') !== -1) {
-                        _isReference = true;
-                    }
-                });
-                if (!_isReference) throw new Error(`Invalid type has been declared on property '${name}' in class '${__currentClassName}'. '@ref' decorator is probably missing.`);
-            }
-            return true;
+        function transformPropertyType(name: string, node: ts.Node, type: any): any {
+            // check if model factory is registered
+            let factoryRef: IModelFactory = ModelRegistry.get(type.toLowerCase());
+            if (!factoryRef) return type;
+            return { type: Schema.Types.ObjectId, ref: type.toLowerCase() };
         }
 
         //////////////////////////////////////////////////
@@ -208,10 +210,14 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     else {
                         prev[curr.name] = curr.value;
                     }
+                    // manage plural
+                    if (curr._isArray) prev[curr.name] = [prev[curr.name]];
                     // store properties name that would be used for filtering returned properties
                     // some of them have already been set by decorators
-                    if (modelFactory.properties.indexOf(curr.name) == -1) {
-                        modelFactory.properties.push(curr.name);
+                    if (!curr._isReference && modelFactory.$properties.indexOf(curr.name) == -1) {
+                        modelFactory.$properties.push(curr.name);
+                    } else if (curr._isReference && modelFactory.$references.indexOf(curr.name) == -1) {
+                        modelFactory.$references.push(curr.name);
                     }
                 }
                 return prev;
@@ -220,7 +226,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         return modelFactory;
     }
 
-    function isAllowedType(type: string): boolean {
+    function isNativeType(type: string): boolean {
         return ['string', 'number', 'date', 'buffer', 'boolean', 'mixed', 'objectid', 'array'].indexOf(type.toLowerCase()) !== -1;
     }
 
@@ -253,7 +259,7 @@ export class SchemaCompiler {
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-
+            //console.log("Model factory:", modelFactory);
             // setup model actions
             modelFactory.setup(routers);
         });

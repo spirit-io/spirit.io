@@ -19,14 +19,3 @@ export function required(target: any, propertyKey: string) {
 export function index(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, {index: true});
 }
-
-export function ref(refName: string, options?: IReference) {
-    let defaultOpts = { type: Schema.Types.ObjectId, ref: refName };
-    if (options) {
-        objectHelper.extend(options, defaultOpts)
-    } else {
-        options = defaultOpts;
-    } 
-    objectHelper.extend(options, { type: Schema.Types.ObjectId, ref: refName });
-    return helpers.getFieldDecorator(options);
-}

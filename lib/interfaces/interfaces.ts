@@ -1,7 +1,7 @@
 import { _ } from 'streamline-runtime';
 import express = require("express");
 
-export interface IController {
+export interface IModelController {
     create: express.RequestHandler;
     update: express.RequestHandler;
     delete: express.RequestHandler;
@@ -15,9 +15,11 @@ export interface IModelFactory {
     targetClass: any;
     collectionName: string;
     datasource: string;
-    properties: string[];
-    statics: string[];
-    methods: string[];
+    $properties: string[];
+    $references: string[];
+    $fields: string[];
+    $statics: string[];
+    $methods: string[];
     schemaDef: Object;
     model: Object;
     actions: IModelActions;

@@ -12,6 +12,9 @@ export class ModelRegistry {
     }
     
     public static get(target: any): IModelFactory {
+        if (typeof target === 'string') {
+            return this.factories.get(target);
+        }
         let collectionName = target._collectionName;
         let f = this.factories.get(collectionName);
         if (!f) {

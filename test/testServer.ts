@@ -33,7 +33,7 @@ exports.runTests = function(_) {
     server.init();
     server.start(_);
 
-    // wait 2 seconds before running test scripts
+    // wait 1 second before running test scripts
     flows.setTimeout(function(_) {
         // Instantiate a Mocha instance.
         let mochaInst = new Mocha();
@@ -56,6 +56,6 @@ exports.runTests = function(_) {
             if (err) console.error("Mocha end error:"+err.toString());
             process.exit();
         });
-    }, 2000);
+    }, 1000);
 
 }

@@ -1,7 +1,7 @@
 import { _ } from 'streamline-runtime';
 import { collection, unique, required, ref } from '../decorators';
 import { ModelBase } from '../base/modelBase';
-import { Role } from './role';
+import { Role, Group } from './';
 /**
  * User class
  */
@@ -22,8 +22,9 @@ export class User extends ModelBase {
     @required
     email: String;
 
-    @ref('role')
     role: Role
+
+    groups: Group[]
 
     get fullName(): String {
         return `${this.firstName} ${this.lastName}`;

@@ -16,7 +16,8 @@ export class Contract {
 
     static MODELS = {
         "Role": {},
-        "User": {}
+        "User": {},
+        "Group": {}
     };
 }
 Object.seal(Contract);

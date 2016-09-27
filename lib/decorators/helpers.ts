@@ -10,13 +10,15 @@ export function getFieldDecorator (options: any): any {
     return fieldDecorator;
 }
 
-export function addMetadata(target: any, key: string, meta: any, force?: boolean) {
-    if (!target._collectionName) target._collectionName = getClassName(target).toLowerCase()
+export function addMetadata(target: any, key: string, meta: any, options?: any) {
+    options = options || {};
+    if (!target._collectionName) target._collectionName = getClassName(target).toLowerCase();
     // Get model factory
     let modelFactory: IModelFactory = ModelRegistry.get(target);
-    // store properties names
-    modelFactory.properties.push(key);
-    
+
+    if (options.registerIn) {
+        modelFactory[options.registerIn].push(key);
+    }
     // add field to schemaDef
     // Note: the schemaDef is post processed by the schema compiler !!!
     if (modelFactory.schemaDef[key]) {
