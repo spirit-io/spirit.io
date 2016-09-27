@@ -1,5 +1,6 @@
 import { collection, unique, required } from '../decorators';
 import { ModelBase } from '../base/modelBase';
+import { User } from './';
 
 /**
  * Group class
@@ -12,5 +13,6 @@ export class Group {
 
     description: string
 
+    users: User[]
 
 }
