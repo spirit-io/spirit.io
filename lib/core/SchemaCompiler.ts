@@ -182,7 +182,10 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                         prev[curr.name] = curr.value;
                     }
                     // manage plural
-                    if (curr._isArray) prev[curr.name] = [prev[curr.name]];
+                    if (curr._isArray) {
+                        prev[curr.name] = [prev[curr.name]];
+                        modelFactory.$plurals.push(curr.name);
+                    }
                     // store properties name that would be used for filtering returned properties
                     // some of them have already been set by decorators
                     if (!curr._isReference && modelFactory.$properties.indexOf(curr.name) == -1) {

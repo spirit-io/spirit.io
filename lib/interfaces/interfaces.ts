@@ -4,6 +4,7 @@ import express = require("express");
 export interface IModelController {
     create: express.RequestHandler;
     update: express.RequestHandler;
+    patch: express.RequestHandler;
     delete: express.RequestHandler;
     read: express.RequestHandler;
     query: express.RequestHandler;
@@ -18,6 +19,7 @@ export interface IModelFactory {
     $properties: string[];
     $references: string[];
     $fields: string[];
+    $plurals: string[];
     $statics: string[];
     $methods: string[];
     schemaDef: Object;
@@ -31,7 +33,7 @@ export interface IModelActions {
     query(_: _, filter?: any, parameters?: IQueryParameters): any;
     read(_: _, _id: string, parameters?: IQueryParameters): any;
     create(_: _, item: any): any;
-    update(_: _, _id: string, item: any): any;
+    update(_: _, _id: string, item: any, options?: any): any;
     createOrUpdate(_: _, _id: any, item: any, options?: any): any;
     delete(_: _, _id: any): any;
 }
