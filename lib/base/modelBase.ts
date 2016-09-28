@@ -1,10 +1,9 @@
 import { _ } from 'streamline-runtime';
-import { Schema } from 'mongoose';
 import { AdminHelper } from '../core/adminHelper';
 import { IModelHelper } from '../interfaces';
 
 export abstract class ModelBase {
-    protected _id: Schema.Types.ObjectId;
+    protected _id: String;
     protected _createdAt: Date;
     protected _updatedAt: Date;
     private _db: IModelHelper;
@@ -14,7 +13,7 @@ export abstract class ModelBase {
         this.updateValues(item);
     }
 
-    get id(): Schema.Types.ObjectId {
+    get id(): String {
         return this._id;
     }
     get createdAt(): Date {

@@ -6,7 +6,6 @@ import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
 import { IModelFactory } from '../interfaces';
-import { Schema } from 'mongoose'; // use Schema only for ObjectID type. Maybe simple uuid would be better...
 
 import express = require('express');
 
@@ -96,7 +95,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 // check if model factory is registered
                 let factoryRef: IModelFactory = ModelRegistry.get(type.toLowerCase());
                 if (!factoryRef) throw new Error(`No model factory registerd for type '${type}'`);
-                return { type: Schema.Types.ObjectId, ref: type.toLowerCase() };
+                return { type: String, ref: type.toLowerCase() };
             }
 
             let symbol: ts.Symbol;

@@ -51,7 +51,7 @@ describe('User Model Unit Tests:', () => {
             let _id = db.getMetadata(u1, '_id');
             let _createdAt = db.getMetadata(u1, '_createdAt');
             
-            expect(_id).to.be.a('object');
+            expect(_id).to.be.a('string');
             expect(_id).to.not.be.null;
             expect(_createdAt).to.be.a('date');
             expect(_createdAt).to.not.null;
@@ -142,7 +142,7 @@ describe('User Model Unit Tests:', () => {
             let _createdAt = db.getMetadata(u1, '_createdAt');
             let _updatedAt = db.getMetadata(u1, '_createdAt');
 
-            expect(_id).to.be.a('object');
+            expect(_id).to.be.a('string');
             expect(_id).to.not.be.null;
             expect(_createdAt).to.be.a('date');
             expect(_createdAt).to.not.null;
@@ -189,7 +189,7 @@ describe('User Model Unit Tests:', () => {
 
             expect(u2.serialize()).to.have.all.keys(users.keys);
             
-            expect(u2.id).to.be.a('object');
+            expect(u2.id).to.be.a('string');
             expect(u2.id).to.not.be.null;
             expect(u2.createdAt).to.be.a('date');
             expect(u2.createdAt).to.not.null;
