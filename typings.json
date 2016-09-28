@@ -6,10 +6,7 @@
     "express-serve-static-core": "registry:dt/express-serve-static-core#4.0.0+20160829034835",
     "method-override": "registry:dt/method-override#0.0.0+20160317120654",
     "mocha": "registry:dt/mocha#2.2.5+20160720003353",
-    "mongodb": "registry:dt/mongodb#2.1.0+20160602142941",
-    "mongoose": "registry:dt/mongoose#4.5.9+20160826204928",
     "node": "registry:dt/node#6.0.0+20160909174046",
-    "node-uuid": "registry:dt/node-uuid#0.0.0+20160316155526",
     "reflect-metadata": "registry:dt/reflect-metadata#0.0.0+20160630155503",
     "serve-static": "registry:dt/serve-static#0.0.0+20160606155157"
   }
