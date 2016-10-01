@@ -13,7 +13,7 @@ export class Server {
     private _middleware: Middleware;
     private _contract: Contract;
 
-    constructor(private _port: Number) {}
+    constructor() {}
 
     init = (config?: any) => {
         this.app = express();
@@ -29,15 +29,13 @@ export class Server {
         return this;
     }
 
-    start = (_: _) => {
+    start = (_: _, port: number) => {
         var self = this;
         // start http server
-        (function(cb: any) {
-            self.app.listen(self._port, function () {
-                cb();
-            });
-        })(_);
-        console.log(`Server listening on port ${this._port}!`);
+        this.app.listen(port, function () {
+            console.log(`Server listening on port ${port}!`);
+        });
+        
     }
 
     addConnector = (connector: IConnector): void => {

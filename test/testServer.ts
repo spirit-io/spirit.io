@@ -28,10 +28,10 @@ exports.runTests = function(_) {
 
 
     let testFiles = [];
-    let server = require('../index')('3001');
+    let server = require('../index')();
     server.addConnector(new MongodbConnector());
     server.init();
-    server.start(_);
+    server.start(_, 3001);
 
     // wait 1 second before running test scripts
     flows.setTimeout(function(_) {
