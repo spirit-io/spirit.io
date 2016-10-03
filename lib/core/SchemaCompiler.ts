@@ -190,8 +190,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     // some of them have already been set by decorators
                     if (!curr._isReference && modelFactory.$properties.indexOf(curr.name) == -1) {
                         modelFactory.$properties.push(curr.name);
-                    } else if (curr._isReference && modelFactory.$references.indexOf(curr.name) == -1) {
-                        modelFactory.$references.push(curr.name);
+                    } else if (curr._isReference && !modelFactory.$references[curr.name]) {
+                        modelFactory.$references[curr.name] = {};
                     }
                 }
                 return prev;

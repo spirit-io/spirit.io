@@ -1,4 +1,4 @@
-import { collection, unique, required } from '../decorators';
+import { collection, unique, required, reverse } from '../decorators';
 import { ModelBase } from '../base/modelBase';
 import { User } from './';
 
@@ -13,6 +13,7 @@ export class Group {
 
     description: string
 
+    @reverse('groups')
     users: User[]
 
 }

@@ -17,11 +17,11 @@ export interface IModelFactory {
     collectionName: string;
     datasource: string;
     $properties: string[];
-    $references: string[];
     $fields: string[];
     $plurals: string[];
     $statics: string[];
     $methods: string[];
+    $references: any;
     schemaDef: Object;
     model: Object;
     actions: IModelActions;

@@ -3,28 +3,30 @@ import { helper as objectHelper } from '../utils';
 import { IModelFactory } from '../interfaces';
 import { ModelRegistry } from '../core/modelRegistry'
 
-export function getFieldDecorator (options: any): any {
-    function fieldDecorator(target: Symbol, propertyKey: string): any {
-        addMetadata(target.constructor, propertyKey, options);
-    }
-    return fieldDecorator;
-}
-
 export function addMetadata(target: any, key: string, meta: any, options?: any) {
     options = options || {};
     if (!target._collectionName) target._collectionName = getClassName(target).toLowerCase();
     // Get model factory
     let modelFactory: IModelFactory = ModelRegistry.get(target);
 
+    // registerIn is used for standard meta _id, _createdAt and _updatedAt
     if (options.registerIn) {
         modelFactory[options.registerIn].push(key);
     }
+
+    // registerReverse is used to save reverse references property names
+    if (options.registerReverse) {
+        modelFactory.$references[key] = {$reverse: options.registerReverse}
+    }
+
     // add field to schemaDef
     // Note: the schemaDef is post processed by the schema compiler !!!
-    if (modelFactory.schemaDef[key]) {
-        objectHelper.merge(meta, modelFactory.schemaDef[key]);
-    } else {
-        modelFactory.schemaDef[key] = meta;
+    if (meta) {
+        if (modelFactory.schemaDef[key]) {
+            objectHelper.merge(meta, modelFactory.schemaDef[key]);
+        } else {
+            modelFactory.schemaDef[key] = meta;
+        }
     }
 }
 

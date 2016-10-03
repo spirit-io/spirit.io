@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { collection, unique, required, ref } from '../decorators';
+import { collection, unique, required, reverse } from '../decorators';
 import { ModelBase } from '../base/modelBase';
 import { Role, Group } from './';
 /**
@@ -24,6 +24,7 @@ export class User extends ModelBase {
 
     role: Role
 
+    @reverse('users')
     groups: Group[]
 
     get fullName(): String {
