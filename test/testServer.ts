@@ -7,6 +7,18 @@ const Mocha = require('mocha'),
 
 
 const testDir = __dirname + '/test';
+const config = {
+    connectors: {
+        mongodb: {
+            datasources: {
+                "mongodb": {uri: "mongodb://localhost/spirit-test", options: {}}
+            },
+            mongoose: {
+                debug: false
+            }
+        }
+    }
+};
 
 exports.runTests = function(_) {
 
@@ -28,7 +40,8 @@ exports.runTests = function(_) {
 
 
     let testFiles = [];
-    let server = require('../index')();
+    
+    let server = require('../index')(config);
     server.addConnector(new MongodbConnector());
     server.init();
     server.start(_, 3001);

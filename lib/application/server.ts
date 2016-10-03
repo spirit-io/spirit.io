@@ -10,15 +10,19 @@ import { ConnectorHelper } from '../core';
 export class Server {
 
     public app: express.Application;
+    public config: any;
     private _middleware: Middleware;
     private _contract: Contract;
 
-    constructor() {}
+    constructor(config: any = {}) {
+        this.config = config;
+    }
 
-    init = (config?: any) => {
+    init = () => {
+        
         this.app = express();
         this._middleware = new Middleware(this.app);
-        this._contract = new Contract(config);
+        this._contract = new Contract(this.config);
         // configure middleware standard rules
         this._middleware.configure();
         // register model and configure model routes
@@ -40,6 +44,7 @@ export class Server {
 
     addConnector = (connector: IConnector): void => {
         let ds = connector.datasource;
+        connector.config = this.config.connectors && this.config.connectors[ds];
         ConnectorHelper.setConnector(ds, connector);
     }
 }

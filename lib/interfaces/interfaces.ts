@@ -51,6 +51,7 @@ export interface IModelHelper {
 
 export interface IConnector {
     datasource: string;
+    config: any;
     connect(datasourceKey: string, parameters: any): any;
     createModelFactory(myClass: any): IModelFactory;
 }
