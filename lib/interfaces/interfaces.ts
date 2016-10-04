@@ -86,5 +86,9 @@ export interface IReference {
     type?: any;
 }
 
+export interface IModelOptions {
+    
+}
+
 
 

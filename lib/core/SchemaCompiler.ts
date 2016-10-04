@@ -5,7 +5,7 @@ import * as qs from "querystring";
 import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
-import { IModelFactory } from '../interfaces';
+import { IModelFactory, IModelOptions } from '../interfaces';
 
 import express = require('express');
 
@@ -16,7 +16,10 @@ interface ILoadedElement{
     factory: IModelFactory
 }
 
-function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): IModelFactory[] {
+function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<string, IModelOptions>, options: ts.CompilerOptions): IModelFactory[] {
+    
+    console.log("I should load all models following:",modelDefinitions.keys())
+    
     // Build a program using the set of root file names in fileNames
     let program = ts.createProgram(fileNames, options);
 
@@ -273,15 +276,30 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 }
 
 export class SchemaCompiler {
-    static registerModels = (routers: Map<string, express.Router>, contract: Contract) => {
-        let modelFiles = Object.keys(Contract.MODELS).map(function (m) {
-            return path.resolve(path.join(__dirname, `../models/${m.toLowerCase()}.ts`));
+    static registerModels = (_, routers: Map<string, express.Router>, contract: Contract) => {
+        
+        function browseDir(_, dir) {
+            // Add each .js file to the mocha instance
+            fs.readdirSync(dir).forEach_(_, function (_, file) {
+                let filePath = path.join(dir, file);
+                var stats = fs.lstat(filePath, _);
+                if (stats.isDirectory()) {
+                    browseDir(_, filePath);
+                } else if (stats.isFile() && /\.ts$/.test(file)) {
+                    // Only keep the .ts files
+                    modelFiles.push(path.join(dir, file));;
+                }
+            });
+        }
+        let modelFiles = [];
+        contract.modelsLocations.forEach_(_, function(_, dir) {
+            browseDir(_, dir);
         });
 
-        generateSchemaDefinitions(modelFiles, {
+        generateSchemaDefinitions(modelFiles, contract.models, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-            //console.log("Model factory:", modelFactory);
+            console.log("Model factory:", modelFactory);
             // setup model actions
             modelFactory.setup(routers);
         });

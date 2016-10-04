@@ -43,7 +43,7 @@ exports.runTests = function(_) {
     
     let server = require('../index')(config);
     server.addConnector(new MongodbConnector());
-    server.init();
+    server.init(_);
     server.start(_, 3001);
 
     // wait 1 second before running test scripts

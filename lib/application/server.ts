@@ -18,7 +18,7 @@ export class Server {
         this.config = config;
     }
 
-    init = () => {
+    init = (_: _) => {
         
         this.app = express();
         this._middleware = new Middleware(this.app);
@@ -26,7 +26,7 @@ export class Server {
         // configure middleware standard rules
         this._middleware.configure();
         // register model and configure model routes
-        SchemaCompiler.registerModels(this._middleware.routers, this._contract);
+        SchemaCompiler.registerModels(_, this._middleware.routers, this._contract);
         this._middleware.setApiRoutes();
         // set default error handler
         this._middleware.setErrorHandler();
