@@ -12,13 +12,14 @@ import express = require('express');
 let trace;// = console.log;
 
 interface ILoadedElement{
+    name: string;
     node: ts.ClassDeclaration,
     factory: IModelFactory
 }
 
 function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<string, IModelOptions>, options: ts.CompilerOptions): IModelFactory[] {
     
-    console.log("I should load all models following:",modelDefinitions.keys())
+    //console.log("I should load all models following:",modelDefinitions.keys())
     
     // Build a program using the set of root file names in fileNames
     let program = ts.createProgram(fileNames, options);
@@ -26,6 +27,7 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
     // Get the checker, we will use it to find more about classes
     let checker = program.getTypeChecker();
 
+    let classes: Map<string, ts.ClassDeclaration> = new Map();
     let sourceFiles = program.getSourceFiles();
     // Visit every sourceFile in the program
     // first loop to load every model factories (necessary for cyclic relations)
@@ -34,8 +36,10 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
         // Walk the tree to search for classes
         ts.forEachChild(sourceFile, visit);
     }
+
     // second loop to compile and build schemas
     modelElements.forEach(function(elt) {
+        //console.log("Inspect class: ",elt.name);
         inspectClass(elt.node, elt.factory);
     });
     return modelElements.map(elt => { return elt.factory; });
@@ -47,8 +51,18 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
         }
 
         if (node.kind === ts.SyntaxKind.ClassDeclaration) {
-            let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
-            if (elt) modelElements.push(elt);
+            // store classes files to manage inheritance
+            let className = checker.getSymbolAtLocation((<ts.ClassDeclaration>node).name).getName();
+            classes.set(className, (<ts.ClassDeclaration>node));
+
+            // load class only if not already loaded
+           // if (!modelElements.some((elt) => {return elt.name === (<ts.SourceFile>node.parent).fileName})) {
+                let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
+                if (elt) {
+                    modelElements.push(elt);
+                    //console.log(`Loaded: ${elt.factory.collectionName}`);
+                }
+            //}
             // No need to walk any further, class expressions/inner declarations
             // cannot be exported
         }
@@ -61,11 +75,11 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
     function loadModelFactories(node: ts.ClassDeclaration): ILoadedElement {
         let sf: ts.SourceFile = <ts.SourceFile>node.parent;
         let symbol = checker.getSymbolAtLocation(node.name);
+        //console.log(`Symbol: ${require('util').inspect(symbol,null,1)}`);
         let className = symbol.getName();
 
         // consider only classes with @collection(...) decorator
         if(!isModelClass(node)) return;
-
         const r = require(sf.fileName);
         let myClass = r[className];
         if (!myClass) {
@@ -77,8 +91,9 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
 
         // Load model factory
         return {
+            name: className,
             node: node,
-            factory: ModelRegistry.get(myClass)
+            factory: ModelRegistry.releaseBuildingFactory(className.toLowerCase())
         }
     }
 
@@ -96,7 +111,7 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
             //////////////////////////////////////////
             function transformPropertyType(name: string, node: ts.Node, type: any): any {
                 // check if model factory is registered
-                let factoryRef: IModelFactory = ModelRegistry.get(type.toLowerCase());
+                let factoryRef: IModelFactory = ModelRegistry.getFactory(type.toLowerCase());
                 if (!factoryRef) throw new Error(`No model factory registerd for type '${type}'`);
                 return { type: String, ref: type.toLowerCase() };
             }
@@ -138,6 +153,8 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                     // retrieve the real type. this part explains essentially why using this schema compiler
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
+                    
+                    //console.log(`Property '${propertyName}' type: ${type}`);
                     let _isArray = type.indexOf('[]') !== -1;
                     if (_isArray) {
                         type = type.substring(0, type.length - 2);
@@ -148,12 +165,14 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                         _isReference = true;
                     }
 
-                    return {
+                    let res = {
                         name: propertyName,
                         value: type,
                         _isArray: _isArray,
                         _isReference: _isReference
                     };
+                    //console.log("Member type:", res);
+                    return res;
                 default:
                     console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
             }
@@ -161,16 +180,46 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
         }
 
 
+        function getClassExtendsHeritageClauseElement(node) {
+            var heritageClause = getHeritageClause(node.heritageClauses, 83 /* ExtendsKeyword */);
+            return heritageClause && heritageClause.types.length > 0 ? heritageClause.types[0] : undefined;
+        }
 
+        function getHeritageClause(clauses, kind) {
+            if (clauses) {
+                for (var _i = 0, clauses_1 = clauses; _i < clauses_1.length; _i++) {
+                    var clause = clauses_1[_i];
+                    if (clause.token === kind) {
+                        return clause;
+                    }
+                }
+            }
+            return undefined;
+        }
 
         //////////////////////////////////////////////////
         let symbol = checker.getSymbolAtLocation(node.name);
+        
+        let superClassName = getClassExtendsHeritageClauseElement(node);
+        if (superClassName) {
+            superClassName = (<ts.CallExpression>superClassName.expression).getText();
+            //console.log("  --> inspect super class:", superClassName);
+            if (classes.has(superClassName)) {
+                let sf: ts.SourceFile = <ts.SourceFile>node.parent;
+                let superClass: ts.ClassDeclaration = classes.get(superClassName);
+                modelFactory.schemaDef = objectHelper.clone(ModelRegistry.getFactoryByName(superClassName).schemaDef);                
+                inspectClass(superClass, modelFactory);
+            }
+        }
+
+       
+
         if (node.members) {
             let members = node.members.map(inspectMembers);
             members && members.reduce(function (prev: any, curr: any) {
                 if (curr) {
                     // the field is maybe already existing in the schemaDef because the a decorator set it.
-                    if (prev[curr.name]) {
+                    if (typeof prev[curr.name] === 'object' && prev[curr.name]) {
                         // if it is a string, only the type is already a part of the field value
                         if (typeof curr.value === 'string') {
                             objectHelper.merge({ type: curr.value }, prev[curr.name]);
@@ -186,12 +235,12 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                     }
                     // manage plural
                     if (curr._isArray) {
-                        prev[curr.name] = [prev[curr.name]];
-                        modelFactory.$plurals.push(curr.name);
+                        prev[curr.name] = Array.isArray(prev[curr.name]) ? prev[curr.name] : [prev[curr.name]];
+                        if (modelFactory.$plurals.indexOf(curr.name) === -1) modelFactory.$plurals.push(curr.name);
                     }
                     // store properties name that would be used for filtering returned properties
                     // some of them have already been set by decorators
-                    if (!curr._isReference && modelFactory.$properties.indexOf(curr.name) == -1) {
+                    if (!curr._isReference && modelFactory.$properties.indexOf(curr.name) === -1) {
                         modelFactory.$properties.push(curr.name);
                     } else if (curr._isReference && !modelFactory.$references[curr.name]) {
                         modelFactory.$references[curr.name] = {};
@@ -299,7 +348,7 @@ export class SchemaCompiler {
         generateSchemaDefinitions(modelFiles, contract.models, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-            console.log("Model factory:", modelFactory);
+           // console.log("Model factory:", modelFactory);
             // setup model actions
             modelFactory.setup(routers);
         });

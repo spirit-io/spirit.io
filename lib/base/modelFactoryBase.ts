@@ -18,7 +18,6 @@ export class ModelFactoryBase {
 
     constructor(targetClass: any) {
         this.targetClass = targetClass;
-        this.collectionName = targetClass._collectionName;
         this.schemaDef = {};
         this.$properties = [];
         this.$plurals = [];

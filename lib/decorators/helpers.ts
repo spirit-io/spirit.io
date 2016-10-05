@@ -4,10 +4,10 @@ import { IModelFactory } from '../interfaces';
 import { ModelRegistry } from '../core/modelRegistry'
 
 export function addMetadata(target: any, key: string, meta: any, options?: any) {
+    //console.log("Add metadata: ",key);
     options = options || {};
-    if (!target._collectionName) target._collectionName = getClassName(target).toLowerCase();
     // Get model factory
-    let modelFactory: IModelFactory = ModelRegistry.get(target);
+    let modelFactory: IModelFactory = ModelRegistry.getbuildingFactory(target);
 
     // registerIn is used for standard meta _id, _createdAt and _updatedAt
     if (options.registerIn) {
@@ -28,10 +28,4 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
             modelFactory.schemaDef[key] = meta;
         }
     }
-}
-
-export function getClassName(target: any) {
-    let regex = /^function ([^ (){]{1,})/;
-    let res = (regex).exec(target.toString());
-    return (res && res.length > 1) ? res[1] : null;
 }

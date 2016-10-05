@@ -7,8 +7,7 @@ export function collection(options?: ICollection): any {
     options = options || {};
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
         // set collection name
-        target._collectionName = options.name || target._collectionName || helpers.getClassName(target);
-        let modelFactory: IModelFactory = ModelRegistry.get(target);
+        let modelFactory: IModelFactory = ModelRegistry.getbuildingFactory(target);
         // define datasource
         if (options.datasource) modelFactory.datasource = options.datasource;
 
