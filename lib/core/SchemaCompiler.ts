@@ -17,10 +17,18 @@ interface ILoadedElement{
     factory: IModelFactory
 }
 
-function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<string, IModelOptions>, options: ts.CompilerOptions): IModelFactory[] {
-    
-    //console.log("I should load all models following:",modelDefinitions.keys())
-    
+function releaseBuildingFactory(collectionName: string): IModelFactory {
+    if (!ModelRegistry.buildingFactory) throw new Error('No currently building factory found');
+    let f = ModelRegistry.buildingFactory;
+    f.collectionName = collectionName;
+    trace && trace(" => Release building model factory: ",f.collectionName);
+    ModelRegistry.factories.set(collectionName, f);
+    ModelRegistry.buildingFactory = null;
+    return f;
+}
+
+function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): IModelFactory[] {
+       
     // Build a program using the set of root file names in fileNames
     let program = ts.createProgram(fileNames, options);
 
@@ -36,10 +44,11 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
         // Walk the tree to search for classes
         ts.forEachChild(sourceFile, visit);
     }
-
+    trace && trace("Classes loaded: ", classes.keys());
+    trace && trace("Model factory loaded: ", ModelRegistry.factories.keys());
     // second loop to compile and build schemas
     modelElements.forEach(function(elt) {
-        //console.log("Inspect class: ",elt.name);
+        trace && trace("\n\n==========================\nInspect class: ",elt.name);
         inspectClass(elt.node, elt.factory);
     });
     return modelElements.map(elt => { return elt.factory; });
@@ -60,7 +69,7 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                 let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
                 if (elt) {
                     modelElements.push(elt);
-                    //console.log(`Loaded: ${elt.factory.collectionName}`);
+                    trace && trace(`Loaded: ${elt.factory.collectionName}`);
                 }
             //}
             // No need to walk any further, class expressions/inner declarations
@@ -87,13 +96,14 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
             return;
         }
 
+        myClass._collectionName = className;
         myClass._documentation = ts.displayPartsToString(symbol.getDocumentationComment());
 
         // Load model factory
         return {
             name: className,
             node: node,
-            factory: ModelRegistry.releaseBuildingFactory(className.toLowerCase())
+            factory: releaseBuildingFactory(className)
         }
     }
 
@@ -111,9 +121,9 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
             //////////////////////////////////////////
             function transformPropertyType(name: string, node: ts.Node, type: any): any {
                 // check if model factory is registered
-                let factoryRef: IModelFactory = ModelRegistry.getFactory(type.toLowerCase());
+                let factoryRef: IModelFactory = ModelRegistry.getFactory(type);
                 if (!factoryRef) throw new Error(`No model factory registerd for type '${type}'`);
-                return { type: String, ref: type.toLowerCase() };
+                return { type: String, ref: type };
             }
 
             let symbol: ts.Symbol;
@@ -145,23 +155,30 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                     log("Setter", member);
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
-                    symbol = checker.getSymbolAtLocation(member.name);
+                    let prop: ts.PropertyDeclaration = <ts.PropertyDeclaration>member;
+                    // ignore private properties
+                    if (isPrivate(prop)) return;
+                    // ignore properties assigned with an arrow function
+                    if (prop.initializer && prop.initializer.kind === ts.SyntaxKind.ArrowFunction) return;
+                    
+                    
+                    symbol = checker.getSymbolAtLocation(prop.name);
                     let propertyName = symbol.getName();
-                    //console.log("Property",member);
+                    //console.log("Property",prop);
 
                     // !!! IMPORTANT !!!
                     // retrieve the real type. this part explains essentially why using this schema compiler
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
                     
-                    //console.log(`Property '${propertyName}' type: ${type}`);
+                    trace && trace(`    - Property '${propertyName}' type: ${type}`);
                     let _isArray = type.indexOf('[]') !== -1;
                     if (_isArray) {
                         type = type.substring(0, type.length - 2);
                     }
                     let _isReference = false;
                     if (!isNativeType(type)) {
-                        type = transformPropertyType(propertyName, member, type);
+                        type = transformPropertyType(propertyName, prop, type);
                         _isReference = true;
                     }
 
@@ -174,7 +191,7 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
                     //console.log("Member type:", res);
                     return res;
                 default:
-                    console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
+                    trace && trace(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
             }
 
         }
@@ -203,11 +220,13 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
         let superClassName = getClassExtendsHeritageClauseElement(node);
         if (superClassName) {
             superClassName = (<ts.CallExpression>superClassName.expression).getText();
-            //console.log("  --> inspect super class:", superClassName);
+            trace && trace("  --> inspect super class:", superClassName);
             if (classes.has(superClassName)) {
                 let sf: ts.SourceFile = <ts.SourceFile>node.parent;
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
-                modelFactory.schemaDef = objectHelper.clone(ModelRegistry.getFactoryByName(superClassName).schemaDef);                
+                let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
+                if (superModelFactory) modelFactory.schemaDef = objectHelper.clone(superModelFactory.schemaDef);                
+                else trace && trace("No model factory found for super class: ",superClassName);
                 inspectClass(superClass, modelFactory);
             }
         }
@@ -289,7 +308,7 @@ function generateSchemaDefinitions(fileNames: string[], modelDefinitions: Map<st
     }
 
     function isNativeType(type: string): boolean {
-        return ['string', 'number', 'date', 'buffer', 'boolean', 'mixed', 'objectid', 'array'].indexOf(type.toLowerCase()) !== -1;
+        return ['string', 'number', 'date', 'boolean', 'array'].indexOf(type.toLowerCase()) !== -1;
     }
 
     function isModelClass(node: ts.Node): boolean {
@@ -336,6 +355,7 @@ export class SchemaCompiler {
                     browseDir(_, filePath);
                 } else if (stats.isFile() && /\.ts$/.test(file)) {
                     // Only keep the .ts files
+                    //console.log("File:",file)
                     modelFiles.push(path.join(dir, file));;
                 }
             });
@@ -348,7 +368,8 @@ export class SchemaCompiler {
         generateSchemaDefinitions(modelFiles, contract.models, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-           // console.log("Model factory:", modelFactory);
+            trace && trace("\n\n===============================\nModel factory:", modelFactory);
+            trace && trace("\n");
             // setup model actions
             modelFactory.setup(routers);
         });

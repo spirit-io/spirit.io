@@ -40,20 +40,14 @@ exports.runTests = function(_) {
 
 
     let testFiles = [];
-    
-    let server = require('../index')(config);
-    server.addConnector(new MongodbConnector());
-    server.init(_);
-    server.start(_, 3001);
+    // browse directories under test
+    browseDir(_, __dirname);
 
-    // wait 1 second before running test scripts
-    flows.setTimeout(function(_) {
+    let server = require('../index')(config);
+
+    server.on('initialized', function() {
         // Instantiate a Mocha instance.
         let mochaInst = new Mocha();
-
-        // browse directories under test
-        
-        browseDir(_, __dirname);
         testFiles.forEach(function (file) {
             mochaInst.addFile(file);
         });
@@ -64,11 +58,20 @@ exports.runTests = function(_) {
                 process.exit(failures);  // exit with non-zero status if there were failures
             });
         });
+
+        runner.on('fail', function(test, err) {
+            console.log("Test:",test);
+            console.error("Err:",err);
+        });
         // register end event
         runner.on('end', function(err) {
             if (err) console.error("Mocha end error:"+err.toString());
             process.exit();
         });
-    }, 1000);
+    });
 
+
+    server.addConnector(new MongodbConnector());
+    server.init(_);
+    server.start(_, 3001);
 }

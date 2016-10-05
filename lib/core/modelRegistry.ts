@@ -9,7 +9,7 @@ export class ModelRegistry {
     }
 
     public static getFactoryByName(collectionName: string): IModelFactory {
-        return this.factories.get(collectionName.toLowerCase());
+        return this.factories.get(collectionName);
     }
     
     public static getFactory(target: any): IModelFactory {
@@ -23,14 +23,5 @@ export class ModelRegistry {
     public static getbuildingFactory(target: any): IModelFactory {
         if (!this.buildingFactory) this.buildingFactory = ConnectorHelper.createModelFactory(target);
         return this.buildingFactory;
-    }
-
-    public static releaseBuildingFactory(collectionName: string): IModelFactory {
-        if (!this.buildingFactory) throw new Error('No currently building factory found');
-        let f = this.buildingFactory;
-        f.collectionName = collectionName;
-        this.factories.set(collectionName, f);
-        this.buildingFactory = null;
-        return f;
     }
 }

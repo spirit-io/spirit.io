@@ -6,8 +6,9 @@ import { SchemaCompiler, Middleware } from "../core";
 import { Contract } from "./contract";
 import { IConnector } from '../interfaces';
 import { ConnectorHelper } from '../core';
+import { EventEmitter } from 'events';
 
-export class Server {
+export class Server extends EventEmitter{
 
     public app: express.Application;
     public config: any;
@@ -15,6 +16,7 @@ export class Server {
     private _contract: Contract;
 
     constructor(config: any = {}) {
+        super();
         this.config = config;
     }
 
@@ -30,6 +32,7 @@ export class Server {
         this._middleware.setApiRoutes();
         // set default error handler
         this._middleware.setErrorHandler();
+        this.emit('initialized');
         return this;
     }
 

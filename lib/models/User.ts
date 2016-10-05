@@ -6,7 +6,7 @@ import { Role, Group } from './';
  * User class
  */
 @collection()
-export class User {
+export class User extends ModelBase {
     
     @unique @required
     userName: String;
@@ -23,8 +23,6 @@ export class User {
     email: String;
 
     role: Role
-
-    test: string[];
 
     @reverse('users')
     groups: Group[]

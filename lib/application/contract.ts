@@ -27,11 +27,7 @@ export class Contract {
     }
 
     private initBuiltInModels = () => {
-        this._builtInModels = {
-            "Role": {},
-            "User": {},
-            "Group": {}
-        }
+        this._builtInModels = {}
         this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
     };
 
