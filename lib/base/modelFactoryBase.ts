@@ -18,12 +18,12 @@ export class ModelFactoryBase {
 
     constructor(targetClass: any) {
         this.targetClass = targetClass;
-        this.schemaDef = {};
-        this.$properties = [];
-        this.$plurals = [];
-        this.$statics = [];
-        this.$methods = [];
-        this.$references = {};
+        this.schemaDef = targetClass.__factory__.schemaDef || {};
+        this.$properties = targetClass.__factory__.$properties || [];
+        this.$plurals = targetClass.__factory__.$plurals || [];
+        this.$statics = targetClass.__factory__.$statics || [];
+        this.$methods = targetClass.__factory__.$methods || [];
+        this.$references = targetClass.__factory__.$references || {};
     }
 
 }

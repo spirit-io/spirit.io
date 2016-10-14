@@ -1,3 +1,4 @@
+import { _ } from 'streamline-runtime';
 import * as ts from "typescript";
 import * as fs from "fs";
 import * as path from 'path';
@@ -6,6 +7,7 @@ import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
 import { IModelFactory, IModelOptions } from '../interfaces';
+import { ConnectorHelper } from '../core/connectorHelper';
 
 import express = require('express');
 
@@ -17,13 +19,12 @@ interface ILoadedElement{
     factory: IModelFactory
 }
 
-function releaseBuildingFactory(collectionName: string): IModelFactory {
-    if (!ModelRegistry.buildingFactory) throw new Error('No currently building factory found');
-    let f = ModelRegistry.buildingFactory;
+function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
+    let f = ConnectorHelper.createModelFactory(myClass);    
     f.collectionName = collectionName;
     trace && trace(" => Release building model factory: ",f.collectionName);
     ModelRegistry.factories.set(collectionName, f);
-    ModelRegistry.buildingFactory = null;
+    myClass.__factory__ = null;
     return f;
 }
 
@@ -103,7 +104,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         return {
             name: className,
             node: node,
-            factory: releaseBuildingFactory(className)
+            factory: releaseBuildingFactory(className, myClass)
         }
     }
 
@@ -364,7 +365,7 @@ export class SchemaCompiler {
         contract.modelsLocations.forEach_(_, function(_, dir) {
             browseDir(_, dir);
         });
-
+        _.context.schemaCompiling = true;
         generateSchemaDefinitions(modelFiles, contract.models, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
@@ -373,5 +374,6 @@ export class SchemaCompiler {
             // setup model actions
             modelFactory.setup(routers);
         });
+        _.context.schemaCompiling = false;
     }
 }
