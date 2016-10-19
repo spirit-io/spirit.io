@@ -4,25 +4,36 @@
   "description": "Typescript ORM framework with streamline, mongoose and express",
   "main": "index.js",
   "scripts": {
-    "start": "node sample",
-    "test": "node test"
+    "postinstall": "npm run build",
+    "build": "node build",
+    "test": "node ./node_modules/mocha/bin/_mocha",
+    "test:coverage": "npm run build && node ./node_modules/nyc/bin/nyc npm test"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
   "dependencies": {
+    "@types/body-parser": "0.0.33",
+    "@types/express": "^4.0.33",
+    "@types/express-serve-static-core": "^4.0.37",
+    "@types/method-override": "0.0.29",
+    "@types/node": "^6.0.45",
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
     "express-streamline": "^0.5.3",
     "ez-streams": "^3.0.10",
     "method-override": "^2.3.6",
     "node-uuid": "^1.4.7",
-    "reflect-metadata": "^0.1.8",
     "streamline": "^2.0.10",
-    "streamline-node": "^1.0.4",
     "streamline-runtime": "^1.0.31"
   },
   "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.32",
     "chai": "^3.5.0",
-    "mocha": "^3.0.2"
+    "istanbul": "^0.4.5",
+    "mocha": "^3.0.2",
+    "nyc": "^8.3.1",
+    "remap-istanbul": "^0.7.0",
+    "streamline-node": "^2.0.1"
   }
 }

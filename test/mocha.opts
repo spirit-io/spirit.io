@@ -1,0 +1,4 @@
+--compilers ts:streamline/register
+--full-trace
+--bail
+test/**/*.spec.ts

@@ -7,11 +7,10 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "sourceMap": true,
+        "inlineSources": true,
         "outDir": "dist",
-        "moduleResolution": "node"
-    },
-    "paths": {
-      "spirit/*": ["./lib/*"]
+        "moduleResolution": "node",
+        "strictNullChecks": false
     },
     "filesGlob": [
         "./**/*.ts"
