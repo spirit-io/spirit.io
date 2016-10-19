@@ -4,10 +4,9 @@
   "description": "Typescript ORM framework with streamline, mongoose and express",
   "main": "index.js",
   "scripts": {
-    "postinstall": "npm run build",
     "build": "node build",
-    "test": "node ./node_modules/mocha/bin/_mocha",
-    "test:coverage": "npm run build && node ./node_modules/nyc/bin/nyc npm test"
+    "test": "npm run build && node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
@@ -30,10 +29,9 @@
     "@types/chai": "^3.4.34",
     "@types/mocha": "^2.2.32",
     "chai": "^3.5.0",
-    "istanbul": "^0.4.5",
+    "coveralls": "^2.11.14",
     "mocha": "^3.0.2",
     "nyc": "^8.3.1",
-    "remap-istanbul": "^0.7.0",
     "streamline-node": "^2.0.1"
   }
 }
