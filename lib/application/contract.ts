@@ -1,4 +1,4 @@
-import { ConnectorHelper } from '../core/ConnectorHelper';
+import { ConnectorHelper } from '../core/connectorHelper';
 import { IModelOptions } from '../interfaces';
 import { helper as objectHelper } from '../utils/object';
 import * as path from 'path';
