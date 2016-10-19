@@ -1,3 +1,9 @@
 language: node_js
 node_js:
   - "4"
+notifications:
+  email:
+    recipients:
+      - teddy.chambard@gmail.com
+    on_success: change
+    on_failure: change
