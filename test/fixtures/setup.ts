@@ -1,7 +1,7 @@
 require('streamline').register({});
 import { _ } from 'streamline-runtime';
 import { Server } from '../../lib/application';
-import { MockConnector } from './mocKConnector';
+import { MockConnector } from './mockConnector';
 const path = require('path');
 const config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
