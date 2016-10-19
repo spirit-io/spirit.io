@@ -20,7 +20,7 @@ const config = {
 export class Fixtures {
 
     static setup(_) {
-        let server: Server = require('spirit.io')(config);
+        let server: Server = require('../..')(config);
         server.addConnector(new MockConnector());
         server.init(_);
         server.start(_, 3001);
