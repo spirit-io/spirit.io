@@ -10,7 +10,8 @@ require('streamline').register();
 var transformJs = require('streamline/lib/transformSync').transformFileSync;
 
 function fixPath(path) {
-	return path.replace(/\/lib\/|\\lib\\/g, '\\');
+	path = path.replace(/\\lib\\/g, '\\');
+	return path.replace(/\/lib\//g, '/');
 }
 
 function mkdirp(path) {

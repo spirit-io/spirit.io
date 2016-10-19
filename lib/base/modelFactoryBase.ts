@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { IModelActions, IModelHelper } from 'spirit.io/lib/interfaces'
+import { IModelActions, IModelHelper } from '../interfaces'
 
 export class ModelFactoryBase {
 
