@@ -4,13 +4,17 @@ import { Server } from '../lib/application';
 const expect = require('chai').expect;
 
 let server: Server;
-before(function(_) {
-    server = Fixtures.setup(_);
+before(function(done) {
+    Fixtures.setup(function(err, res) {
+        if (err) throw err;
+        server = res;
+        done();
+    });
 });
 
 describe('Spirit.io Framework Tests:', () => {
 
-    it('config should be not empty', (_) => {
+    it('config should be not empty', () => {
         expect(server.config).to.not.null;
     });
 
