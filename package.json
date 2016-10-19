@@ -23,7 +23,8 @@
     "method-override": "^2.3.6",
     "node-uuid": "^1.4.7",
     "streamline": "^2.0.10",
-    "streamline-runtime": "^1.0.31"
+    "streamline-runtime": "^1.0.31",
+    "typescript": "^2.0.3"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
