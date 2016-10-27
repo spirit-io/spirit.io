@@ -1,5 +1,6 @@
 import { _ } from 'streamline-runtime';
-import express = require("express");
+//import express = require("express");
+import * as express from "express";
 
 export interface IModelController {
     create: express.RequestHandler;
@@ -22,11 +23,10 @@ export interface IModelFactory {
     $statics: string[];
     $methods: string[];
     $references: any;
-    schemaDef: Object;
-    model: Object;
+    $prototype: any;
     actions: IModelActions;
     helper: IModelHelper;
-    setup(mid: Map<string, express.Router>);
+    setup (routers: Map<string, express.Router>, actions: IModelActions, helper?: IModelHelper, controller?: IModelController);
 }
 
 export interface IModelActions {

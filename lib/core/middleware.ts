@@ -11,15 +11,6 @@ let trace; // = console.log;
 
 const router = express.Router();
 
-function errorHandler(err: Error, req: express.Request, res: express.Response, _:_) {
-  if (res.headersSent) {
-    return;
-  }
-  console.log("Err: ",err);
-  res.status(500);
-  res.json({ error: err.message });
-}
-
 export class Middleware {
 
     routers: Map<string, express.Router>;
@@ -28,7 +19,7 @@ export class Middleware {
         this.routers.set('v1', express.Router());        
     }
 
-    configure = () => {
+    configure () {
         // this.app.use(new Routes().routes);
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({
@@ -54,13 +45,13 @@ export class Middleware {
         
     }
 
-    setApiRoutes = () => {
+    setApiRoutes () {
         for (var [key, router] of this.routers) {
             this.app.use(`/api/${key}`, router);
         }
     }
 
-    setErrorHandler = () => {
+    setErrorHandler () {
         this.app.use(function(err: Error, req: express.Request, res: express.Response, _:_) {
             if (res.headersSent) {
                 return;

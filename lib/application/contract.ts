@@ -16,7 +16,7 @@ export class Contract {
         this.initExtendsModels();
     };
 
-    private initConnectors = () => {
+    private initConnectors () {
         for (let key in this.config.connectors) {
             let datasources = this.config.connectors[key].datasources;
             for (let ds in datasources) {
@@ -26,14 +26,12 @@ export class Contract {
         }
     }
 
-    private initBuiltInModels = () => {
+    private initBuiltInModels () {
         this._builtInModels = {}
        // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
     };
 
-    private initExtendsModels = () => {
-        if (!this.config.models) return;
-        
+    private initExtendsModels () {       
         // set models locations
         if (!this.config.modelsLocation) throw new Error(`'modelsLocation' configuration property must be set to register extends models`);
         this.config.modelsLocation = Array.isArray(this.config.modelsLocation) ? this.config.modelsLocation : [this.config.modelsLocation]

@@ -20,7 +20,7 @@ export class Server extends EventEmitter{
         this.config = config;
     }
 
-    init = (_: _) => {
+    init (_: _) {
         
         this.app = express();
         this._middleware = new Middleware(this.app);
@@ -36,7 +36,7 @@ export class Server extends EventEmitter{
         return this;
     }
 
-    start = (_: _, port: number) => {
+    start (_: _, port: number) {
         var self = this;
         // start http server
         this.app.listen(port, function () {
@@ -45,7 +45,7 @@ export class Server extends EventEmitter{
         
     }
 
-    addConnector = (connector: IConnector): void => {
+    addConnector (connector: IConnector): void {
         let ds = connector.datasource;
         connector.config = this.config.connectors && this.config.connectors[ds];
         ConnectorHelper.setConnector(ds, connector);

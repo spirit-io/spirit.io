@@ -20,16 +20,14 @@ interface ILoadedElement{
 }
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
-    let f = ConnectorHelper.createModelFactory(myClass);    
-    f.collectionName = collectionName;
+    let f: IModelFactory = ConnectorHelper.createModelFactory(myClass);    
     trace && trace(" => Release building model factory: ",f.collectionName);
-    ModelRegistry.factories.set(collectionName, f);
+    ModelRegistry.register(f);
     myClass.__factory__ = null;
     return f;
 }
 
 function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): IModelFactory[] {
-       
     // Build a program using the set of root file names in fileNames
     let program = ts.createProgram(fileNames, options);
 
@@ -99,7 +97,6 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         myClass._collectionName = className;
         myClass._documentation = ts.displayPartsToString(symbol.getDocumentationComment());
-
         // Load model factory
         return {
             name: className,
@@ -226,7 +223,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 let sf: ts.SourceFile = <ts.SourceFile>node.parent;
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
                 let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
-                if (superModelFactory) modelFactory.schemaDef = objectHelper.clone(superModelFactory.schemaDef);                
+                if (superModelFactory) modelFactory.$prototype = objectHelper.clone(superModelFactory.$prototype);                
                 else trace && trace("No model factory found for super class: ",superClassName);
                 inspectClass(superClass, modelFactory);
             }
@@ -267,7 +264,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     }
                 }
                 return prev;
-            }, modelFactory.schemaDef);
+            }, modelFactory.$prototype);
         }
         return modelFactory;
     }

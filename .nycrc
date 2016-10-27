@@ -3,6 +3,9 @@
       "lib/*.ts",
       "lib/**/*.ts"
     ],
+    "exclude": [
+      "lib/**/index.ts"
+    ],
     "extension": [
       ".ts"
     ],
@@ -10,7 +13,6 @@
       "lcov",
       "text"
     ],
-
     "sourceMap": true,
     "instrument": true
 }

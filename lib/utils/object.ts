@@ -1,5 +1,5 @@
 export class helper {
-    static merge = (src, dst) => {
+    static merge (src, dst) {
 		var differs = false;
 		helper.forEachKey(src, function(key, val) {
 			var dstVal = dst[key];
@@ -12,7 +12,7 @@ export class helper {
 		return differs;
 	}
 
-	static clone = (obj, deep?) => {
+	static clone (obj, deep?) {
 		if (!obj || typeof obj != "object")
 			return obj;
 		if (obj instanceof Date)
@@ -32,13 +32,13 @@ export class helper {
 		return clone;
 	}
 
-    static forEachKey = (object, body) => {
+    static forEachKey (object, body) {
 		for (var key in object)
 			if (helper.has(object, key))
 				body(key, object[key]);
 	}
 
-    static extend = (src, ext, override?, deep?) => {
+    static extend (src, ext, override?, deep?) {
 		src = src || {};
 		helper.forEachKey(ext, function(key, val) {
 			if (deep && typeof src[key] === "object" && src[key] !== null) {
@@ -52,11 +52,11 @@ export class helper {
 		return src;
 	}
 
-    static has = (obj, key) => {
+    static has (obj, key) {
 		return Object.prototype.hasOwnProperty.call(obj, key);
 	}
     
-	static areEqual = (obj1, obj2) => {
+	static areEqual (obj1, obj2) {
 		if (obj1 == obj2)
 			return true;
 		if (obj1 == null || obj2 == null)

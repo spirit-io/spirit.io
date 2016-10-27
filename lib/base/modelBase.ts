@@ -3,7 +3,7 @@ import { AdminHelper } from '../core/adminHelper';
 import { IModelHelper } from '../interfaces';
 
 export abstract class ModelBase {
-    protected _id: String;
+    protected _id: string;
     protected _createdAt: Date;
     protected _updatedAt: Date;
     private _db: IModelHelper;
@@ -31,15 +31,15 @@ export abstract class ModelBase {
      *      deleteMissing: true // allows to add $unset properties in order to remove values from the updated document
      * }
      */
-    save = (_: _, options?: any): any => {
+    save (_: _, options?: any): any {
         return this._db.saveInstance(_, this, options);
     }
 
-    serialize = (): any => {
+    serialize (): any {
         return this._db.serialize(this);
     }
 
-    updateValues = (item: any, options?: any): void => {
+    updateValues (item: any, options?: any): void {
         this._db.updateValues(this, item, options);
     }
 

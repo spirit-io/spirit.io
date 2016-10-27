@@ -4,7 +4,7 @@ import { ConnectorHelper } from './connectorHelper';
 export class ModelRegistry {
     static factories: Map<string, IModelFactory> = new Map();
 
-    private static register(modelFactory: IModelFactory): void {
+    public static register(modelFactory: IModelFactory): void {
         this.factories.set(modelFactory.collectionName, modelFactory);
     }
 
