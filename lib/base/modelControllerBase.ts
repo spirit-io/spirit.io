@@ -1,7 +1,7 @@
 /// <reference path="../../index.d.ts" />
 import { _ } from 'streamline-runtime';
 import express = require("express");
-import { IModelController, IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
+import { IModelController, IModelActions, IModelFactory } from '../interfaces';
 
 export class ModelControllerBase implements IModelController {
 
