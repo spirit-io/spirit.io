@@ -1,11 +1,11 @@
 import { _ } from 'streamline-runtime';
-import express = require ('express');
+import { Router, RequestHandler } from 'express';
 import { IModelFactory, IModelActions, IModelHelper, IModelController } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 
 let trace;// = console.log;
 
-export class ModelFactoryBase implements IModelFactory {
+export abstract class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
@@ -18,6 +18,7 @@ export class ModelFactoryBase implements IModelFactory {
     public $prototype: Object;
     public actions: IModelActions;
     public helper: IModelHelper;
+    public controller: IModelController;
     public datasource: string;
 
     constructor(targetClass: any) {
@@ -31,36 +32,35 @@ export class ModelFactoryBase implements IModelFactory {
         this.$references = targetClass.__factory__.$references || {};
     }
 
-    setup (routers: Map<string, express.Router>, actions: IModelActions, helper?: IModelHelper, controller?: IModelController) {
+    setup (routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController) {
         trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype,null,2)}`)
         
         this.$fields = this.$properties.concat(Object.keys(this.$references));  
 
         this.actions = actions;
-        this.helper = helper || new ModelHelperBase(this);    
-
+        this.helper = helper;    
+        this.controller = controller;
         let routeName = this.collectionName.substring(0,1).toLowerCase() + this.collectionName.substring(1);
-        let modelCtrl: IModelController = controller || new ModelControllerBase(this);
         let v1 = routers.get('v1');
         if (this.actions) {
             trace && trace(`Register routes: /${routeName}`);
             // handle main requests
-            v1.get(`/${routeName}`, modelCtrl.query);
-            v1.get(`/${routeName}/:_id`, modelCtrl.read);
-            v1.post(`/${routeName}`, modelCtrl.create);
-            v1.put(`/${routeName}/:_id`, modelCtrl.update);
-            v1.patch(`/${routeName}/:_id`, modelCtrl.patch);
-            v1.delete(`/${routeName}/:_id`, modelCtrl.delete);
+            v1.get(`/${routeName}`, this.controller.query);
+            v1.get(`/${routeName}/:_id`, this.controller.read);
+            v1.post(`/${routeName}`, this.controller.create);
+            v1.put(`/${routeName}/:_id`, this.controller.update);
+            v1.patch(`/${routeName}/:_id`, this.controller.patch);
+            v1.delete(`/${routeName}/:_id`, this.controller.delete);
             // handle references requests
-            v1.get(`/${routeName}/:_id/:_ref`, modelCtrl.read);
-            v1.put(`/${routeName}/:_id/:_ref`, modelCtrl.update);
-            v1.patch(`/${routeName}/:_id/:_ref`, modelCtrl.patch);
+            v1.get(`/${routeName}/:_id/:_ref`, this.controller.read);
+            v1.put(`/${routeName}/:_id/:_ref`, this.controller.update);
+            v1.patch(`/${routeName}/:_id/:_ref`, this.controller.patch);
         }
 
         if (this.helper) {
             // handle execution requests
-            v1.post(`/${routeName}/([\$])service/:_name`, modelCtrl.executeService);
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, modelCtrl.executeMethod);
+            v1.post(`/${routeName}/([\$])service/:_name`, this.controller.executeService);
+            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.controller.executeMethod);
         }
     }
 

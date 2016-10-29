@@ -1,9 +1,8 @@
-/// <reference path="../../index.d.ts" />
 import { _ } from 'streamline-runtime';
-import express = require("express");
+import { Request, Response } from "express";
 import { IModelController, IModelActions, IModelFactory } from '../interfaces';
 
-export class ModelControllerBase implements IModelController {
+export abstract class ModelControllerBase implements IModelController {
 
     private _actions: IModelActions;
     private _target: any;
@@ -12,7 +11,7 @@ export class ModelControllerBase implements IModelController {
         this._actions = modelFactory.actions;
         this._target = modelFactory.targetClass;
     }
-    query (req: express.Request, res: express.Response, _: _): void {
+    query = (req: Request, res: Response, _: _): void => {
         let where: string = req.query['where'];
         if (where) {
             try {
@@ -26,7 +25,7 @@ export class ModelControllerBase implements IModelController {
         res.json(result);
     }
 
-    read (req: express.Request, res: express.Response, _: _): void {
+    read (req: Request, res: Response, _: _): void {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let includes: string = req.query['includes'];
@@ -40,13 +39,13 @@ export class ModelControllerBase implements IModelController {
         }
     }
 
-    create (req: express.Request, res: express.Response, _ : _): void {
+    create (req: Request, res: Response, _ : _): void {
         let item: any = req['body'];
         let result = this._actions.create(_, item);
         res.json(result);
     }
 
-    update (req: express.Request, res: express.Response, _: _): void {
+    update (req: Request, res: Response, _: _): void {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let item: any = req['body'];
@@ -62,7 +61,7 @@ export class ModelControllerBase implements IModelController {
         }
     }
 
-    patch (req: express.Request, res: express.Response, _: _): void {
+    patch (req: Request, res: Response, _: _): void {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let item: any = req['body'];
@@ -78,13 +77,13 @@ export class ModelControllerBase implements IModelController {
         }
     }
 
-    delete (req: express.Request, res: express.Response, _: _): void {
+    delete (req: Request, res: Response, _: _): void {
         let _id: string = req.params['_id'];
         let result = this._actions.delete(_, _id);
         res.json(result);
     }
 
-    executeService (req: express.Request, res: express.Response, _: _): void {
+    executeService (req: Request, res: Response, _: _): void {
         let _name: string = req.params['_name'];
         if (this.modelFactory.$statics.indexOf(_name) === -1 || !this._target[_name]) {
             res.sendStatus(404);
@@ -94,7 +93,7 @@ export class ModelControllerBase implements IModelController {
         res.json(result);
     }
 
-    executeMethod (req: express.Request, res: express.Response, _: _): void {
+    executeMethod (req: Request, res: Response, _: _): void {
         let _id: string = req.params['_id'];
         let _name: string = req.params['_name'];
         let inst = this.modelFactory.helper.fetchInstance(_, _id);

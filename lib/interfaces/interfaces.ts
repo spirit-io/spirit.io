@@ -26,7 +26,8 @@ export interface IModelFactory {
     $prototype: any;
     actions: IModelActions;
     helper: IModelHelper;
-    setup (routers: Map<string, express.Router>, actions: IModelActions, helper?: IModelHelper, controller?: IModelController);
+    controller: IModelController;
+    setup (routers: Map<string, express.Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController);
 }
 
 export interface IModelActions {

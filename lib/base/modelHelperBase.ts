@@ -2,7 +2,7 @@ import { _ } from 'streamline-runtime';
 import { IModelFactory, IModelHelper, IModelActions } from '../interfaces';
 import { ModelRegistry } from '../core';
 
-export class ModelHelperBase implements IModelHelper {
+export abstract class ModelHelperBase implements IModelHelper {
 
 
     constructor(private modelFactory: IModelFactory) {}
