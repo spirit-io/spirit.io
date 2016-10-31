@@ -109,6 +109,6 @@ export class MockConnector implements IConnector {
     }
 
     dumpStorage() {
-        console.log("Storage content:\n\n" + JSON.stringify(storage, null, 2))
+        return storage;
     }
 }

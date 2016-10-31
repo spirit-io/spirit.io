@@ -125,7 +125,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
             expect(new Date(body._createdAt)).to.be.a("Date");
             expect(new Date(body._updated)).to.be.a("Date");
 
-            Fixtures.dumpStorage();
+            console.log("Storage content:\n\n" + JSON.stringify(Fixtures.dumpStorage(), null, 2));
         });
     });
 

@@ -41,25 +41,29 @@ function request(_: _, method: string, url: string, data?: any, headers?: any) {
 export class Fixtures {
 
     static setup = (_, done) => {
+        let firstSetup = true;
         if (!_.context.__server) {
             let server: Server = _.context.__server = require('../..')(config);
-            server.on('initialized', function () {
+            server.on('initialized', function() {
                 console.log("Server initialized");
                 done();
             });
             server.addConnector(new MockConnector());
             server.init(_);
             server.start(_, 3001);
+        } else {
+            firstSetup = false;
         }
-        console.log("Connectors registered on setup:", _.context['connectors']);
+        //
         let connector = <MockConnector>ConnectorHelper.getConnector('mock');
         connector.resetStorage();
-        //console.log("CONTEXT:", _.context);
+        //
+        if (!firstSetup) done();
         return _.context.__server
     }
 
     static dumpStorage = () => {
-        (<MockConnector>ConnectorHelper.getConnector('mock')).dumpStorage();
+        return (<MockConnector>ConnectorHelper.getConnector('mock')).dumpStorage();
     }
 
     static get = (_: _, url: string, headers?: any) => {
@@ -83,7 +87,7 @@ export class Fixtures {
     }
 
     static execAsync = (done, fn): void => {
-        fn(function (err, res) {
+        fn(function(err, res) {
             if (err) done(err);
             else done();
         });
