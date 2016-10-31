@@ -21,7 +21,7 @@ export class ConnectorHelper {
     }
 
     public static createModelFactory(modelClass: any): IModelFactory {
-        let datasource: string = modelClass._datasource || 'mongodb';
+        let datasource: string = modelClass._datasource || _.context.__defaultDatasource || 'mongodb';
         return ConnectorHelper.getConnector(datasource).createModelFactory(modelClass);
     }
 }

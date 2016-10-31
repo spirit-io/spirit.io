@@ -7,20 +7,20 @@ export abstract class ModelBase {
     protected _createdAt: Date;
     protected _updatedAt: Date;
     private _db: IModelHelper;
-    
+
     constructor(item: any = {}) {
         this._db = AdminHelper.model(this.constructor);
         this.updateValues(item);
     }
 
     get id(): String {
-        return this._id;
+        return this._db.getMetadata(this, '_id');
     }
     get createdAt(): Date {
-        return this._createdAt;
+        return this._db.getMetadata(this, '_createdAt');
     }
     get updatedAt(): Date {
-        return this._updatedAt;
+        return this._db.getMetadata(this, '_updatedAt');
     }
 
     /**
@@ -31,15 +31,15 @@ export abstract class ModelBase {
      *      deleteMissing: true // allows to add $unset properties in order to remove values from the updated document
      * }
      */
-    save (_: _, options?: any): any {
-        return this._db.saveInstance(_, this, options);
+    save(_: _, data?: any, options?: any): any {
+        return this._db.saveInstance(_, this, data, options);
     }
 
-    serialize (): any {
+    serialize(): any {
         return this._db.serialize(this);
     }
 
-    updateValues (item: any, options?: any): void {
+    updateValues(item: any, options?: any): void {
         this._db.updateValues(this, item, options);
     }
 

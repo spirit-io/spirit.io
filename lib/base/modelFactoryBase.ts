@@ -1,11 +1,11 @@
 import { _ } from 'streamline-runtime';
 import { Router, RequestHandler } from 'express';
-import { IModelFactory, IModelActions, IModelHelper, IModelController } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 
 let trace;// = console.log;
 
-export abstract class ModelFactoryBase implements IModelFactory {
+export abstract class ModelFactoryBase {
 
     public targetClass: any;
     public collectionName: string;
@@ -30,17 +30,17 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.$statics = targetClass.__factory__.$statics || [];
         this.$methods = targetClass.__factory__.$methods || [];
         this.$references = targetClass.__factory__.$references || {};
+
     }
 
-    setup (routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController) {
-        trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype,null,2)}`)
-        
-        this.$fields = this.$properties.concat(Object.keys(this.$references));  
+    setup(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController) {
+        trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype, null, 2)}`)
+        this.$fields = this.$properties.concat(Object.keys(this.$references));
 
         this.actions = actions;
-        this.helper = helper;    
+        this.helper = helper;
         this.controller = controller;
-        let routeName = this.collectionName.substring(0,1).toLowerCase() + this.collectionName.substring(1);
+        let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
         let v1 = routers.get('v1');
         if (this.actions) {
             trace && trace(`Register routes: /${routeName}`);

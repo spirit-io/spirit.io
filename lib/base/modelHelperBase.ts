@@ -1,39 +1,52 @@
 import { _ } from 'streamline-runtime';
-import { IModelFactory, IModelHelper, IModelActions } from '../interfaces';
+import {
+    IModelFactory,
+    IModelHelper,
+    IModelActions,
+    IQueryParameters,
+    IReadParameters,
+    ISaveParameters,
+    ISerializeOptions
+} from '../interfaces';
 import { ModelRegistry } from '../core';
 
 export abstract class ModelHelperBase implements IModelHelper {
 
+    constructor(private modelFactory: IModelFactory) { }
 
-    constructor(private modelFactory: IModelFactory) {}
-
-    fetchInstances (_: _, filter?: any) {
+    fetchInstances(_: _, filter?: any, parameters?: IQueryParameters, serialize?: boolean) {
         let instances: any = [];
-        let docs = this.modelFactory.actions.query(_, filter);
+        let docs = this.modelFactory.actions.query(_, filter, parameters);
         for (var doc of docs) {
-            instances.push(this.serialize(new this.modelFactory.targetClass.prototype.constructor(doc), {ignoreNull: true}));
+            let inst = new this.modelFactory.targetClass.prototype.constructor();
+            this.updateValues(inst, doc);
+            instances.push(serialize ? this.serialize(inst, { ignoreNull: true }) : inst);
         }
         return instances;
     }
 
-    fetchInstance (_:_, _id: any) {
-        let doc = this.modelFactory.actions.read(_, _id);
-        if (!doc) return;
-        return this.serialize(new this.modelFactory.targetClass.prototype.constructor(doc), {ignoreNull: true});
+    fetchInstance(_: _, _id: string, options?: IReadParameters, serialize?: boolean) {
+        let doc = this.modelFactory.actions.read(_, _id, options);
+        if (!doc) return null;
+        let inst = new this.modelFactory.targetClass.prototype.constructor();
+        this.updateValues(inst, doc);
+        return serialize ? this.serialize(inst, { ignoreNull: true }) : inst;
     }
 
-    saveInstance (_:_, instance: any, options?: any) {
-        let item = this.modelFactory.actions.createOrUpdate(_, instance._id, this.serialize(instance, {ignoreNull: true}), options);
-        this.updateValues(instance, item, {deleteMissing: true});
-        if (options && options.returnInstance) return instance;
-        return;
+    saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serialize?: boolean) {
+        if (data) this.updateValues(instance, data, { deleteMissing: false });
+        let serialized = this.serialize(instance, { ignoreNull: true });
+        let item = this.modelFactory.actions.createOrUpdate(_, instance._id, serialized, options);
+        this.updateValues(instance, item, { deleteMissing: true });
+        if (!serialize) return instance;
+        return this.serialize(instance);
     }
 
-    deleteInstance (_:_, instance: any): any {
+    deleteInstance(_: _, instance: any): any {
         return this.modelFactory.actions.delete(_, instance._id);
     }
 
-    serialize (instance: any, options?: any): any {
+    serialize(instance: any, options?: ISerializeOptions): any {
         options = options || {};
         let item: any = {};
         for (let key of this.modelFactory.$fields) {
@@ -53,16 +66,18 @@ export abstract class ModelHelperBase implements IModelHelper {
             }
             if (!options.ignoreNull) if (instance[key] === undefined) item[key] = undefined;
         }
-        //console.log("Serialize:",item);
+        //console.log("Serialize:", item);
         return item;
     }
 
-    updateValues (instance: any, item: any, options?: any): void {
-        if (!instance || !item) return;
+    updateValues(instance: any, item: any, options?: any): void {
+        if (!instance || !item) return null;
         // update new values
         for (let key of Object.keys(item)) {
             if (this.modelFactory.$fields.indexOf(key) !== -1) {
                 instance[key] = item[key];
+            } else {
+                throw new Error(`Property '${key}' does not exist on model '${this.modelFactory.collectionName}'`);
             }
         }
         if (options && options.deleteMissing) {
@@ -73,9 +88,10 @@ export abstract class ModelHelperBase implements IModelHelper {
                 }
             }
         }
+
     }
 
-    getMetadata (instance: any, metadataName: string): any {
+    getMetadata(instance: any, metadataName: string): any {
         return instance[metadataName];
     }
 }

@@ -1,3 +1,4 @@
+import { _ } from 'streamline-runtime';
 import { ConnectorHelper } from '../core/connectorHelper';
 import { IModelOptions } from '../interfaces';
 import { helper as objectHelper } from '../utils/object';
@@ -10,36 +11,40 @@ export class Contract {
     private _extendsModels: any;
     private _modelsLocation: string[] = [];
 
-    constructor(private config: any) {
-        this.initConnectors();
-        this.initBuiltInModels();
-        this.initExtendsModels();
-    };
+    constructor(private config: any) { };
 
-    private initConnectors () {
+    public init(_) {
+        if (this.config.defaultDatasource) {
+            _.context.__defaultDatasource = this.config.defaultDatasource;
+        }
         for (let key in this.config.connectors) {
             let datasources = this.config.connectors[key].datasources;
             for (let ds in datasources) {
                 let dsId: string = ds.indexOf(':') === -1 ? ds : ds.split(':')[0];
+                if (!_.context.__defaultDatasource) _.context.__defaultDatasource = dsId;
                 ConnectorHelper.getConnector(dsId).connect(ds, datasources[ds]);
-            }            
+            }
         }
+
+        this.initBuiltInModels();
+        this.initExtendsModels();
+        return this;
     }
 
-    private initBuiltInModels () {
+    private initBuiltInModels() {
         this._builtInModels = {}
-       // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
+        // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
     };
 
-    private initExtendsModels () {       
+    private initExtendsModels() {
         // set models locations
         if (!this.config.modelsLocation) throw new Error(`'modelsLocation' configuration property must be set to register extends models`);
         this.config.modelsLocation = Array.isArray(this.config.modelsLocation) ? this.config.modelsLocation : [this.config.modelsLocation]
         this.config.modelsLocation.forEach((loc) => {
             this._modelsLocation.push(loc);
         });
-        
-        
+
+
         // TODO: validation
         this._extendsModels = this.config.models;
     };
@@ -60,7 +65,7 @@ export class Contract {
         let merged: any = objectHelper.clone(this.builtInModels, true);
         objectHelper.merge(this.extendsModels, merged);
         let _models = new Map();
-        Object.keys(merged).forEach(function(key: string) {
+        Object.keys(merged).forEach(function (key: string) {
             _models.set(key, merged[key]);
         }, []);
         return _models;

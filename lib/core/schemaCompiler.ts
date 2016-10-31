@@ -13,15 +13,15 @@ import express = require('express');
 
 let trace;// = console.log;
 
-interface ILoadedElement{
+interface ILoadedElement {
     name: string;
     node: ts.ClassDeclaration,
     factory: IModelFactory
 }
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
-    let f: IModelFactory = ConnectorHelper.createModelFactory(myClass);    
-    trace && trace(" => Release building model factory: ",f.collectionName);
+    let f: IModelFactory = ConnectorHelper.createModelFactory(myClass);
+    trace && trace(" => Release building model factory: ", f.collectionName);
     ModelRegistry.register(f);
     myClass.__factory__ = null;
     return f;
@@ -46,8 +46,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
     trace && trace("Classes loaded: ", classes.keys());
     trace && trace("Model factory loaded: ", ModelRegistry.factories.keys());
     // second loop to compile and build schemas
-    modelElements.forEach(function(elt) {
-        trace && trace("\n\n==========================\nInspect class: ",elt.name);
+    modelElements.forEach(function (elt) {
+        trace && trace("\n\n==========================\nInspect class: ", elt.name);
         inspectClass(elt.node, elt.factory);
     });
     return modelElements.map(elt => { return elt.factory; });
@@ -64,12 +64,12 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
             classes.set(className, (<ts.ClassDeclaration>node));
 
             // load class only if not already loaded
-           // if (!modelElements.some((elt) => {return elt.name === (<ts.SourceFile>node.parent).fileName})) {
-                let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
-                if (elt) {
-                    modelElements.push(elt);
-                    trace && trace(`Loaded: ${elt.factory.collectionName}`);
-                }
+            // if (!modelElements.some((elt) => {return elt.name === (<ts.SourceFile>node.parent).fileName})) {
+            let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
+            if (elt) {
+                modelElements.push(elt);
+                trace && trace(`Loaded: ${elt.factory.collectionName}`);
+            }
             //}
             // No need to walk any further, class expressions/inner declarations
             // cannot be exported
@@ -87,7 +87,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         let className = symbol.getName();
 
         // consider only classes with @collection(...) decorator
-        if(!isModelClass(node)) return;
+        if (!isModelClass(node)) return;
         const r = require(sf.fileName);
         let myClass = r[className];
         if (!myClass) {
@@ -133,7 +133,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     log("Variable", member);
                     break;
                 case ts.SyntaxKind.MethodDeclaration:
-                    log("Member",member);
+                    log("Member", member);
                     symbol = checker.getSymbolAtLocation(member.name);
                     if (!isPrivate(member)) {
                         if (isStatic(member)) {
@@ -158,8 +158,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     if (isPrivate(prop)) return;
                     // ignore properties assigned with an arrow function
                     if (prop.initializer && prop.initializer.kind === ts.SyntaxKind.ArrowFunction) return;
-                    
-                    
+
+
                     symbol = checker.getSymbolAtLocation(prop.name);
                     let propertyName = symbol.getName();
                     //console.log("Property",prop);
@@ -168,7 +168,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     // retrieve the real type. this part explains essentially why using this schema compiler
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
-                    
+
                     trace && trace(`    - Property '${propertyName}' type: ${type}`);
                     let _isArray = type.indexOf('[]') !== -1;
                     if (_isArray) {
@@ -214,7 +214,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         //////////////////////////////////////////////////
         let symbol = checker.getSymbolAtLocation(node.name);
-        
+
         let superClassName = getClassExtendsHeritageClauseElement(node);
         if (superClassName) {
             superClassName = (<ts.CallExpression>superClassName.expression).getText();
@@ -223,13 +223,13 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 let sf: ts.SourceFile = <ts.SourceFile>node.parent;
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
                 let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
-                if (superModelFactory) modelFactory.$prototype = objectHelper.clone(superModelFactory.$prototype);                
-                else trace && trace("No model factory found for super class: ",superClassName);
+                if (superModelFactory) modelFactory.$prototype = objectHelper.clone(superModelFactory.$prototype);
+                else trace && trace("No model factory found for super class: ", superClassName);
                 inspectClass(superClass, modelFactory);
             }
         }
 
-       
+
 
         if (node.members) {
             let members = node.members.map(inspectMembers);
@@ -343,7 +343,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
 export class SchemaCompiler {
     static registerModels = (_, routers: Map<string, express.Router>, contract: Contract) => {
-        
+
         function browseDir(_, dir) {
             // Add each .js file to the mocha instance
             fs.readdirSync(dir).forEach_(_, function (_, file) {
@@ -359,10 +359,9 @@ export class SchemaCompiler {
             });
         }
         let modelFiles = [];
-        contract.modelsLocations.forEach_(_, function(_, dir) {
+        contract.modelsLocations.forEach_(_, function (_, dir) {
             browseDir(_, dir);
         });
-        _.context.schemaCompiling = true;
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
@@ -371,6 +370,5 @@ export class SchemaCompiler {
             // setup model actions
             modelFactory.setup(routers);
         });
-        _.context.schemaCompiling = false;
     }
 }
