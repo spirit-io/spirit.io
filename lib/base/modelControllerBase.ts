@@ -5,7 +5,7 @@ import {
     IModelActions,
     IModelFactory,
     IQueryParameters,
-    IReadParameters,
+    IFetchOptions,
     ISaveParameters
 } from '../interfaces';
 
@@ -24,7 +24,7 @@ export abstract class ModelControllerBase implements IModelController {
         }
         let includes: string = req.query['includes'];
         let queryParams: IQueryParameters = { includes: includes };
-        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, true);
+        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, { ignoreNull: true, ignoreRef: true });
 
         //let result = this.modelFactory.actions.query(_, where, { includes: includes });
         res.json(result);
@@ -34,9 +34,8 @@ export abstract class ModelControllerBase implements IModelController {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let includes: string = req.query['includes'];
-
-        let readOptions: IReadParameters = _ref ? {} : { includes: includes, ref: _ref };
-        let result = this.modelFactory.helper.fetchInstance(_, _id, readOptions, true);
+        let fetchOpt: IFetchOptions = _ref ? { includes: includes, ref: _ref } : {};
+        let result = this.modelFactory.helper.fetchInstance(_, _id, fetchOpt, { ignoreNull: true, ignoreRef: true });
 
         //let result = this.modelFactory.actions.read(_, _id, readOptions);
         if (!result) {
@@ -49,56 +48,47 @@ export abstract class ModelControllerBase implements IModelController {
     create = (req: Request, res: Response, _: _): void => {
         let item: any = req['body'];
         let inst = new this.modelFactory.targetClass.prototype.constructor();
-        this.modelFactory.helper.saveInstance(_, inst, item);
-        let result = this.modelFactory.helper.serialize(inst, { ignoreNull: true });
+        this.modelFactory.helper.saveInstance(_, inst, item, null, { ignoreNull: true, ignoreRef: true });
+        let result = this.modelFactory.helper.serialize(inst, { ignoreNull: true, ignoreRef: true });
 
         // let result = this.modelFactory.actions.create(_, item);
         res.status(201).json(result);
     }
 
-    update = (req: Request, res: Response, _: _): void => {
+    private _update = (_: _, params: ISaveParameters | IFetchOptions = {}, req: Request, res: Response): void => {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let item: any = req['body'];
-        let params: ISaveParameters;
-        if (_ref) {
-            let data = {};
-            data[_ref] = item;
-            params = { ref: _ref, deleteMissing: true };
-            let inst = this.modelFactory.helper.fetchInstance(_, _id, { ref: _ref });
-            let result = this.modelFactory.helper.saveInstance(_, inst, data, params, true);
 
-            //let result = this.modelFactory.actions.update(_, _id, data, params);
-            res.json(result);
+        let data;
+        if (!_ref) {
+            data = item;
         } else {
-            params = { deleteMissing: true };
-            let inst = this.modelFactory.helper.fetchInstance(_, _id);
-            let result = this.modelFactory.helper.saveInstance(_, inst, item, params, true);
-
-            //let result = this.modelFactory.actions.update(_, _id, item, params);
-            res.json(result);
+            data = {};
+            data[_ref] = item;
+            params.ref = _ref;
         }
+        let inst = this.modelFactory.helper.fetchInstance(_, _id, params);
+        let result = this.modelFactory.helper.saveInstance(_, inst, data, params, { ignoreNull: true, ignoreRef: true });
+
+        //let result = this.modelFactory.actions.update(_, _id, item, params);
+        res.json(result);
+    }
+
+    update = (req: Request, res: Response, _: _): void => {
+        this._update(_, { deleteMissing: true }, req, res);
     }
 
     patch = (req: Request, res: Response, _: _): void => {
-        let _id: string = req.params['_id'];
-        let _ref: string = req.params['_ref'];
-        let item: any = req['body'];
-
-        if (_ref) {
-            let data = {};
-            data[_ref] = item;
-            let result = this.modelFactory.actions.update(_, _id, data, { reference: _ref });
-            res.json(result);
-        } else {
-            let result = this.modelFactory.actions.update(_, _id, item);
-            res.json(result);
-        }
+        this._update(_, null, req, res);
     }
 
     delete = (req: Request, res: Response, _: _): void => {
         let _id: string = req.params['_id'];
-        let result = this.modelFactory.actions.delete(_, _id);
+        let inst = this.modelFactory.helper.fetchInstance(_, _id);
+        let result = this.modelFactory.helper.deleteInstance(_, inst);
+
+        //let result = this.modelFactory.actions.delete(_, _id);
         res.json(result);
     }
 

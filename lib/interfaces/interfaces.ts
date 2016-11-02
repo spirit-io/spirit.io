@@ -28,11 +28,12 @@ export interface IModelFactory {
     helper: IModelHelper;
     controller: IModelController;
     setup(routers: Map<string, express.Router>);
+    getModelFactoryByPath(path: string): IModelFactory;
 }
 
 export interface IModelActions {
     query(_: _, filter?: any, parameters?: IQueryParameters): any;
-    read(_: _, _id: string, parameters?: IReadParameters): any;
+    read(_: _, _id: string, parameters?: IFetchOptions): any;
     create(_: _, item: any): any;
     update(_: _, _id: string, item: any, options?: any): any;
     createOrUpdate(_: _, _id: any, item: any, options?: any): any;
@@ -40,9 +41,9 @@ export interface IModelActions {
 }
 
 export interface IModelHelper {
-    fetchInstances(_, filter?: any, options?: IQueryParameters, serialize?: boolean): any[];
-    fetchInstance(_, _id: string, options?: IReadParameters, serialize?: boolean): any;
-    saveInstance(_, instance: any, data?: any, options?: ISaveParameters, serialize?: boolean): any;
+    fetchInstances(_, filter?: any, options?: IQueryParameters, serializeOptions?: ISerializeOptions): any[];
+    fetchInstance(_, _id: string, options?: IFetchOptions, serializeOptions?: ISerializeOptions): any;
+    saveInstance(_, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions): any;
     deleteInstance(_: _, instance: any): any;
     serialize(instance: any, options?: ISerializeOptions): any;
     updateValues(instance: any, item: any, options?: any): void;
@@ -61,7 +62,7 @@ export interface IQueryParameters {
     includes?: string;
 }
 
-export interface IReadParameters {
+export interface IFetchOptions {
     includes?: any;
     ref?: string;
 }
@@ -72,7 +73,9 @@ export interface ISaveParameters {
 }
 
 export interface ISerializeOptions {
+    modelFactory?: IModelFactory;
     ignoreNull?: boolean;
+    ignoreRef?: boolean;
 }
 
 /**

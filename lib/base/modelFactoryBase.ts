@@ -1,7 +1,8 @@
 import { _ } from 'streamline-runtime';
 import { Router, RequestHandler } from 'express';
-import { IModelActions, IModelHelper, IModelController } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
+import { ModelRegistry } from '../core';
 
 let trace;// = console.log;
 
@@ -62,6 +63,17 @@ export abstract class ModelFactoryBase {
             v1.post(`/${routeName}/([\$])service/:_name`, this.controller.executeService);
             v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.controller.executeMethod);
         }
+    }
+
+    getModelFactoryByPath(path: string): IModelFactory {
+        let _treeEntry = this.$prototype[path];
+        let _ref = _treeEntry ? (Array.isArray(_treeEntry) ? _treeEntry[0].ref : _treeEntry.ref) : null;
+        if (!_ref) throw new Error(`path '${path}' not found in '${this.collectionName}' factory's schema`);
+
+        // specifying model when populate is necessary for multiple database usage
+        let mf = ModelRegistry.getFactoryByName(_ref)
+        if (!mf) throw new Error(`Class hasn't been registered for model '${path}'.`);
+        return mf;
     }
 
 }

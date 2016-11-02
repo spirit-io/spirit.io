@@ -51,6 +51,7 @@ export class Middleware {
 
     setErrorHandler() {
         this.app.use(function (err: Error, req: Request, res: Response, _: _) {
+            //console.error(err.stack);
             if (res.headersSent) {
                 return;
             }

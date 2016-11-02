@@ -4,7 +4,7 @@ import {
     IModelHelper,
     IModelActions,
     IQueryParameters,
-    IReadParameters,
+    IFetchOptions,
     ISaveParameters,
     ISerializeOptions
 } from '../interfaces';
@@ -14,32 +14,41 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     constructor(private modelFactory: IModelFactory) { }
 
-    fetchInstances(_: _, filter?: any, parameters?: IQueryParameters, serialize?: boolean) {
+    fetchInstances(_: _, filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions) {
         let instances: any = [];
         let docs = this.modelFactory.actions.query(_, filter, parameters);
         for (var doc of docs) {
             let inst = new this.modelFactory.targetClass.prototype.constructor();
             this.updateValues(inst, doc);
-            instances.push(serialize ? this.serialize(inst, { ignoreNull: true }) : inst);
+            instances.push(serializeOptions ? this.serialize(inst, serializeOptions) : inst);
         }
         return instances;
     }
 
-    fetchInstance(_: _, _id: string, options?: IReadParameters, serialize?: boolean) {
+    fetchInstance(_: _, _id: string, options?: IFetchOptions, serializeOptions?: ISerializeOptions) {
         let doc = this.modelFactory.actions.read(_, _id, options);
         if (!doc) return null;
-        let inst = new this.modelFactory.targetClass.prototype.constructor();
-        this.updateValues(inst, doc);
-        return serialize ? this.serialize(inst, { ignoreNull: true }) : inst;
+        let inst;
+        if (options && options.ref) {
+            let refFactory = this.modelFactory.getModelFactoryByPath(options.ref);
+            inst = new refFactory.targetClass.prototype.constructor();
+            this.updateValues(inst, doc, { modelFactory: refFactory });
+            if (serializeOptions) serializeOptions.modelFactory = refFactory;
+        } else {
+            inst = new this.modelFactory.targetClass.prototype.constructor();
+            this.updateValues(inst, doc);
+        }
+        return serializeOptions ? this.serialize(inst, serializeOptions) : inst;
     }
 
-    saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serialize?: boolean) {
-        if (data) this.updateValues(instance, data, { deleteMissing: false });
-        let serialized = this.serialize(instance, { ignoreNull: true });
+    saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
+        options = options || {};
+        if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
+        let serialized = this.serialize(instance, serializeOptions);
         let item = this.modelFactory.actions.createOrUpdate(_, instance._id, serialized, options);
         this.updateValues(instance, item, { deleteMissing: true });
-        if (!serialize) return instance;
-        return this.serialize(instance);
+        if (!serializeOptions) return instance;
+        return this.serialize(instance, serializeOptions);
     }
 
     deleteInstance(_: _, instance: any): any {
@@ -48,17 +57,19 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     serialize(instance: any, options?: ISerializeOptions): any {
         options = options || {};
+        // consider correct modelFactory (for relation potentially)
+        let mf = options.modelFactory || this.modelFactory;
         let item: any = {};
-        for (let key of this.modelFactory.$fields) {
+        for (let key of mf.$fields) {
             if (instance[key] !== undefined) {
-                if (this.modelFactory.$references.hasOwnProperty(key)) {
-                    if (this.modelFactory.$plurals.indexOf(key) !== -1) {
+                if (mf.$references.hasOwnProperty(key)) {
+                    if (mf.$plurals.indexOf(key) !== -1) {
                         instance[key] = Array.isArray(instance[key]) ? instance[key] : [instance[key]];
                         item[key] = instance[key].map((inst) => {
-                            return inst._id;
+                            return options.ignoreRef ? inst : inst._id;
                         });
                     } else {
-                        item[key] = instance[key]._id;
+                        item[key] = options.ignoreRef ? instance[key] : instance[key]._id;
                     }
                 } else {
                     item[key] = instance[key];
@@ -72,18 +83,21 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     updateValues(instance: any, item: any, options?: any): void {
         if (!instance || !item) return null;
+        options = options || {};
+        // consider correct modelFactory (for relation potentially)
+        let mf = options.modelFactory || this.modelFactory;
         // update new values
         for (let key of Object.keys(item)) {
-            if (this.modelFactory.$fields.indexOf(key) !== -1) {
+            if (mf.$fields.indexOf(key) !== -1) {
                 instance[key] = item[key];
             } else {
-                throw new Error(`Property '${key}' does not exist on model '${this.modelFactory.collectionName}'`);
+                throw new Error(`Property '${key}' does not exist on model '${mf.collectionName}'`);
             }
         }
-        if (options && options.deleteMissing) {
+        if (options.deleteMissing) {
             // reinitialize deleted values
-            for (let key of this.modelFactory.$fields) {
-                if (item[key] === undefined) {
+            for (let key of mf.$fields) {
+                if (key[0] !== '_' && item[key] === undefined) {
                     instance[key] = undefined;
                 }
             }

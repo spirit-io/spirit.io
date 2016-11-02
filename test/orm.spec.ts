@@ -103,7 +103,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(mRel3.p1).to.equal("prop3modified");
             // instanciate class with AdminHelper
             let data = {
-                "pString": "aString",
+                "pString": "pString",
                 "pNumber": 20,
                 "pDate": new Date(),
                 "pBoolean": true,
@@ -122,7 +122,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(m1.createdAt).to.be.a("Date");
             expect(m1.updatedAt).to.be.a("Date");
             expect(m1.serialize()).to.be.a("object");
-            expect(m1.pString).to.equal("aString");
+            expect(m1.pString).to.equal("pString");
             expect(m1.pNumber).to.equal(20);
             expect(m1.pDate).to.be.a("Date");
             expect(m1.pBoolean).to.equal(true);

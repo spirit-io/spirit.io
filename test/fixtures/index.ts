@@ -6,6 +6,8 @@ import { ConnectorHelper } from '../../lib/core';
 import { devices } from 'ez-streams'
 const path = require('path');
 
+let trace;// = console.log;
+
 const port = 3001;
 const baseUrl = 'http://localhost:' + port;
 
@@ -26,6 +28,7 @@ function request(_: _, method: string, url: string, data?: any, headers?: any) {
     headers = headers || {
         'content-type': 'application/json'
     };
+    trace && trace("HTTP " + method + " " + baseUrl + url);
     let resp = devices.http.client({
         url: baseUrl + url,
         method: method,
@@ -44,7 +47,7 @@ export class Fixtures {
         let firstSetup = true;
         if (!_.context.__server) {
             let server: Server = _.context.__server = require('../..')(config);
-            server.on('initialized', function() {
+            server.on('initialized', function () {
                 console.log("Server initialized");
                 done();
             });
@@ -87,7 +90,7 @@ export class Fixtures {
     }
 
     static execAsync = (done, fn): void => {
-        fn(function(err, res) {
+        fn(function (err, res) {
             if (err) done(err);
             else done();
         });

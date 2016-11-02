@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController } from '../../lib/interfaces'
+import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, ISaveParameters, IFetchOptions } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
 import { Connection } from 'mongoose';
@@ -13,7 +13,6 @@ function ensureId(item: any) {
 let storage: any = {};
 
 class MockActions implements IModelActions {
-
 
     constructor(private modelFactory: MockFactory) { }
 
@@ -33,9 +32,26 @@ class MockActions implements IModelActions {
         return res;
     }
 
-    read(_: _, id: any, options?: any) {
+    read(_: _, id: any, options?: IFetchOptions) {
+        //console.log(`Read ${this.modelFactory.collectionName}: id: ${id} ; options: ${JSON.stringify(options, null, 2)}`);
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
-        return storage[this.modelFactory.collectionName][id];
+        let res = storage[this.modelFactory.collectionName][id];
+        if (options && options.ref) {
+            let refRes: any;
+            let refModelFactory: IModelFactory = this.modelFactory.getModelFactoryByPath(options.ref);
+
+            if (this.modelFactory.$plurals.indexOf(options.ref) !== -1) {
+                let ids = Array.isArray(res[options.ref]) ? res[options.ref] : [res[options.ref]];
+                let all = refModelFactory.actions.query(_);
+                return all.filter((elt) => {
+                    return res[options.ref].indexOf(elt._id) !== -1;
+                });
+            } else {
+                return refModelFactory.actions.read(_, res[options.ref]);
+            }
+        } else {
+            return res;
+        }
     }
 
     create(_: _, item: any) {
@@ -44,14 +60,24 @@ class MockActions implements IModelActions {
         return this.update(_, item._id, item);
     }
 
-    update(_: _, _id: any, item: any, options?: any) {
+    update(_: _, _id: any, item: any, options?: ISaveParameters) {
         item._updatedAt = new Date();
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
-        storage[this.modelFactory.collectionName][_id] = item;
+
+        if (options && options.ref) {
+            let key = options.ref;
+            if (this.modelFactory.$fields.indexOf(key) !== -1) {
+                storage[this.modelFactory.collectionName][_id] = storage[this.modelFactory.collectionName][_id] || {};
+                storage[this.modelFactory.collectionName][_id][key] = item;
+            }
+        } else {
+            storage[this.modelFactory.collectionName][_id] = item;
+        }
         return item;
     }
 
-    createOrUpdate(_: _, _id: any, item: any, options?: any) {
+    createOrUpdate(_: _, _id: any, item: any, options?: ISaveParameters) {
+        if (!item._id) item._id = _id;
         return this.create(_, item);
     };
 
