@@ -172,7 +172,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
         });
     });
 
-    it('read reference should work and return correct values', (done) => {
+    it('read singular reference should work and return correct values', (done) => {
         Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel/' + myModel[0] + '/inv');
             expect(resp.status).to.equal(200);
@@ -181,7 +181,6 @@ describe('Spirit.io REST Express routes Tests:', () => {
             expect(objectHelper.areEqual(body, ref)).to.equal(true);
         });
     });
-
 
     it('update complex instance with only one property should work and return only provided values', (done) => {
         Fixtures.execAsync(done, function (_) {
@@ -207,5 +206,29 @@ describe('Spirit.io REST Express routes Tests:', () => {
             expect(new Date(body._updated)).to.be.a("Date");
         });
     });
+
+    it('execute instance method should work and saved instance should be updated', (done) => {
+        Fixtures.execAsync(done, function (_) {
+            let resp = Fixtures.post(_, '/api/v1/myModel/' + myModel[0] + '/$execute/aMethod', { pString: "pString updated by aMethod call", anotherParam: 'test' });
+            expect(resp.status).to.equal(200);
+            let body = JSON.parse(resp.body);
+            // TODO: manage responses structure with diagnoses maybe ?
+            resp = Fixtures.get(_, '/api/v1/myModel/' + myModel[0]);
+            expect(resp.status).to.equal(200);
+            body = JSON.parse(resp.body);
+            expect(body.pString).to.equal("pString updated by aMethod call");
+        });
+    });
+
+    it('execute instance service should work and return expected value', (done) => {
+        Fixtures.execAsync(done, function (_) {
+            let resp = Fixtures.post(_, '/api/v1/myModel/$service/aService', { a: 2.22, b: 3.33 });
+            expect(resp.status).to.equal(200);
+            let body = JSON.parse(resp.body);
+            expect(body.c).to.equal('5.55');
+        });
+    });
+
+
 
 });

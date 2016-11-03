@@ -1,7 +1,7 @@
 import { collection, unique, required, index, reverse } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 
-@collection({datasource: 'mock:ds'})
+@collection({ datasource: 'mock:ds' })
 export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);
@@ -30,7 +30,7 @@ export class MyModel extends ModelBase {
 
     @required
     aString: Array<string>;
-    
+
     aNumber: Array<number>;
     aDate: Array<Date>;
     aBoolean: Array<boolean>;
@@ -43,5 +43,15 @@ export class MyModel extends ModelBase {
 
     @reverse('relinvs')
     invs: MyModelRel[];
+
+    aMethod(_, params: any): string {
+        this.pString = params.pString;
+        this.save(_);
+        return `aMethod has been called with parameters ${JSON.stringify(params)}`;
+    }
+
+    static aService(_, params: any): any {
+        return { c: (params.a + params.b).toFixed(2) };
+    }
 }
 

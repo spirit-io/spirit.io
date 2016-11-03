@@ -64,15 +64,21 @@ export abstract class ModelControllerBase implements IModelController {
         if (!_ref) {
             data = item;
         } else {
+            // TODO: Ref update should be callable only for children
             data = {};
             data[_ref] = item;
             params.ref = _ref;
         }
         let inst = this.modelFactory.helper.fetchInstance(_, _id, params);
         let result = this.modelFactory.helper.saveInstance(_, inst, data, params, { ignoreNull: true, ignoreRef: true });
-
         //let result = this.modelFactory.actions.update(_, _id, item, params);
-        res.json(result);
+
+        if (!_ref) {
+            res.json(result);
+        } else {
+            res.json(result[_ref]);
+        }
+
     }
 
     update = (req: Request, res: Response, _: _): void => {
@@ -98,7 +104,8 @@ export abstract class ModelControllerBase implements IModelController {
             res.sendStatus(404);
             return;
         }
-        let result = this.modelFactory.targetClass[_name]();
+        let params = req.body;
+        let result = this.modelFactory.targetClass[_name](_, params);
         res.json(result);
     }
 
@@ -111,7 +118,8 @@ export abstract class ModelControllerBase implements IModelController {
             return;
         }
 
-        let result = inst[_name]();
+        let params = req.body;
+        let result = inst[_name](_, params);
         res.json(result);
     }
 } 
