@@ -230,5 +230,34 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
 
+    it('query should return nothing after deleting all elements', (done) => {
+        Fixtures.execAsync(done, function (_) {
+
+            myModelRels.forEach_(_, (_, r) => {
+                let resp = Fixtures.delete(_, '/api/v1/myModelRel/' + r);
+                expect(resp.status).to.equal(204);
+            });
+
+
+            let resp = Fixtures.get(_, '/api/v1/myModelRel');
+            let body = JSON.parse(resp.body);
+            expect(resp.status).to.equal(200);
+            expect(body).to.be.a('array');
+            expect(body.length).to.equal(0);
+
+            myModel.forEach_(_, (_, m) => {
+                let resp = Fixtures.delete(_, '/api/v1/myModel/' + m);
+                expect(resp.status).to.equal(204);
+            });
+
+            resp = Fixtures.get(_, '/api/v1/myModel');
+            body = JSON.parse(resp.body);
+            expect(resp.status).to.equal(200);
+            expect(body).to.be.a('array');
+            expect(body.length).to.equal(0);
+        });
+    });
+
+
 
 });

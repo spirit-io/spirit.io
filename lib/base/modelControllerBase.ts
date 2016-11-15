@@ -95,7 +95,7 @@ export abstract class ModelControllerBase implements IModelController {
         let result = this.modelFactory.helper.deleteInstance(_, inst);
 
         //let result = this.modelFactory.actions.delete(_, _id);
-        res.json(result);
+        res.status(204).json(result);
     }
 
     executeService = (req: Request, res: Response, _: _): void => {

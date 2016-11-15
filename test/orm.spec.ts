@@ -155,4 +155,27 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(rel3.p1).to.equal("prop3modified");
         });
     });
+
+    it('Delete instances should work as expected', (done) => {
+        Fixtures.execAsync(done, function (_) {
+            // delete all myModelRels
+            let db = AdminHelper.model(MyModelRel);
+            let rels = db.fetchInstances(_);
+            rels.forEach_(_, function (_, r) {
+                db.deleteInstance(_, r);
+            });
+            rels = db.fetchInstances(_);
+            expect(rels.length).to.equal(0);
+
+            // delete all myModels
+            db = AdminHelper.model(MyModel);
+            rels = db.fetchInstances(_);
+            rels.forEach_(_, function (_, r) {
+                db.deleteInstance(_, r);
+            });
+            rels = db.fetchInstances(_);
+            expect(rels.length).to.equal(0);
+        });
+    });
+
 });
