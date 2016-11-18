@@ -29,11 +29,13 @@ export interface IModelFactory {
     controller: IModelController;
     setup(routers: Map<string, express.Router>);
     getModelFactoryByPath(path: string): IModelFactory;
+    getReferenceType(refName: string): string;
+    instanciateReference(type: string, data: any): any;
 }
 
 export interface IModelActions {
     query(_: _, filter?: any, parameters?: IQueryParameters): any;
-    read(_: _, _id: string, parameters?: IFetchOptions): any;
+    read(_: _, _id: string, parameters?: IFetchParameters): any;
     create(_: _, item: any): any;
     update(_: _, _id: string, item: any, options?: any): any;
     createOrUpdate(_: _, _id: any, item: any, options?: any): any;
@@ -41,11 +43,11 @@ export interface IModelActions {
 }
 
 export interface IModelHelper {
-    fetchInstances(_, filter?: any, options?: IQueryParameters, serializeOptions?: ISerializeOptions): any[];
-    fetchInstance(_, _id: string, options?: IFetchOptions, serializeOptions?: ISerializeOptions): any;
+    fetchInstances(_, filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions): any[];
+    fetchInstance(_, _id: string, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions): any;
     saveInstance(_, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions): any;
     deleteInstance(_: _, instance: any): any;
-    serialize(instance: any, options?: ISerializeOptions): any;
+    serialize(instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
     updateValues(instance: any, item: any, options?: any): void;
     getMetadata(instance: any, metadataName: string): any;
 }
@@ -62,7 +64,7 @@ export interface IQueryParameters {
     includes?: string;
 }
 
-export interface IFetchOptions {
+export interface IFetchParameters {
     includes?: any;
     ref?: string;
 }
@@ -75,7 +77,7 @@ export interface ISaveParameters {
 export interface ISerializeOptions {
     modelFactory?: IModelFactory;
     ignoreNull?: boolean;
-    ignoreRef?: boolean;
+    serializeRef?: boolean;
 }
 
 /**

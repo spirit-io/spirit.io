@@ -5,7 +5,7 @@ import {
     IModelActions,
     IModelFactory,
     IQueryParameters,
-    IFetchOptions,
+    IFetchParameters,
     ISaveParameters
 } from '../interfaces';
 
@@ -22,10 +22,10 @@ export abstract class ModelControllerBase implements IModelController {
                 throw new Error(`Invalid where filter: ${where}`);
             }
         }
+
         let includes: string = req.query['includes'];
         let queryParams: IQueryParameters = { includes: includes };
-        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, { ignoreNull: true, ignoreRef: true });
-
+        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, { ignoreNull: true, serializeRef: true });
         //let result = this.modelFactory.actions.query(_, where, { includes: includes });
         res.json(result);
     }
@@ -34,8 +34,8 @@ export abstract class ModelControllerBase implements IModelController {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let includes: string = req.query['includes'];
-        let fetchOpt: IFetchOptions = _ref ? { includes: includes, ref: _ref } : {};
-        let result = this.modelFactory.helper.fetchInstance(_, _id, fetchOpt, { ignoreNull: true, ignoreRef: true });
+        let fetchOpt: IFetchParameters = _ref ? { includes: includes, ref: _ref } : {};
+        let result = this.modelFactory.helper.fetchInstance(_, _id, fetchOpt, { ignoreNull: true, serializeRef: true });
 
         //let result = this.modelFactory.actions.read(_, _id, readOptions);
         if (!result) {
@@ -48,14 +48,13 @@ export abstract class ModelControllerBase implements IModelController {
     create = (req: Request, res: Response, _: _): void => {
         let item: any = req['body'];
         let inst = new this.modelFactory.targetClass.prototype.constructor();
-        this.modelFactory.helper.saveInstance(_, inst, item, null, { ignoreNull: true, ignoreRef: true });
-        let result = this.modelFactory.helper.serialize(inst, { ignoreNull: true, ignoreRef: true });
+        let result = this.modelFactory.helper.saveInstance(_, inst, item, null, { ignoreNull: true, serializeRef: true });
 
         // let result = this.modelFactory.actions.create(_, item);
         res.status(201).json(result);
     }
 
-    private _update = (_: _, params: ISaveParameters | IFetchOptions = {}, req: Request, res: Response): void => {
+    private _update = (_: _, params: ISaveParameters | IFetchParameters = {}, req: Request, res: Response): void => {
         let _id: string = req.params['_id'];
         let _ref: string = req.params['_ref'];
         let item: any = req['body'];
@@ -70,7 +69,7 @@ export abstract class ModelControllerBase implements IModelController {
             params.ref = _ref;
         }
         let inst = this.modelFactory.helper.fetchInstance(_, _id, params);
-        let result = this.modelFactory.helper.saveInstance(_, inst, data, params, { ignoreNull: true, ignoreRef: true });
+        let result = this.modelFactory.helper.saveInstance(_, inst, data, params, { ignoreNull: true, serializeRef: true });
         //let result = this.modelFactory.actions.update(_, _id, item, params);
 
         if (!_ref) {

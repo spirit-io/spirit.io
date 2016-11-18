@@ -45,24 +45,28 @@ export class Fixtures {
 
     static setup = (_, done) => {
         let firstSetup = true;
+        let connector;
         if (!_.context.__server) {
             let server: Server = _.context.__server = require('../..')(config);
             server.on('initialized', function () {
-                console.log("Server initialized");
+                console.log("========== Server initialized ============\n");
                 done();
             });
-            server.addConnector(new MockConnector());
+            console.log("\n========== Initialize server begins ============");
+            connector = new MockConnector();
+            server.addConnector(connector);
+            console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
             server.init(_);
             server.start(_, 3001);
         } else {
             firstSetup = false;
         }
         //
-        let connector = <MockConnector>ConnectorHelper.getConnector('mock');
+        connector = <MockConnector>ConnectorHelper.getConnector('mock');
         connector.resetStorage();
         //
         if (!firstSetup) done();
-        return _.context.__server
+        return _.context.__server;
     }
 
     static dumpStorage = () => {

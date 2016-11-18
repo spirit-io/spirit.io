@@ -71,9 +71,31 @@ export abstract class ModelFactoryBase {
         if (!_ref) throw new Error(`path '${path}' not found in '${this.collectionName}' factory's schema`);
 
         // specifying model when populate is necessary for multiple database usage
-        let mf = ModelRegistry.getFactoryByName(_ref)
+        let mf = ModelRegistry.getFactoryByName(_ref);
         if (!mf) throw new Error(`Class hasn't been registered for model '${path}'.`);
         return mf;
     }
+
+    getReferenceType(refName: string): string {
+        let typeIsPlural = this.$plurals.indexOf(refName) !== -1;
+        return this.$prototype[refName] && (typeIsPlural ? this.$prototype[refName][0] && this.$prototype[refName][0].ref : this.$prototype[refName].ref);
+    }
+
+    instanciateReference(type: string, data: any): any {
+        let mf = ModelRegistry.getFactoryByName(type);
+        let constructor = mf.targetClass.prototype.constructor;
+        if (data instanceof constructor) {
+            return data;
+        } else if (typeof data === 'string') {
+            data = {
+                _id: data
+            };
+        }
+        //console.log(`Instanciate reference ${type} with data: ${require('util').inspect(data, null, 2)}`);
+        let inst = new constructor();
+        if (data) mf.helper.updateValues(inst, data);
+        return inst;
+    }
+
 
 }

@@ -10,7 +10,7 @@ export abstract class ModelBase {
 
     constructor(item: any = {}) {
         this._db = AdminHelper.model(this.constructor);
-        this.updateValues(item);
+        if (Object.keys(item).length > 0) this.updateValues(item);
     }
 
     get id(): String {

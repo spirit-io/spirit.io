@@ -51,7 +51,8 @@ export class Middleware {
 
     setErrorHandler() {
         this.app.use(function (err: Error, req: Request, res: Response, _: _) {
-            //console.error(err.stack);
+
+            console.error(`*****\nError handled when processing HTTP request\n\t- ${req.method} ${req.url}\n\t- Data: ${JSON.stringify(req['body'])}\n\t- ${err.stack}\n*****`);
             if (res.headersSent) {
                 return;
             }

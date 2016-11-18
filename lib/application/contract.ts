@@ -26,15 +26,15 @@ export class Contract {
             }
         }
 
-        this.initBuiltInModels();
+        // this.initBuiltInModels();
         this.initExtendsModels();
         return this;
     }
 
-    private initBuiltInModels() {
-        this._builtInModels = {}
-        // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
-    };
+    // private initBuiltInModels() {
+    //     this._builtInModels = {}
+    //     // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
+    // };
 
     private initExtendsModels() {
         // set models locations
@@ -49,27 +49,29 @@ export class Contract {
         this._extendsModels = this.config.models;
     };
 
-    public get builtInModels(): any {
-        return this._builtInModels;
-    }
 
-    public get extendsModels(): any {
-        return this._extendsModels;
-    }
 
     public get modelsLocations(): string[] {
         return this._modelsLocation;
     }
 
-    public get models(): Map<string, IModelOptions> {
-        let merged: any = objectHelper.clone(this.builtInModels, true);
-        objectHelper.merge(this.extendsModels, merged);
-        let _models = new Map();
-        Object.keys(merged).forEach(function (key: string) {
-            _models.set(key, merged[key]);
-        }, []);
-        return _models;
-    }
+    // public get builtInModels(): any {
+    //     return this._builtInModels;
+    // }
+
+    // public get extendsModels(): any {
+    //     return this._extendsModels;
+    // }
+
+    // public get models(): Map<string, IModelOptions> {
+    //     let merged: any = objectHelper.clone(this.builtInModels, true);
+    //     objectHelper.merge(this.extendsModels, merged);
+    //     let _models = new Map();
+    //     Object.keys(merged).forEach(function (key: string) {
+    //         _models.set(key, merged[key]);
+    //     }, []);
+    //     return _models;
+    // }
 
 
 }
