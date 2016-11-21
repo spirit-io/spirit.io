@@ -11,6 +11,7 @@
   },
   "author": "Teddy Chambard",
   "license": "MIT",
+  "repository": "https://github.com/spirit-io/spirit.io",
   "dependencies": {
     "@types/body-parser": "0.0.33",
     "@types/express": "^4.0.33",
