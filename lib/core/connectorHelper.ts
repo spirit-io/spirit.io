@@ -20,8 +20,8 @@ export class ConnectorHelper {
         _.context['connectors'].set(ds, connector);
     }
 
-    public static createModelFactory(modelClass: any): IModelFactory {
+    public static createModelFactory(name: string, modelClass: any): IModelFactory {
         let datasource: string = modelClass._datasource || _.context.__defaultDatasource || 'mongodb';
-        return ConnectorHelper.getConnector(datasource).createModelFactory(modelClass);
+        return ConnectorHelper.getConnector(datasource).createModelFactory(name, modelClass);
     }
 }

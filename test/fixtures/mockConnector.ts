@@ -4,7 +4,7 @@ import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../li
 import { helper as objectHelper } from '../../lib/utils'
 import { Connection } from 'mongoose';
 import express = require('express');
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 
 function ensureId(item: any) {
     item._id = item._id || uuid.v4();
@@ -131,7 +131,7 @@ class MockActions implements IModelActions {
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         if (options && options.ref) {
             let key = options.ref;
-            if (this.modelFactory.$fields.indexOf(key) !== -1) {
+            if (this.modelFactory.$fields.has(key)) {
                 storage[this.modelFactory.collectionName][_id] = storage[this.modelFactory.collectionName][_id] || {};
                 storage[this.modelFactory.collectionName][_id][key] = storedItem;
             }
@@ -173,13 +173,15 @@ class MockController extends ModelControllerBase implements IModelController {
 }
 
 class MockFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(targetClass: any) {
-        super(targetClass);
+    constructor(name: string, targetClass: any) {
+        super(name, targetClass);
     }
 
     setup(routers: Map<string, express.Router>) {
-        super.setup(routers, new MockActions(this), new MockHelper(this), new MockController(this));
+        super.init(routers, new MockActions(this), new MockHelper(this), new MockController(this));
     }
+
+    createSchema(): any { }
 }
 
 export class MockConnector implements IConnector {
@@ -199,8 +201,8 @@ export class MockConnector implements IConnector {
 
     connect(datasourceKey: string, parameters: any): any { }
 
-    createModelFactory(myClass: any): IModelFactory {
-        return new MockFactory(myClass);
+    createModelFactory(name: string, myClass: any): IModelFactory {
+        return new MockFactory(name, myClass);
     }
 
     resetStorage(): any {

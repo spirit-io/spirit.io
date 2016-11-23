@@ -66,12 +66,17 @@ describe('Spirit.io ORM Framework Tests:', () => {
         let myModelFactory: IModelFactory = ModelRegistry.getFactory("MyModel");
         trace && trace("$prototype:" + JSON.stringify(myModelFactory.$prototype, null, 2));
         expect(myModelFactory.$prototype).to.have.all.keys(myModelMeta.$properties);
-        expect(myModelFactory.$fields).to.have.members(myModelMeta.$properties);
+        expect(Array.from(myModelFactory.$fields.keys())).to.have.members(myModelMeta.$properties);
         expect(myModelFactory.$plurals).to.have.members(myModelMeta.$plurals);
 
-        expect(myModelFactory.$prototype._id).to.equal('string');
-        expect(myModelFactory.$prototype._createdAt).to.equal('Date');
-        expect(myModelFactory.$prototype._updatedAt).to.equal('Date');
+        expect(myModelFactory.$prototype._id).to.be.a('object');
+        expect(myModelFactory.$prototype._id.type).to.equal('string');
+        expect(myModelFactory.$prototype._id.readOnly).to.be.true;
+        expect(myModelFactory.$prototype._createdAt).to.be.a('object');
+        expect(myModelFactory.$prototype._createdAt.type).to.equal('Date');
+        expect(myModelFactory.$prototype._createdAt.readOnly).to.be.true;
+        expect(myModelFactory.$prototype._updatedAt).to.be.a('object');
+        expect(myModelFactory.$prototype._updatedAt.type).to.equal('Date');
 
         expect(myModelFactory.$prototype.pString).to.be.a('object');
         expect(myModelFactory.$prototype.pString.required).to.equal(true);
@@ -144,6 +149,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
             let m1: MyModel = new MyModel();
             db.updateValues(m1, null); // update with null data for test coverage
             db.saveInstance(_, m1, data);
+
             expect(m1.id).to.be.a("string");
             expect(m1.createdAt).to.be.a("Date");
             expect(m1.updatedAt).to.be.a("Date");

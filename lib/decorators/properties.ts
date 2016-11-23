@@ -19,8 +19,16 @@ export function index(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { index: true });
 }
 
+export function embedded(target: any, propertyKey: string) {
+    helpers.addMetadata(target.constructor, propertyKey, { embedded: true });
+}
+
+export function readonly(target: any, propertyKey: string) {
+    helpers.addMetadata(target.constructor, propertyKey, { readOnly: true });
+}
+
 export function reverse(refName: string) {
     return function fieldDecorator(target: Symbol, propertyKey: string): any {
-        helpers.addMetadata(target.constructor, propertyKey, null, {registerReverse: refName});
+        helpers.addMetadata(target.constructor, propertyKey, null, { registerReverse: refName });
     }
 }

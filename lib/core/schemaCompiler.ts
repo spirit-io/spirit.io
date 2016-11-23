@@ -20,10 +20,11 @@ interface ILoadedElement {
 }
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
-    let f: IModelFactory = ConnectorHelper.createModelFactory(myClass);
+    let f: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass);
     trace && trace(" => Release building model factory: ", f.collectionName);
     ModelRegistry.register(f);
-    myClass.__factory__ = null;
+    myClass.__factory__[collectionName] = null;
+    if (Object.keys(myClass.__factory__).length === 0) myClass.__factory__ = null;
     return f;
 }
 
@@ -223,8 +224,11 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 let sf: ts.SourceFile = <ts.SourceFile>node.parent;
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
                 let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
-                if (superModelFactory) modelFactory.$prototype = objectHelper.clone(superModelFactory.$prototype);
-                else trace && trace("No model factory found for super class: ", superClassName);
+                if (superModelFactory) {
+                    objectHelper.merge(superModelFactory.$prototype, modelFactory.$prototype);
+                } else {
+                    trace && trace("No model factory found for super class: ", superClassName);
+                }
                 inspectClass(superClass, modelFactory);
             }
         }

@@ -1,9 +1,12 @@
 import { _ } from 'streamline-runtime';
 import { AdminHelper } from '../core/adminHelper';
 import { IModelHelper } from '../interfaces';
+import { readonly } from '../../lib/decorators';
 
 export abstract class ModelBase {
+    @readonly
     protected _id: string;
+    @readonly
     protected _createdAt: Date;
     protected _updatedAt: Date;
     private _db: IModelHelper;

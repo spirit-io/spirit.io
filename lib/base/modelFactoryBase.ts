@@ -1,19 +1,51 @@
 import { _ } from 'streamline-runtime';
 import { Router, RequestHandler } from 'express';
-import { IModelActions, IModelHelper, IModelController, IModelFactory } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 
-let trace;// = console.log;
+let trace = console.log;
 
-export abstract class ModelFactoryBase {
+
+class Field implements IField {
+    name: string;
+    isPlural: boolean = false;
+    isReference: boolean = false;
+    isReverse: boolean = false;
+    isEmbedded: boolean = false;
+    isReadOnly: boolean = false;
+    isUnique: boolean = false;
+    isRequired: boolean = false;
+    isIndexed: boolean = false;
+
+    constructor(key: string, factory: IModelFactory) {
+        this.name = key;
+        if (factory.$plurals.indexOf(key) !== -1) this.isPlural = true;
+        if (factory.$references.hasOwnProperty(key)) {
+            this.isReference = true;
+            if (factory.$references[key].$reverse) this.isReverse = true;
+        }
+
+        if (factory.$prototype.hasOwnProperty(key)) {
+            this.isReadOnly = factory.$prototype[key].readOnly;
+            this.isEmbedded = factory.$prototype[key].embedded;
+            this.isUnique = factory.$prototype[key].unique;
+            this.isRequired = factory.$prototype[key].required;
+            this.isIndexed = factory.$prototype[key].index;
+        }
+    }
+}
+
+export abstract class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
-    public $fields: string[];
+    public $fields: Map<string, IField>;
+
+    public $readOnly: string[];
     public $plurals: string[];
     public $references: any;
     public $prototype: Object;
@@ -22,22 +54,24 @@ export abstract class ModelFactoryBase {
     public controller: IModelController;
     public datasource: string;
 
-    constructor(targetClass: any) {
-        this.collectionName = targetClass._collectionName;
+    constructor(name: string, targetClass: any) {
+        this.collectionName = name;
         this.targetClass = targetClass;
-        this.$prototype = targetClass.__factory__.$prototype || {};
-        this.$properties = targetClass.__factory__.$properties || [];
-        this.$plurals = targetClass.__factory__.$plurals || [];
-        this.$statics = targetClass.__factory__.$statics || [];
-        this.$methods = targetClass.__factory__.$methods || [];
-        this.$references = targetClass.__factory__.$references || {};
-
+        let tempFactory = targetClass.__factory__[name];
+        this.$prototype = tempFactory.$prototype || {};
+        this.$properties = tempFactory.$properties || [];
+        this.$plurals = tempFactory.$plurals || [];
+        this.$statics = tempFactory.$statics || [];
+        this.$methods = tempFactory.$methods || [];
+        this.$references = tempFactory.$references || {};
+        this.$fields = new Map();
     }
 
-    setup(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController) {
-        trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype, null, 2)}`)
-        this.$fields = this.$properties.concat(Object.keys(this.$references));
-
+    init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
+        trace && trace(`Prototype registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype, null, 2)}`)
+        this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
+            this.$fields.set(key, new Field(key, this));
+        });
         this.actions = actions;
         this.helper = helper;
         this.controller = controller;
@@ -93,9 +127,12 @@ export abstract class ModelFactoryBase {
         }
         //console.log(`Instanciate reference ${type} with data: ${require('util').inspect(data, null, 2)}`);
         let inst = new constructor();
-        if (data) mf.helper.updateValues(inst, data);
+        if (data) mf.helper.updateValues(inst, data, { deleteMissing: true });
         return inst;
     }
+
+    abstract createSchema(): any;
+    abstract setup(routers: Map<string, Router>): void;
 
 
 }

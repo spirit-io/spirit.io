@@ -18,7 +18,8 @@ export interface IModelFactory {
     collectionName: string;
     datasource: string;
     $properties: string[];
-    $fields: string[];
+    $fields: Map<string, IField>;
+    $readOnly: string[];
     $plurals: string[];
     $statics: string[];
     $methods: string[];
@@ -27,10 +28,23 @@ export interface IModelFactory {
     actions: IModelActions;
     helper: IModelHelper;
     controller: IModelController;
+    init(routers: Map<string, express.Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController);
     setup(routers: Map<string, express.Router>);
     getModelFactoryByPath(path: string): IModelFactory;
     getReferenceType(refName: string): string;
+    createSchema(): any;
     instanciateReference(type: string, data: any): any;
+}
+
+export interface IField {
+    isPlural: boolean;
+    isReference: boolean;
+    isReverse: boolean;
+    isEmbedded: boolean;
+    isReadOnly: boolean;
+    isUnique: boolean;
+    isRequired: boolean;
+    isIndexed: boolean;
 }
 
 export interface IModelActions {
@@ -57,7 +71,7 @@ export interface IConnector {
     datasource: string;
     config: any;
     connect(datasourceKey: string, parameters: any): any;
-    createModelFactory(myClass: any): IModelFactory;
+    createModelFactory(name: string, myClass: any): IModelFactory;
 }
 
 export interface IQueryParameters {
@@ -78,6 +92,7 @@ export interface ISerializeOptions {
     modelFactory?: IModelFactory;
     ignoreNull?: boolean;
     serializeRef?: boolean;
+    ignoreReadOnly?: boolean;
 }
 
 /**

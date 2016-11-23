@@ -6,10 +6,13 @@ import {
     IQueryParameters,
     IFetchParameters,
     ISaveParameters,
-    ISerializeOptions
+    ISerializeOptions,
+    IField
 } from '../interfaces';
 import { ModelRegistry, AdminHelper } from '../core';
 import { helper as objectHelper } from '../utils';
+
+let trace;// = console.log;
 
 export abstract class ModelHelperBase implements IModelHelper {
 
@@ -83,6 +86,7 @@ export abstract class ModelHelperBase implements IModelHelper {
     }
 
     fetchInstances(_: _, filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions) {
+        trace && trace("\n\n\n## Fetch instances ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let instances: any = [];
         let docs = this.modelFactory.actions.query(_, filter, parameters);
@@ -95,6 +99,7 @@ export abstract class ModelHelperBase implements IModelHelper {
     }
 
     fetchInstance(_: _, _id: string, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
+        trace && trace("\n\n\n## Fetch instance ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let doc = this.modelFactory.actions.read(_, _id, parameters);
         if (!doc) return null;
@@ -112,6 +117,7 @@ export abstract class ModelHelperBase implements IModelHelper {
     }
 
     saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
+        trace && trace("\n\n\n## Save instance ##");
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
         let serialized = this.serialize(instance, null, serializeOptions);
@@ -129,86 +135,91 @@ export abstract class ModelHelperBase implements IModelHelper {
         options = options || {};
         parameters = parameters || {};
         // consider correct modelFactory (for relation potentially)
-        let mf = options.modelFactory || this.modelFactory;
+        let mf: IModelFactory = options.modelFactory || this.modelFactory;
         let item: any = {};
 
         let includes = parameters.includes ? parameters.includes.map((i) => { return typeof i === 'object' ? i.path : i }) : [];
-        let sTrace;// = console.log;
-        for (let key of mf.$fields) {
-            sTrace && sTrace("====== Field ", key);
+
+        trace && trace("********** Begin serialization *************");
+        //console.log("Instance: ", require('util').inspect(instance, null, 2));
+        for (var [key, field] of mf.$fields) {
+            trace && trace("====== Field ", key);
             if (instance[key] !== undefined) {
-                if (mf.$references.hasOwnProperty(key) && typeof instance[key] === 'object') {
-                    if (mf.$plurals.indexOf(key) !== -1) {
-                        sTrace && sTrace("Plural ref ", key);
+                // References
+                if (field.isReference && typeof instance[key] === 'object') {
+                    if (field.isPlural) {
+                        trace && trace("Plural ref ", key);
                         instance[key] = Array.isArray(instance[key]) ? instance[key] : [instance[key]];
                         let notInclude = options.serializeRef && includes.indexOf(key) === -1;
                         item[key] = instance[key].map((inst) => {
-                            // only ids if reference serialization is not expected
-                            if (notInclude && typeof inst === 'object' && inst._id) {
-                                sTrace && sTrace("Not include ref ", key);
+                            // only ids if reference serialization is not expected and it is not embedded
+                            if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
+                                trace && trace("Not include ref ", key);
                                 return inst._id;
                             }
                             // serialize reference
                             else {
-                                sTrace && sTrace("Include ref ", key);
+                                trace && trace("Include ref ", key);
                                 let _db = AdminHelper.model(inst.constructor);
                                 let sRef = _db.serialize(inst, null, options);
-                                if (sRef && sRef._id) return sRef;
+                                if (sRef && sRef._id || field.isEmbedded) return sRef;
                             }
                         }).filter((inst) => { return inst != null });
                     } else {
-                        sTrace && sTrace("Singular ", key);
-                        // only ids if reference serialization is not expected
-                        if (options.serializeRef && includes.indexOf(key) === -1 && typeof instance[key] === 'object' && instance[key]._id) {
-                            sTrace && sTrace("Not include ref ", key);
+                        trace && trace("Singular ", key);
+                        // only ids if reference serialization is not expected and it is not embedded
+                        if (options.serializeRef && includes.indexOf(key) === -1 && instance[key]._id && !field.isEmbedded) {
+                            trace && trace("Not include ref ", key);
                             item[key] = instance[key]._id;
                         }
                         // serialize reference
                         else {
-                            sTrace && sTrace("Include ref ", key);
+                            trace && trace("Include ref ", key);
                             let _db = AdminHelper.model(instance[key].constructor);
                             let sRef = _db.serialize(instance[key], null, options);
-                            if (sRef && sRef._id) item[key] = sRef
+                            if (sRef && sRef._id || field.isEmbedded) item[key] = sRef
                         }
                     }
                 }
                 // serialize as it is
                 else {
-                    sTrace && sTrace("Simple prop ", key);
+                    trace && trace("Simple prop ", key);
                     item[key] = instance[key];
                 }
 
-            } else if (!options.ignoreNull) {
-                sTrace && sTrace("Set to undefined ", key);
-                item[key] = undefined;
             }
             else {
-                sTrace && sTrace("IGNORE Field ", key);
+                trace && trace("IGNORE Field ", key);
             }
         }
-        sTrace && sTrace("Serialize:", item);
+        trace && trace("Serialize:", item);
+        trace && trace("********** End serialization *************\n");
+
         return item;
     }
 
     updateValues(instance: any, item: any, options?: any): void {
+        trace && trace("## Update values ##");
         if (!instance || !item) return null;
         options = options || {};
         // consider correct modelFactory (for relation potentially)
-        let mf = options.modelFactory || this.modelFactory;
+        let mf: IModelFactory = options.modelFactory || this.modelFactory;
         // update new values
         for (let key of Object.keys(item)) {
-            if (mf.$fields.indexOf(key) !== -1) {
-                //console.log(`Update key ${key} with value: ${item[key]}`)
+            if (mf.$fields.has(key)) {
+                trace && trace(`Update key ${key} with value: ${require('util').inspect(item[key], null, 1)}`)
 
                 // instanciate references
                 if (this.modelFactory.$references[key]) {
                     let type = this.modelFactory.getReferenceType(key);
                     let refValue;
-                    if (Array.isArray(item[key]) && item[key].length) {
+                    if (Array.isArray(item[key])) {
                         refValue = [];
-                        item[key].forEach((it) => {
-                            if (it) refValue.push(this.modelFactory.instanciateReference(type, it));
-                        });
+                        if (item[key].length) {
+                            item[key].forEach((it) => {
+                                if (it) refValue.push(this.modelFactory.instanciateReference(type, it));
+                            });
+                        }
                     } else {
                         if (item[key]) refValue = this.modelFactory.instanciateReference(type, item[key]);
                     }
@@ -222,8 +233,8 @@ export abstract class ModelHelperBase implements IModelHelper {
         }
         if (options.deleteMissing) {
             // reinitialize deleted values
-            for (let key of mf.$fields) {
-                if (key[0] !== '_' && item[key] === undefined) {
+            for (var [key, field] of mf.$fields) {
+                if (!field.isReadOnly && item[key] === undefined) {
                     instance[key] = undefined;
                 }
             }
