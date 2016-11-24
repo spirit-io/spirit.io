@@ -98,10 +98,12 @@ export abstract class ModelHelperBase implements IModelHelper {
         return instances;
     }
 
-    fetchInstance(_: _, _id: string, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstance(_: _, filter: string, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instance ##");
         parameters = this._patchParameters(parameters, serializeOptions);
-        let doc = this.modelFactory.actions.read(_, _id, parameters);
+        let doc = this.modelFactory.actions.read(_, filter, parameters);
+
+
         if (!doc) return null;
         let inst;
         if (parameters && parameters.ref) {
