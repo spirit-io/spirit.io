@@ -25,6 +25,7 @@ export interface IModelFactory {
     $methods: string[];
     $references: any;
     $prototype: any;
+    $hooks: Map<string, Function>;
     actions: IModelActions;
     helper: IModelHelper;
     controller: IModelController;
@@ -32,8 +33,8 @@ export interface IModelFactory {
     setup(routers: Map<string, express.Router>);
     getModelFactoryByPath(path: string): IModelFactory;
     getReferenceType(refName: string): string;
-    createSchema(): any;
     instanciateReference(type: string, data: any): any;
+    getHookFunction(name: string): Function;
 }
 
 export interface IField {
@@ -50,10 +51,10 @@ export interface IField {
 export interface IModelActions {
     query(_: _, filter?: any, parameters?: IQueryParameters): any;
     read(_: _, filter: any, parameters?: IFetchParameters): any;
-    create(_: _, item: any): any;
+    create(_: _, item: any, options?: any): any;
     update(_: _, _id: string, item: any, options?: any): any;
-    createOrUpdate(_: _, _id: any, item: any, options?: any): any;
     delete(_: _, _id: any): any;
+    //count(_, filter: any): number;
 }
 
 export interface IModelHelper {
@@ -64,6 +65,7 @@ export interface IModelHelper {
     serialize(instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
     updateValues(instance: any, item: any, options?: any): void;
     getMetadata(instance: any, metadataName: string): any;
+    isModified(instance: any, property: string): boolean;
 }
 
 
@@ -85,7 +87,8 @@ export interface IFetchParameters {
 
 export interface ISaveParameters {
     ref?: string,
-    deleteMissing?: boolean
+    deleteMissing?: boolean;
+    deleteReadOnly?: boolean;
 }
 
 export interface ISerializeOptions {

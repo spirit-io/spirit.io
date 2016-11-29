@@ -27,8 +27,20 @@ export function readonly(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { readOnly: true });
 }
 
-export function reverse(refName: string) {
-    return function fieldDecorator(target: Symbol, propertyKey: string): any {
+export function invisible(target: any, propertyKey: string) {
+    helpers.addMetadata(target.constructor, propertyKey, { invisible: true });
+}
+
+
+
+export function reverse(refName: string): any {
+    return function (target: Symbol, propertyKey: string): any {
         helpers.addMetadata(target.constructor, propertyKey, null, { registerReverse: refName });
+    }
+}
+
+export function hook(name: string): any {
+    return function (target: Symbol, propertyKey: string): any {
+        helpers.addHook(target, propertyKey, name);
     }
 }

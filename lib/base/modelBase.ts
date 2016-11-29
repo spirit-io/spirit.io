@@ -46,5 +46,13 @@ export abstract class ModelBase {
         this._db.updateValues(this, item, options);
     }
 
+    getMetadata(metadataName: string): any {
+        return this._db.getMetadata(this, metadataName);
+    }
+
+    isModified(property: string): boolean {
+        return this._db.isModified(this, property);
+    }
+
 }
 Object.seal(ModelBase);

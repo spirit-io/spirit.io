@@ -18,6 +18,7 @@ exports.initFactory = function (target: any) {
     tempFactory.$statics = tempFactory.$statics || [];
     tempFactory.$methods = tempFactory.$methods || [];
     tempFactory.$references = tempFactory.$references || {};
+    tempFactory.$hooks = tempFactory.$hooks || new Map();
     return tempFactory;
 };
 
@@ -45,5 +46,13 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
             factory.$prototype[key] = meta;
         }
     }
+    return target;
+}
+
+export function addHook(target: Symbol, propertyKey: string, name: string) {
+    // Get model factory
+    let factory: IModelFactory = exports.initFactory(target);
+    // Set hook
+    factory.$hooks.set(name, target[propertyKey]);
     return target;
 }

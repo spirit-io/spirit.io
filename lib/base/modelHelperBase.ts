@@ -98,7 +98,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         return instances;
     }
 
-    fetchInstance(_: _, filter: string, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstance(_: _, filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instance ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let doc = this.modelFactory.actions.read(_, filter, parameters);
@@ -120,10 +120,29 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Save instance ##");
+        if (!instance._id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
+
+        let exists, item;
+        if (instance._id) {
+            instance.$snapshot = this.fetchInstance(_, instance._id);
+        } else {
+            instance.$isCreated;
+        }
+
+        // Call beforeSave hook
+        this.applyHook(_, 'beforeSave', instance);
         let serialized = this.serialize(instance, null, serializeOptions);
-        let item = this.modelFactory.actions.createOrUpdate(_, instance._id, serialized, options);
+
+        if (!instance.$isCreated) {
+            options.deleteReadOnly = true;
+            item = this.modelFactory.actions.update(_, instance._id, serialized, options);
+        } else {
+            item = this.modelFactory.actions.create(_, serialized, options);
+        }
+
+
         this.updateValues(instance, item, { deleteMissing: true });
         if (!serializeOptions) return instance;
         return this.serialize(instance, null, serializeOptions);
@@ -246,7 +265,28 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     }
 
+    applyHook(_, name: string, instance: any) {
+        let fn: Function = this.modelFactory.getHookFunction(name);
+        if (!fn) return;
+        try {
+            instance.__hooksRunning = instance.__hooksRunning || {};
+            if (!instance.__hooksRunning[name]) {
+                instance.__hooksRunning[name] = true;
+                fn(_, instance);
+            }
+        } catch (e) {
+            throw new Error(`An error occured while applying hook '${name}: ${e.message}`);
+        } finally {
+            delete instance.__hooksRunning[name];
+        }
+    }
+
     getMetadata(instance: any, metadataName: string): any {
         return instance[metadataName];
+    }
+
+    isModified(instance: any, property: string): boolean {
+        if (!instance.$snapshot) return false;
+        return instance[property] === undefined || instance[property] !== instance.$snapshot[property];
     }
 }

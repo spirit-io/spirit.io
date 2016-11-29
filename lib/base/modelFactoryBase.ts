@@ -49,6 +49,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public $plurals: string[];
     public $references: any;
     public $prototype: Object;
+    public $hooks: Map<string, Function>;
     public actions: IModelActions;
     public helper: IModelHelper;
     public controller: IModelController;
@@ -64,21 +65,25 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.$statics = tempFactory.$statics || [];
         this.$methods = tempFactory.$methods || [];
         this.$references = tempFactory.$references || {};
+        this.$hooks = tempFactory.$hooks || new Map();
         this.$fields = new Map();
     }
 
     init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
-        trace && trace(`Prototype registered for collection ${this.collectionName}: ${require('util').inspect(this.$prototype, null, 2)}`)
+        trace && trace(`\n============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
+
+        // compute fields
         this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
             this.$fields.set(key, new Field(key, this));
         });
+
         this.actions = actions;
         this.helper = helper;
         this.controller = controller;
         let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
         let v1 = routers.get('v1');
         if (this.actions) {
-            trace && trace(`Register routes: /${routeName}`);
+            trace && trace(`\n--> Register routes: /${routeName}`);
             // handle main requests
             v1.get(`/${routeName}`, this.controller.query);
             v1.get(`/${routeName}/:_id`, this.controller.read);
@@ -131,7 +136,10 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return inst;
     }
 
-    abstract createSchema(): any;
+    getHookFunction(name: string): Function {
+        return this.$hooks.get(name);
+    }
+
     abstract setup(routers: Map<string, Router>): void;
 
 

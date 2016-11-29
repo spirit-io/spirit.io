@@ -162,9 +162,9 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(m1.aNumber).to.have.members([0, 1, 2]);
             expect(m1.aBoolean).to.have.members([false, true, false]);
             expect(m1.inv).to.be.a("object");
-            expect(objectHelper.areEqual(m1.inv, mRel1)).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[0], mRel2)).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[1], mRel3)).to.be.true;
+            expect(objectHelper.areEqual(m1.inv.serialize(), mRel1.serialize())).to.be.true;
+            expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
+            expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
 
         });
     });

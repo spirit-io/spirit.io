@@ -28,9 +28,9 @@ export class Server extends EventEmitter {
         this.config = config;
     }
 
-    init(_: _) {
+    init(_: _, midSettings?: any) {
         this.app = express();
-        this._middleware = new Middleware(this.app);
+        this._middleware = new Middleware(this.app, midSettings);
         this._contract = new Contract(this.config).init(_);
         // configure middleware standard rules
         this._middleware.configure();

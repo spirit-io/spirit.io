@@ -1,4 +1,4 @@
-import { collection, unique, required, index, reverse, embedded, readonly } from '../../lib/decorators';
+import { collection, unique, required, index, reverse, embedded, readonly, hook } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 
 @collection({ datasource: 'mock:ds' })
@@ -55,13 +55,18 @@ export class MyModel extends ModelBase {
     invs: MyModelRel[];
 
     aMethod(_, params: any): string {
-        this.pString = params.pString;
+        if (params.pString) this.pString = params.pString;
         this.save(_);
         return `aMethod has been called with parameters ${JSON.stringify(params)}`;
     }
 
     static aService(_, params: any): any {
         return { c: (params.a + params.b).toFixed(2) };
+    }
+
+    @hook('beforeSave')
+    static beforeSave(_, instance: MyModel) {
+        instance.aMethod(_, 'test');
     }
 }
 

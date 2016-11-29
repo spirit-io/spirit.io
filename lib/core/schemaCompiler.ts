@@ -125,8 +125,23 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 return { type: String, ref: type };
             }
 
+            function isHookFunction(): boolean {
+                if (!decorators) return false;
+                for (var i = 0; i < decorators.length; i++) {
+                    let match = decorators[i].name && decorators[i].name.match(/\w+/g);
+                    if (match && match[0] === 'hook') {
+                        return true;
+                    }
+                };
+                return false;
+            }
+
             let symbol: ts.Symbol;
             let type: string;
+            let decorators: any[];
+            if (member.decorators) {
+                decorators = member.decorators.map(inspectDecorator);
+            }
 
             switch (member && member.kind) {
                 case ts.SyntaxKind.VariableDeclaration:
@@ -136,7 +151,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 case ts.SyntaxKind.MethodDeclaration:
                     log("Member", member);
                     symbol = checker.getSymbolAtLocation(member.name);
-                    if (!isPrivate(member)) {
+                    // do not consider hooks and private functions
+                    if (!isHookFunction() && !isPrivate(member)) {
                         if (isStatic(member)) {
                             modelFactory.$statics.push(symbol.name);
                         } else {

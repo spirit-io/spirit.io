@@ -141,19 +141,6 @@ class MockActions implements IModelActions {
         return item;
     }
 
-    createOrUpdate(_: _, _id: any, item: any, options?: any) {
-        // console.log("Create or update document with values;", item);
-        let doc = this.read(_, _id);
-        if (doc) {
-            // console.log(`update ${_id}`);
-            if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
-            return this.update(_, _id, item, options);
-        } else {
-            // console.log(`create ${_id}`);
-            return this.create(_, item, options);
-        }
-    };
-
     delete(_: _, _id: any) {
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         delete storage[this.modelFactory.collectionName][_id];
