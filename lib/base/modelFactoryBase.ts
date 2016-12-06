@@ -1,6 +1,6 @@
 import { _ } from 'streamline-runtime';
 import { Request, Response, Router, RequestHandler } from 'express';
-import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IFetchParameters, IQueryParameters } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 
@@ -125,7 +125,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     getModelFactoryByPath(path: string): IModelFactory {
         let _treeEntry = this.$prototype[path];
         let _ref = _treeEntry ? (Array.isArray(_treeEntry) ? _treeEntry[0].ref : _treeEntry.ref) : null;
-        if (!_ref) throw new Error(`path '${path}' not found in '${this.collectionName}' factory's schema`);
+        if (!_ref) throw new Error(`path '${path}' not found in '${this.collectionName}' factory's prototype`);
 
         // specifying model when populate is necessary for multiple database usage
         let mf = ModelRegistry.getFactoryByName(_ref);
@@ -156,6 +156,38 @@ export abstract class ModelFactoryBase implements IModelFactory {
 
     getHookFunction(name: string): Function {
         return this.$hooks.get(name);
+    }
+
+    populateField(_: _, parameters: IFetchParameters | IQueryParameters = {}, item: any = {}, key: string): void {
+        let include = parameters.includes && parameters.includes.filter((i) => { return i.path === key; })[0];
+        if (include && item && item[key] != null) {
+            let type = this.getReferenceType(key);
+            let mf = this.getModelFactoryByPath(key);
+            let relValue;
+            if (Array.isArray(item[key])) {
+                relValue = [];
+                item[key].forEach_(_, (_, id) => {
+                    let ref = mf.actions.read(_, id);
+                    if (include.select) {
+                        let data = { _id: ref._id };
+                        data[include.select] = ref[include.select];
+                        relValue.push(data);
+                    } else {
+                        relValue.push(ref);
+                    }
+                });
+            } else {
+                let ref = mf.actions.read(_, item[key]);
+                if (include.select) {
+                    let data = { _id: ref._id };
+                    data[include.select] = ref[include.select];
+                    relValue = data;
+                } else {
+                    relValue = ref;
+                }
+            }
+            item[key] = relValue;
+        }
     }
 
     private executeService(req: Request, res: Response, _: _): void {
