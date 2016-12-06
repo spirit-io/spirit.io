@@ -1,6 +1,6 @@
 {
   "name": "spirit.io",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Extensible typescript ORM framework designed for MEAN stack",
   "main": "index.js",
   "scripts": {
