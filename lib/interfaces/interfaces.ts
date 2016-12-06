@@ -23,6 +23,7 @@ export interface IModelFactory {
     $plurals: string[];
     $statics: string[];
     $methods: string[];
+    $routes: IRoute[];
     $references: any;
     $prototype: any;
     $hooks: Map<string, Function>;
@@ -46,6 +47,12 @@ export interface IField {
     isUnique: boolean;
     isRequired: boolean;
     isIndexed: boolean;
+}
+
+export interface IRoute {
+    method: string;
+    path: string;
+    fn: Function;
 }
 
 export interface IModelActions {
@@ -102,8 +109,8 @@ export interface ISerializeOptions {
  * @param name string A collection name if you don't want to use the Class name'
  */
 export interface ICollection {
-    name?: string;
     datasource?: string;
+    persistent?: boolean;
 }
 
 /**

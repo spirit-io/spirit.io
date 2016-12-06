@@ -11,9 +11,7 @@ export class Contract {
     private _extendsModels: any;
     private _modelsLocation: string[] = [];
 
-    constructor(private config: any) { };
-
-    public init(_) {
+    constructor(private config: any) {
         if (this.config.defaultDatasource) {
             _.context.__defaultDatasource = this.config.defaultDatasource;
         }
@@ -28,8 +26,7 @@ export class Contract {
 
         // this.initBuiltInModels();
         this.initExtendsModels();
-        return this;
-    }
+    };
 
     // private initBuiltInModels() {
     //     this._builtInModels = {}

@@ -125,15 +125,24 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                 return { type: String, ref: type };
             }
 
-            function isHookFunction(): boolean {
+
+            function isSpecialFunction(_decorator: string): boolean {
                 if (!decorators) return false;
                 for (var i = 0; i < decorators.length; i++) {
                     let match = decorators[i].name && decorators[i].name.match(/\w+/g);
-                    if (match && match[0] === 'hook') {
+                    if (match && match[0] === _decorator) {
                         return true;
                     }
                 };
                 return false;
+            }
+
+            function isHookFunction(): boolean {
+                return isSpecialFunction('hook');
+            }
+
+            function isRouteFunction(): boolean {
+                return isSpecialFunction('route');
             }
 
             let symbol: ts.Symbol;
@@ -152,7 +161,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     log("Member", member);
                     symbol = checker.getSymbolAtLocation(member.name);
                     // do not consider hooks and private functions
-                    if (!isHookFunction() && !isPrivate(member)) {
+                    if (!isHookFunction() && !isRouteFunction() && !isPrivate(member)) {
                         if (isStatic(member)) {
                             modelFactory.$statics.push(symbol.name);
                         } else {
@@ -326,7 +335,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
     }
 
     function isNativeType(type: string): boolean {
-        return ['string', 'number', 'date', 'boolean', 'array'].indexOf(type.toLowerCase()) !== -1;
+        return ['string', 'number', 'date', 'boolean', 'array', 'object'].indexOf(type.toLowerCase()) !== -1;
     }
 
     function isModelClass(node: ts.Node): boolean {

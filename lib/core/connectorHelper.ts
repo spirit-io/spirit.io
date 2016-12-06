@@ -1,6 +1,9 @@
 import { _ } from 'streamline-runtime';
+import { Router } from 'express';
+import { NonPersistentModelFactory } from '../base';
 import { IModelFactory, IConnector } from '../interfaces';
 import { synchronize } from '../utils';
+
 
 export class ConnectorHelper {
 
@@ -21,7 +24,13 @@ export class ConnectorHelper {
     }
 
     public static createModelFactory(name: string, modelClass: any): IModelFactory {
-        let datasource: string = modelClass._datasource || _.context.__defaultDatasource || 'mongodb';
-        return ConnectorHelper.getConnector(datasource).createModelFactory(name, modelClass);
+        let tempFactory = modelClass.__factory__[name];
+        if (tempFactory.persistent === false) {
+            return new NonPersistentModelFactory(name, modelClass);
+        } else {
+            let datasource: string = tempFactory.datasource || _.context.__defaultDatasource || 'mongodb';
+            console.log(`Register model ${name} with datasource ${datasource}`)
+            return ConnectorHelper.getConnector(datasource).createModelFactory(name, modelClass);
+        }
     }
 }

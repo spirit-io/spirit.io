@@ -15,6 +15,9 @@ export function collection(options?: ICollection): any {
         // define datasource
         if (options.datasource) modelFactory.datasource = options.datasource;
 
+        // define persistency
+        if (options.persistent != null) modelFactory.persistent = options.persistent;
+
         // defines principal properties
         helpers.addMetadata(target, '_id', { type: 'string', readOnly: true }, { registerIn: '$properties' });
         helpers.addMetadata(target, '_createdAt', { type: 'Date', readOnly: true }, { registerIn: '$properties' });

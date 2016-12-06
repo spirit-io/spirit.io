@@ -44,3 +44,9 @@ export function hook(name: string): any {
         helpers.addHook(target, propertyKey, name);
     }
 }
+
+export function route(method: string, path: string): any {
+    return function (target: Symbol, propertyKey: string): any {
+        helpers.addRoute(target, propertyKey, method, path);
+    }
+}

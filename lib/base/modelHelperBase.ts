@@ -123,14 +123,12 @@ export abstract class ModelHelperBase implements IModelHelper {
         if (!instance._id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
-
         let exists, item;
         if (instance._id) {
             instance.$snapshot = this.fetchInstance(_, instance._id);
         } else {
             instance.$isCreated;
         }
-
         // Call beforeSave hook
         this.applyHook(_, 'beforeSave', instance);
         let serialized = this.serialize(instance, null, serializeOptions);

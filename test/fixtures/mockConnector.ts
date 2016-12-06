@@ -168,7 +168,6 @@ class MockFactory extends ModelFactoryBase implements IModelFactory {
         super.init(routers, new MockActions(this), new MockHelper(this), new MockController(this));
     }
 
-    createSchema(): any { }
 }
 
 export class MockConnector implements IConnector {

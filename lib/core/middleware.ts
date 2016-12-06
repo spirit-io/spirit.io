@@ -17,17 +17,14 @@ let auth = authentication();
 export class Middleware {
 
     routers: Map<string, Router>;
-    authMiddlewares: Map<string, Function>;
+    authMiddleware: Function;
 
-    constructor(private app: Application, midSettings: any) {
+    constructor(private app: Application, options?: any) {
+        options = options || {};
         this.routers = new Map();
         this.routers.set('v1', express.Router());
-        this.authMiddlewares = new Map();
-        if (midSettings && midSettings.auth) {
-            objectHelper.forEachKey(midSettings.auth, (key: string, fn: Function) => {
-                this.authMiddlewares.set(key, fn);
-            });
-        }
+        // set authentication middleware function
+        if (options.auth) this.authMiddleware = options.auth;
     }
 
     configure() {
@@ -36,25 +33,15 @@ export class Middleware {
             extended: true
         }));
 
-        this.app.use(methodOverride("X-HTTP-Method"));
-        this.app.use(methodOverride("X-HTTP-Method-Override"));
-        this.app.use(methodOverride("X-Method-Override"));
-        this.app.use(methodOverride("_method"));
-
         this.app.use(function (req: Request, res: Response, _: _) {
             _.context['request'] = req;
         });
 
-        this.app.get("/", (request: Request, response: Response) => {
-            response.json({
-                name: "Express application"
-            })
-        });
     }
 
     setApiRoutes() {
 
-        let apiAuth = auth.for('api').use(this.authMiddlewares.get('api') || function (req, res, _) {
+        let apiAuth = auth.for('api').use(this.authMiddleware || function (req, res, _) {
             // Default auth middleware does nothing 
             req.authenticated = true;
         });
@@ -71,7 +58,13 @@ export class Middleware {
                 return;
             }
             res.status(err['status'] || 500);
-            res.json({ error: err['error'] ? err['error'] : err.toString(), stack: err.stack });
+            res.json({
+                $diagnoses: [{
+                    $severity: 'error',
+                    $message: err['error'] ? err['error'] : err.toString(),
+                    $stack: err.stack
+                }]
+            });
         });
     }
 }

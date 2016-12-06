@@ -1,6 +1,6 @@
 import { _ } from 'streamline-runtime';
-import { Router, RequestHandler } from 'express';
-import { IModelActions, IModelHelper, IModelController, IModelFactory, IField } from '../interfaces'
+import { Request, Response, Router, RequestHandler } from 'express';
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 
@@ -36,6 +36,8 @@ class Field implements IField {
     }
 }
 
+
+
 export abstract class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
@@ -43,6 +45,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
+    public $routes: IRoute[]
     public $fields: Map<string, IField>;
 
     public $readOnly: string[];
@@ -54,19 +57,25 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public helper: IModelHelper;
     public controller: IModelController;
     public datasource: string;
+    public persistent: boolean = true;
 
     constructor(name: string, targetClass: any) {
         this.collectionName = name;
         this.targetClass = targetClass;
         let tempFactory = targetClass.__factory__[name];
+        if (tempFactory.persistent != null) this.persistent = tempFactory.persistent;
+        if (tempFactory.datasource) this.datasource = tempFactory.datasource;
+
         this.$prototype = tempFactory.$prototype || {};
         this.$properties = tempFactory.$properties || [];
         this.$plurals = tempFactory.$plurals || [];
         this.$statics = tempFactory.$statics || [];
         this.$methods = tempFactory.$methods || [];
+        this.$routes = tempFactory.$routes || [];
         this.$references = tempFactory.$references || {};
         this.$hooks = tempFactory.$hooks || new Map();
         this.$fields = new Map();
+        console.log(`Factory registered for class ${this.collectionName} with datasource ${this.datasource}`);
     }
 
     init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
@@ -77,31 +86,40 @@ export abstract class ModelFactoryBase implements IModelFactory {
             this.$fields.set(key, new Field(key, this));
         });
 
-        this.actions = actions;
-        this.helper = helper;
-        this.controller = controller;
         let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
         let v1 = routers.get('v1');
-        if (this.actions) {
-            trace && trace(`\n--> Register routes: /${routeName}`);
-            // handle main requests
-            v1.get(`/${routeName}`, this.controller.query);
-            v1.get(`/${routeName}/:_id`, this.controller.read);
-            v1.post(`/${routeName}`, this.controller.create);
-            v1.put(`/${routeName}/:_id`, this.controller.update);
-            v1.patch(`/${routeName}/:_id`, this.controller.patch);
-            v1.delete(`/${routeName}/:_id`, this.controller.delete);
-            // handle references requests
-            v1.get(`/${routeName}/:_id/:_ref`, this.controller.read);
-            v1.put(`/${routeName}/:_id/:_ref`, this.controller.update);
-            v1.patch(`/${routeName}/:_id/:_ref`, this.controller.patch);
+
+        if (this.persistent) {
+            this.actions = actions;
+            this.helper = helper;
+            this.controller = controller;
+
+            if (this.actions) {
+                trace && trace(`\n--> Register routes: /${routeName}`);
+                // handle main requests
+                v1.get(`/${routeName}`, this.controller.query);
+                v1.get(`/${routeName}/:_id`, this.controller.read);
+                v1.post(`/${routeName}`, this.controller.create);
+                v1.put(`/${routeName}/:_id`, this.controller.update);
+                v1.patch(`/${routeName}/:_id`, this.controller.patch);
+                v1.delete(`/${routeName}/:_id`, this.controller.delete);
+                // handle references requests
+                v1.get(`/${routeName}/:_id/:_ref`, this.controller.read);
+                v1.put(`/${routeName}/:_id/:_ref`, this.controller.update);
+                v1.patch(`/${routeName}/:_id/:_ref`, this.controller.patch);
+            }
+
+            // handle instance functions
+            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.executeMethod.bind(this) as any);
         }
 
-        if (this.helper) {
-            // handle execution requests
-            v1.post(`/${routeName}/([\$])service/:_name`, this.controller.executeService);
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.controller.executeMethod);
-        }
+        // handle static functions (available also on non persistent classes)
+        v1.post(`/${routeName}/([\$])service/:_name`, this.executeService.bind(this) as any);
+        this.$routes.forEach((route: IRoute) => {
+            let path = `/${routeName}${route.path}`;
+            v1[route.method](path, route.fn);
+        });
+
     }
 
     getModelFactoryByPath(path: string): IModelFactory {
@@ -140,7 +158,42 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return this.$hooks.get(name);
     }
 
+    private executeService(req: Request, res: Response, _: _): void {
+        let _name: string = req.params['_name'];
+        if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
+            res.sendStatus(404);
+            return;
+        }
+        let params = req.body;
+        let result = this.targetClass[_name](_, params);
+        res.json(result);
+    }
+
+    private executeMethod(req: Request, res: Response, _: _): void {
+        let _id: string = req.params['_id'];
+        let _name: string = req.params['_name'];
+        let inst = this.helper.fetchInstance(_, _id);
+        if (this.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
+            res.sendStatus(404);
+            return;
+        }
+
+        let params = req.body;
+        let result = inst[_name](_, params);
+        res.json(result);
+    }
+
     abstract setup(routers: Map<string, Router>): void;
 
 
+}
+
+
+export class NonPersistentModelFactory extends ModelFactoryBase implements IModelFactory {
+    constructor(name: string, targetClass: any) {
+        super(name, targetClass);
+    }
+    setup(routers: Map<string, Router>) {
+        super.init(routers, null, null, null);
+    }
 }

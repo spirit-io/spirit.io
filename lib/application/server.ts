@@ -20,30 +20,35 @@ export class Server extends EventEmitter {
 
     public app: Application;
     public config: any;
-    private _middleware: Middleware;
+    public middleware: Middleware;
     private _contract: Contract;
 
     constructor(config: any = {}) {
         super();
         this.config = config;
+
+        this.app = express();
+        this.middleware = new Middleware(this.app);
     }
 
-    init(_: _, midSettings?: any) {
-        this.app = express();
-        this._middleware = new Middleware(this.app, midSettings);
-        this._contract = new Contract(this.config).init(_);
-        // configure middleware standard rules
-        this._middleware.configure();
-        // register model and configure model routes
-        SchemaCompiler.registerModels(_, this._middleware.routers, this._contract);
-        this._middleware.setApiRoutes();
-        // set default error handler
-        this._middleware.setErrorHandler();
-        this.emit('initialized');
+    init(_: _) {
+        this._contract = new Contract(this.config);
+        // register models
+        SchemaCompiler.registerModels(_, this.middleware.routers, this._contract);
+
         return this;
     }
 
     start(_: _, port: number) {
+        // configure middleware standard rules
+        this.middleware.configure();
+        // initialize versioned api routes
+        this.middleware.setApiRoutes();
+        // set default error handler
+        this.middleware.setErrorHandler();
+
+        this.emit('initialized');
+
         var self = this;
         // start http server
         this.app.listen(port, function () {

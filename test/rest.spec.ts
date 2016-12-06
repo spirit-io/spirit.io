@@ -19,26 +19,26 @@ let myModelMeta = {
 
 
 describe('Spirit.io REST Express routes Tests:', () => {
-    before(function(done) {
+    before(function (done) {
         this.timeout(10000);
-        Fixtures.setup(function(err, res) {
+        Fixtures.setup(function (err, res) {
             if (err) throw err;
             server = res;
         }, done);
     });
 
     it('query with invalid where filter should throw an error', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel?where=badJson');
 
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: Invalid where filter: badJson`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: Invalid where filter: badJson`);
         });
     });
 
     it('query should return empty array', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel');
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(200);
@@ -48,14 +48,14 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('read should return not found', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel/1234');
             expect(resp.status).to.equal(404);
         });
     });
 
     it('create simple instance should work', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.post(_, '/api/v1/myModelRel', { p1: "prop1" });
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(201);
@@ -76,7 +76,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     let myModelRels = [];
 
     it('query should return the four created elements', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModelRel');
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(200);
@@ -89,11 +89,11 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('not expected property should raise an error on creation', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.post(_, '/api/v1/myModelRel', { p1: "prop1", p2: "prop2" });
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: Property 'p2' does not exist on model 'MyModelRel'`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: Property 'p2' does not exist on model 'MyModelRel'`);
         });
     });
 
@@ -120,7 +120,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     let myModel = [];
     let data: any = {}
     it('create complex instance should work and return correct values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             data = {
                 "pString": "s0",
                 "pNumber": 20,
@@ -143,7 +143,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('update complex instance with all values should work and return correct values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             data.pString = "s0updated";
             let resp = Fixtures.put(_, '/api/v1/myModel/' + myModel[0], data);
             expect(resp.status).to.equal(200);
@@ -153,7 +153,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('read updated instance should return correct values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel/' + myModel[0]);
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -162,7 +162,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('patch complex instance with only one property should work and return correct values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.patch(_, '/api/v1/myModel/' + myModel[0], { pString: "s0patched" });
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -171,7 +171,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('read singular reference should work and return correct values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.get(_, '/api/v1/myModel/' + myModel[0] + '/inv');
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -181,7 +181,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('query with includes should return expected elements and references', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             // simple string include
             let resp = Fixtures.get(_, '/api/v1/myModel?includes=inv');
             let body = JSON.parse(resp.body);
@@ -256,12 +256,12 @@ describe('Spirit.io REST Express routes Tests:', () => {
             resp = Fixtures.get(_, '/api/v1/myModel?includes={wrong}}');
             body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: JSON includes filter is not valid`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: JSON includes filter is not valid`);
         });
     });
 
     it('update complex instance with only one property should work and return only provided values', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.put(_, '/api/v1/myModel/' + myModel[0], { pString: "s0updatedAgain", pNumber: 0 });
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -287,7 +287,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('execute instance method should work and saved instance should be updated', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.post(_, '/api/v1/myModel/' + myModel[0] + '/$execute/aMethod', { pString: "pString updated by aMethod call", anotherParam: 'test' });
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -300,7 +300,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('execute instance service should work and return expected value', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let resp = Fixtures.post(_, '/api/v1/myModel/$service/aService', { a: 2.22, b: 3.33 });
             expect(resp.status).to.equal(200);
             let body = JSON.parse(resp.body);
@@ -310,7 +310,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
 
 
     it('query should return nothing after deleting all elements', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
 
             myModelRels.forEach_(_, (_, r) => {
                 let resp = Fixtures.delete(_, '/api/v1/myModelRel/' + r);

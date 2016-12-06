@@ -1,7 +1,7 @@
 import { collection, unique, required, index, reverse, embedded, readonly, hook } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 
-@collection({ datasource: 'mock:ds' })
+@collection({ datasource: 'mock' })
 export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);

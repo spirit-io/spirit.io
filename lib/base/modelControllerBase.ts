@@ -8,6 +8,7 @@ import {
     IFetchParameters,
     ISaveParameters
 } from '../interfaces';
+import { HttpError } from '../common';
 
 export abstract class ModelControllerBase implements IModelController {
 
@@ -39,7 +40,7 @@ export abstract class ModelControllerBase implements IModelController {
 
         //let result = this.modelFactory.actions.read(_, _id, readOptions);
         if (!result) {
-            res.sendStatus(404);
+            throw new HttpError(404, "resource not found");
         } else {
             res.json(result);
         }
@@ -69,6 +70,7 @@ export abstract class ModelControllerBase implements IModelController {
             params.ref = _ref;
         }
         let inst = this.modelFactory.helper.fetchInstance(_, _id, params);
+        if (!inst) throw new HttpError(404, "resource not found");
         let result = this.modelFactory.helper.saveInstance(_, inst, data, params, { ignoreNull: true, serializeRef: true });
         //let result = this.modelFactory.actions.update(_, _id, item, params);
 
@@ -91,34 +93,10 @@ export abstract class ModelControllerBase implements IModelController {
     delete = (req: Request, res: Response, _: _): void => {
         let _id: string = req.params['_id'];
         let inst = this.modelFactory.helper.fetchInstance(_, _id);
+        if (!inst) throw new HttpError(404, "resource not found");
         let result = this.modelFactory.helper.deleteInstance(_, inst);
 
         //let result = this.modelFactory.actions.delete(_, _id);
         res.status(204).json(result);
-    }
-
-    executeService = (req: Request, res: Response, _: _): void => {
-        let _name: string = req.params['_name'];
-        if (this.modelFactory.$statics.indexOf(_name) === -1 || !this.modelFactory.targetClass[_name]) {
-            res.sendStatus(404);
-            return;
-        }
-        let params = req.body;
-        let result = this.modelFactory.targetClass[_name](_, params);
-        res.json(result);
-    }
-
-    executeMethod = (req: Request, res: Response, _: _): void => {
-        let _id: string = req.params['_id'];
-        let _name: string = req.params['_name'];
-        let inst = this.modelFactory.helper.fetchInstance(_, _id);
-        if (this.modelFactory.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
-            res.sendStatus(404);
-            return;
-        }
-
-        let params = req.body;
-        let result = inst[_name](_, params);
-        res.json(result);
     }
 } 

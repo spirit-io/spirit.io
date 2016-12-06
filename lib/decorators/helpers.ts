@@ -12,11 +12,15 @@ exports.initFactory = function (target: any) {
         target._collectionName = fName;
         tempFactory = target.__factory__[fName] = {};
     }
+    if (target.datasource) {
+        tempFactory.datasource = target.datasource;
+    }
     tempFactory.$prototype = tempFactory.$prototype || {};
     tempFactory.$properties = tempFactory.$properties || [];
     tempFactory.$plurals = tempFactory.$plurals || [];
     tempFactory.$statics = tempFactory.$statics || [];
     tempFactory.$methods = tempFactory.$methods || [];
+    tempFactory.$routes = tempFactory.$routes || [];
     tempFactory.$references = tempFactory.$references || {};
     tempFactory.$hooks = tempFactory.$hooks || new Map();
     return tempFactory;
@@ -54,5 +58,17 @@ export function addHook(target: Symbol, propertyKey: string, name: string) {
     let factory: IModelFactory = exports.initFactory(target);
     // Set hook
     factory.$hooks.set(name, target[propertyKey]);
+    return target;
+}
+
+export function addRoute(target: Symbol, propertyKey: string, method: string, path: string) {
+    // Get model factory
+    let factory: IModelFactory = exports.initFactory(target.constructor);
+    // Set hook
+    factory.$routes.push({
+        method: method,
+        path: path,
+        fn: target[propertyKey]
+    });
     return target;
 }
