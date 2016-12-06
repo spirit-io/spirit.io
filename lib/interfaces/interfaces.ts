@@ -37,6 +37,7 @@ export interface IModelFactory {
     instanciateReference(type: string, data: any): any;
     getHookFunction(name: string): Function;
     populateField(_: _, parameters: IFetchParameters | IQueryParameters, item: any, key: string): void;
+    simplifyReferences(item: any): any;
 }
 
 export interface IField {

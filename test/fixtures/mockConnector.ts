@@ -24,57 +24,11 @@ class MockActions implements IModelActions {
 
         parameters = parameters || {};
         Object.keys(this.modelFactory.$references).forEach((key) => {
-            let incl = parameters.includes && parameters.includes.filter((i) => { return i.path === key; })[0];
-            if (incl && item && item[key] != null) {
-                let type = this.modelFactory.getReferenceType(key);
-                let relValue;
-                if (Array.isArray(item[key])) {
-                    relValue = [];
-                    item[key].forEach((id) => {
-                        let ref = getRel(type, id);
-                        if (incl.select) {
-                            let data = { _id: ref._id };
-                            data[incl.select] = ref[incl.select];
-                            relValue.push(data);
-                        } else {
-                            relValue.push(ref);
-                        }
-                    });
-                } else {
-                    let ref = getRel(type, item[key]);
-                    if (incl.select) {
-                        let data = { _id: ref._id };
-                        data[incl.select] = ref[incl.select];
-                        relValue = data;
-                    } else {
-                        relValue = ref;
-                    }
-                }
-                item[key] = relValue;
-            }
+            this.modelFactory.populateField(_, parameters, item, key);
         });
     }
 
-    private _simplifyReferences(item: any) {
-        let transformed = objectHelper.clone(item, true);
-        Object.keys(this.modelFactory.$references).forEach((key) => {
-            if (transformed && transformed[key] != null) {
-                let relValue;
-                if (Array.isArray(transformed[key])) {
-                    relValue = [];
-                    transformed[key].forEach((it) => {
-                        if (typeof it === 'object' && it._id) relValue.push(it._id);
-                        else relValue.push(it);
-                    });
-                } else {
-                    if (typeof transformed[key] === 'object' && transformed[key]._id) relValue = transformed[key]._id;
-                    else relValue = transformed[key];
-                }
-                transformed[key] = relValue;
-            }
-        });
-        return transformed;
-    }
+
 
     query(_: _, filter: Object = {}, parameters?: IQueryParameters) {
         let res = [];

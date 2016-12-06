@@ -3,6 +3,7 @@ import { Request, Response, Router, RequestHandler } from 'express';
 import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IFetchParameters, IQueryParameters } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
+import { helper as objectHelper } from '../utils'
 
 let trace = console.log;
 
@@ -188,6 +189,27 @@ export abstract class ModelFactoryBase implements IModelFactory {
             }
             item[key] = relValue;
         }
+    }
+
+    simplifyReferences(item: any): any {
+        let transformed = objectHelper.clone(item, true);
+        Object.keys(this.$references).forEach((key) => {
+            if (transformed && transformed[key] != null) {
+                let relValue;
+                if (Array.isArray(transformed[key])) {
+                    relValue = [];
+                    transformed[key].forEach((it) => {
+                        if (typeof it === 'object' && it._id) relValue.push(it._id);
+                        else relValue.push(it);
+                    });
+                } else {
+                    if (typeof transformed[key] === 'object' && transformed[key]._id) relValue = transformed[key]._id;
+                    else relValue = transformed[key];
+                }
+                transformed[key] = relValue;
+            }
+        });
+        return transformed;
     }
 
     private executeService(req: Request, res: Response, _: _): void {
