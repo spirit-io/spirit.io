@@ -53,7 +53,7 @@ export class Fixtures {
                 done();
             });
             console.log("\n========== Initialize server begins ============");
-            connector = new MockConnector();
+            connector = new MockConnector(config.connectors.mock);
             server.addConnector(connector);
             console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
             server.init(_);

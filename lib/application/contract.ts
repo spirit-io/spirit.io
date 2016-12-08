@@ -7,7 +7,6 @@ import * as path from 'path';
 export class Contract {
 
     public datasources: Map<string, any>;
-    private _builtInModels: any;
     private _extendsModels: any;
     private _modelsLocation: string[] = [];
 
@@ -15,6 +14,9 @@ export class Contract {
         if (this.config.defaultDatasource) {
             _.context.__defaultDatasource = this.config.defaultDatasource;
         }
+    };
+
+    public init() {
         for (let key in this.config.connectors) {
             let datasources = this.config.connectors[key].datasources;
             for (let ds in datasources) {
@@ -24,51 +26,28 @@ export class Contract {
             }
         }
 
-        // this.initBuiltInModels();
-        this.initExtendsModels();
-    };
-
-    // private initBuiltInModels() {
-    //     this._builtInModels = {}
-    //     // this._modelsLocation.push(path.resolve(path.join(__dirname, '../models')));
-    // };
-
-    private initExtendsModels() {
         // set models locations
-        if (!this.config.modelsLocation) throw new Error(`'modelsLocation' configuration property must be set to register extends models`);
-        this.config.modelsLocation = Array.isArray(this.config.modelsLocation) ? this.config.modelsLocation : [this.config.modelsLocation]
-        this.config.modelsLocation.forEach((loc) => {
-            this._modelsLocation.push(loc);
-        });
+        if (this.config.modelsLocation) {
+            this.config.modelsLocation = Array.isArray(this.config.modelsLocation) ? this.config.modelsLocation : [this.config.modelsLocation]
+            this.config.modelsLocation.forEach((loc) => {
+                this.registerModelsByPath(loc);
+            });
+        }
 
 
         // TODO: validation
         this._extendsModels = this.config.models;
     };
 
+    public registerModelsByPath(path: string) {
+        if (this._modelsLocation.indexOf(path) === -1) this._modelsLocation.push(path);
+    }
+
 
 
     public get modelsLocations(): string[] {
         return this._modelsLocation;
     }
-
-    // public get builtInModels(): any {
-    //     return this._builtInModels;
-    // }
-
-    // public get extendsModels(): any {
-    //     return this._extendsModels;
-    // }
-
-    // public get models(): Map<string, IModelOptions> {
-    //     let merged: any = objectHelper.clone(this.builtInModels, true);
-    //     objectHelper.merge(this.extendsModels, merged);
-    //     let _models = new Map();
-    //     Object.keys(merged).forEach(function (key: string) {
-    //         _models.set(key, merged[key]);
-    //     }, []);
-    //     return _models;
-    // }
 
 
 }

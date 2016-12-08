@@ -18,7 +18,8 @@ export class ConnectorHelper {
     }
 
     @synchronize()
-    public static setConnector(ds: string, connector: IConnector): void {
+    public static setConnector(connector: IConnector): void {
+        let ds = connector.datasource;
         _.context['connectors'] = _.context['connectors'] || new Map<string, IConnector>();
         _.context['connectors'].set(ds, connector);
     }
@@ -29,8 +30,9 @@ export class ConnectorHelper {
             return new NonPersistentModelFactory(name, modelClass);
         } else {
             let datasource: string = tempFactory.datasource || _.context.__defaultDatasource || 'mongodb';
-            console.log(`Register model ${name} with datasource ${datasource}`)
-            return ConnectorHelper.getConnector(datasource).createModelFactory(name, modelClass);
+            let dsId: string = datasource.indexOf(':') === -1 ? datasource : datasource.split(':')[0];
+            // console.log(`Register model ${name} with datasource ${datasource}`)
+            return ConnectorHelper.getConnector(dsId).createModelFactory(name, modelClass);
         }
     }
 }

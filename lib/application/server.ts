@@ -21,7 +21,7 @@ export class Server extends EventEmitter {
     public app: Application;
     public config: any;
     public middleware: Middleware;
-    private _contract: Contract;
+    public contract: Contract;
 
     constructor(config: any = {}) {
         super();
@@ -29,12 +29,13 @@ export class Server extends EventEmitter {
 
         this.app = express();
         this.middleware = new Middleware(this.app);
+        this.contract = new Contract(this.config);
     }
 
     init(_: _) {
-        this._contract = new Contract(this.config);
         // register models
-        SchemaCompiler.registerModels(_, this.middleware.routers, this._contract);
+        this.contract.init();
+        SchemaCompiler.registerModels(_, this.middleware.routers, this.contract);
 
         return this;
     }
@@ -46,10 +47,7 @@ export class Server extends EventEmitter {
         this.middleware.setApiRoutes();
         // set default error handler
         this.middleware.setErrorHandler();
-
         this.emit('initialized');
-
-        var self = this;
         // start http server
         this.app.listen(port, function () {
             console.log(`Server listening on port ${port}!`);
@@ -58,8 +56,6 @@ export class Server extends EventEmitter {
     }
 
     addConnector(connector: IConnector): void {
-        let ds = connector.datasource;
-        connector.config = this.config.connectors && this.config.connectors[ds];
-        ConnectorHelper.setConnector(ds, connector);
+        ConnectorHelper.setConnector(connector);
     }
 }

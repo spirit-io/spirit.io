@@ -133,6 +133,10 @@ export class MockConnector implements IConnector {
     private _datasource: string = 'mock';
     private _config: any;
 
+    constructor(config: any) {
+        this.config = config;
+    }
+
     get datasource(): string {
         return this._datasource;
     }
