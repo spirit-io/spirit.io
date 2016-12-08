@@ -161,7 +161,7 @@ export abstract class ModelHelperBase implements IModelHelper {
 
         trace && trace("********** Begin serialization *************");
         //console.log("Instance: ", require('util').inspect(instance, null, 2));
-        for (var [key, field] of mf.$fields) {
+        for (let [key, field] of mf.$fields) {
             trace && trace("====== Field ", key);
             if (instance[key] !== undefined) {
                 // References

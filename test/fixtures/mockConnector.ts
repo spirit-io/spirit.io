@@ -17,13 +17,13 @@ class MockActions implements IModelActions {
     constructor(private modelFactory: MockFactory) { }
 
 
-    private _populate(item: any, parameters: IFetchParameters | IQueryParameters) {
+    private _populate(_: _, item: any, parameters: IFetchParameters | IQueryParameters) {
         function getRel(_type: string, _id: string) {
             return storage[_type] && storage[_type][_id];
         }
 
         parameters = parameters || {};
-        Object.keys(this.modelFactory.$references).forEach((key) => {
+        Object.keys(this.modelFactory.$references).forEach_(_, (_, key) => {
             this.modelFactory.populateField(_, parameters, item, key);
         });
     }
@@ -33,7 +33,12 @@ class MockActions implements IModelActions {
     query(_: _, filter: Object = {}, parameters?: IQueryParameters) {
         let res = [];
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
-        objectHelper.forEachKey(objectHelper.clone(storage[this.modelFactory.collectionName], true), (id, doc) => {
+
+        let data = objectHelper.clone(storage[this.modelFactory.collectionName], true);
+        let keys = Object.keys(data);
+
+        keys.forEach_(_, (_, k) => {
+            let doc = data[k];
             let filterMatch = true;
             let filterKeys = Object.keys(filter);
             for (let i = 0; i < filterKeys.length && filterMatch; i++) {
@@ -42,7 +47,7 @@ class MockActions implements IModelActions {
                 if (doc[key] !== value) filterMatch = false;
             }
             if (filterMatch) {
-                this._populate(doc, parameters);
+                this._populate(_, doc, parameters);
                 res.push(doc);
             }
         });
@@ -67,7 +72,7 @@ class MockActions implements IModelActions {
                 return refModelFactory.actions.read(_, res[parameters.ref]);
             }
         } else {
-            this._populate(res, parameters);
+            this._populate(_, res, parameters);
             return res;
         }
     }
@@ -80,7 +85,7 @@ class MockActions implements IModelActions {
 
     update(_: _, _id: any, item: any, options?: ISaveParameters) {
         item._updatedAt = new Date();
-        let storedItem = this._simplifyReferences(item);
+        let storedItem = this.modelFactory.simplifyReferences(item);
         storedItem._id = _id;
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         if (options && options.ref) {
