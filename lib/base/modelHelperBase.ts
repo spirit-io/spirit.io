@@ -93,7 +93,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         for (var doc of docs) {
             let inst = new this.modelFactory.targetClass.prototype.constructor();
             this.updateValues(inst, doc);
-            instances.push(serializeOptions ? this.serialize(inst, parameters, serializeOptions) : inst);
+            instances.push(serializeOptions ? this.serialize(_, inst, parameters, serializeOptions) : inst);
         }
         return instances;
     }
@@ -115,7 +115,7 @@ export abstract class ModelHelperBase implements IModelHelper {
             inst = new this.modelFactory.targetClass.prototype.constructor();
             this.updateValues(inst, doc);
         }
-        return serializeOptions ? this.serialize(inst, parameters, serializeOptions) : inst;
+        return serializeOptions ? this.serialize(_, inst, parameters, serializeOptions) : inst;
     }
 
     saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
@@ -131,7 +131,11 @@ export abstract class ModelHelperBase implements IModelHelper {
         }
         // Call beforeSave hook
         this.applyHook(_, 'beforeSave', instance);
-        let serialized = this.serialize(instance, null, serializeOptions);
+
+        // special options are needed for pre update serialization
+        let customSerializeOptions = serializeOptions ? objectHelper.clone(serializeOptions) : {};
+        customSerializeOptions.includeInvisible = true;
+        let serialized = this.serialize(_, instance, null, customSerializeOptions);
 
         if (!instance.$isCreated) {
             options.deleteReadOnly = true;
@@ -140,17 +144,17 @@ export abstract class ModelHelperBase implements IModelHelper {
             item = this.modelFactory.actions.create(_, serialized, options);
         }
 
-
         this.updateValues(instance, item, { deleteMissing: true });
+        this.applyHook(_, 'afterSave', instance);
         if (!serializeOptions) return instance;
-        return this.serialize(instance, null, serializeOptions);
+        return this.serialize(_, instance, null, serializeOptions);
     }
 
     deleteInstance(_: _, instance: any): any {
         return this.modelFactory.actions.delete(_, instance._id);
     }
 
-    serialize(instance: any, parameters?: IQueryParameters | IFetchParameters, options?: ISerializeOptions): any {
+    serialize(_: _, instance: any, parameters?: IQueryParameters | IFetchParameters, options?: ISerializeOptions): any {
         options = options || {};
         parameters = parameters || {};
         // consider correct modelFactory (for relation potentially)
@@ -161,7 +165,12 @@ export abstract class ModelHelperBase implements IModelHelper {
 
         trace && trace("********** Begin serialization *************");
         //console.log("Instance: ", require('util').inspect(instance, null, 2));
-        for (let [key, field] of mf.$fields) {
+
+
+
+        for (var [key, field] of mf.$fields) {
+
+
             trace && trace("====== Field ", key);
             if (instance[key] !== undefined) {
                 // References
@@ -170,8 +179,10 @@ export abstract class ModelHelperBase implements IModelHelper {
                         trace && trace("Plural ref ", key);
                         instance[key] = Array.isArray(instance[key]) ? instance[key] : [instance[key]];
                         let notInclude = options.serializeRef && includes.indexOf(key) === -1;
-                        item[key] = instance[key].map((inst) => {
-                            // only ids if reference serialization is not expected and it is not embedded
+
+
+                        item[key] = instance[key].map_(_, function (_, inst) {
+                            //only ids if reference serialization is not expected and it is not embedded
                             if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
                                 trace && trace("Not include ref ", key);
                                 return inst._id;
@@ -180,9 +191,10 @@ export abstract class ModelHelperBase implements IModelHelper {
                             else {
                                 trace && trace("Include ref ", key);
                                 let _db = AdminHelper.model(inst.constructor);
-                                let sRef = _db.serialize(inst, null, options);
+                                let sRef = _db.serialize(_, inst, null, options);
                                 if (sRef && sRef._id || field.isEmbedded) return sRef;
                             }
+                            return null;
                         }).filter((inst) => { return inst != null });
                     } else {
                         trace && trace("Singular ", key);
@@ -195,7 +207,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                         else {
                             trace && trace("Include ref ", key);
                             let _db = AdminHelper.model(instance[key].constructor);
-                            let sRef = _db.serialize(instance[key], null, options);
+                            let sRef = _db.serialize(_, instance[key], null, options);
                             if (sRef && sRef._id || field.isEmbedded) item[key] = sRef
                         }
                     }
@@ -209,6 +221,15 @@ export abstract class ModelHelperBase implements IModelHelper {
             }
             else {
                 trace && trace("IGNORE Field ", key);
+            }
+        }
+
+
+        if (!options.includeInvisible) {
+            for (let [key, field] of mf.$fields) {
+                if (!field.isVisible(_, instance)) {
+                    delete item[key];
+                }
             }
         }
         trace && trace("Serialize:", item);
@@ -258,9 +279,6 @@ export abstract class ModelHelperBase implements IModelHelper {
                 }
             }
         }
-
-        //console.log("FINAL INST:", instance);
-
     }
 
     applyHook(_, name: string, instance: any) {

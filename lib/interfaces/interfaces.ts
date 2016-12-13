@@ -49,6 +49,7 @@ export interface IField {
     isUnique: boolean;
     isRequired: boolean;
     isIndexed: boolean;
+    isVisible(_, instance: any): boolean;
 }
 
 export interface IRoute {
@@ -71,7 +72,7 @@ export interface IModelHelper {
     fetchInstance(_, filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions): any;
     saveInstance(_, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions): any;
     deleteInstance(_: _, instance: any): any;
-    serialize(instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
+    serialize(_, instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
     updateValues(instance: any, item: any, options?: any): void;
     getMetadata(instance: any, metadataName: string): any;
     isModified(instance: any, property: string): boolean;
@@ -102,9 +103,8 @@ export interface ISaveParameters {
 
 export interface ISerializeOptions {
     modelFactory?: IModelFactory;
-    ignoreNull?: boolean;
     serializeRef?: boolean;
-    ignoreReadOnly?: boolean;
+    includeInvisible?: boolean;
 }
 
 /**

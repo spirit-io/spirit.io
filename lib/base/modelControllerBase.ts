@@ -26,7 +26,7 @@ export abstract class ModelControllerBase implements IModelController {
 
         let includes: string = req.query['includes'];
         let queryParams: IQueryParameters = { includes: includes };
-        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, { ignoreNull: true, serializeRef: true });
+        let result = this.modelFactory.helper.fetchInstances(_, where, queryParams, { serializeRef: true });
         //let result = this.modelFactory.actions.query(_, where, { includes: includes });
         res.json(result);
     }
@@ -36,7 +36,7 @@ export abstract class ModelControllerBase implements IModelController {
         let _ref: string = req.params['_ref'];
         let includes: string = req.query['includes'];
         let fetchOpt: IFetchParameters = _ref ? { includes: includes, ref: _ref } : {};
-        let result = this.modelFactory.helper.fetchInstance(_, _id, fetchOpt, { ignoreNull: true, serializeRef: true });
+        let result = this.modelFactory.helper.fetchInstance(_, _id, fetchOpt, { serializeRef: true });
 
         //let result = this.modelFactory.actions.read(_, _id, readOptions);
         if (!result) {
@@ -49,7 +49,7 @@ export abstract class ModelControllerBase implements IModelController {
     create = (req: Request, res: Response, _: _): void => {
         let item: any = req['body'];
         let inst = new this.modelFactory.targetClass.prototype.constructor();
-        let result = this.modelFactory.helper.saveInstance(_, inst, item, null, { ignoreNull: true, serializeRef: true });
+        let result = this.modelFactory.helper.saveInstance(_, inst, item, null, { serializeRef: true });
 
         // let result = this.modelFactory.actions.create(_, item);
         res.status(201).json(result);

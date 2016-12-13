@@ -38,8 +38,8 @@ export abstract class ModelBase {
         return this._db.saveInstance(_, this, data, options);
     }
 
-    serialize(): any {
-        return this._db.serialize(this);
+    serialize(_: _): any {
+        return this._db.serialize(_, this);
     }
 
     updateValues(item: any, options?: any): void {

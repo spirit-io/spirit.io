@@ -153,7 +153,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(m1.id).to.be.a("string");
             expect(m1.createdAt).to.be.a("Date");
             expect(m1.updatedAt).to.be.a("Date");
-            expect(m1.serialize()).to.be.a("object");
+            expect(m1.serialize(_, )).to.be.a("object");
             expect(m1.pString).to.equal("pString");
             expect(m1.pNumber).to.equal(20);
             expect(m1.pDate).to.be.a("Date");
@@ -162,9 +162,9 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(m1.aNumber).to.have.members([0, 1, 2]);
             expect(m1.aBoolean).to.have.members([false, true, false]);
             expect(m1.inv).to.be.a("object");
-            expect(objectHelper.areEqual(m1.inv.serialize(), mRel1.serialize())).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
+            expect(objectHelper.areEqual(m1.inv.serialize(_, ), mRel1.serialize(_, ))).to.be.true;
+            expect(objectHelper.areEqual(m1.rels[0].serialize(_, ), mRel2.serialize(_, ))).to.be.true;
+            expect(objectHelper.areEqual(m1.rels[1].serialize(_, ), mRel3.serialize(_, ))).to.be.true;
 
         });
     });

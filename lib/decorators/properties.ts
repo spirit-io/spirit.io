@@ -27,11 +27,11 @@ export function readonly(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { readOnly: true });
 }
 
-export function invisible(target: any, propertyKey: string) {
-    helpers.addMetadata(target.constructor, propertyKey, { invisible: true });
+export function invisible(value: boolean | Function): any {
+    return function (target: Symbol, propertyKey: string): any {
+        helpers.addMetadata(target.constructor, propertyKey, { invisible: value });
+    }
 }
-
-
 
 export function reverse(refName: string): any {
     return function (target: Symbol, propertyKey: string): any {

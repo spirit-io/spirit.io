@@ -18,6 +18,7 @@ class Field implements IField {
     isUnique: boolean = false;
     isRequired: boolean = false;
     isIndexed: boolean = false;
+    private _invisible: boolean | Function;
 
     constructor(key: string, factory: IModelFactory) {
         this.name = key;
@@ -33,6 +34,15 @@ class Field implements IField {
             this.isUnique = factory.$prototype[key].unique;
             this.isRequired = factory.$prototype[key].required;
             this.isIndexed = factory.$prototype[key].index;
+            this._invisible = factory.$prototype[key].invisible != null ? factory.$prototype[key].invisible : false;
+        }
+    }
+
+    isVisible(_, instance: any): boolean {
+        if (typeof this._invisible === 'boolean') {
+            return !<boolean>this._invisible;
+        } else {
+            return !this._invisible(_, instance);
         }
     }
 }
@@ -76,7 +86,6 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.$references = tempFactory.$references || {};
         this.$hooks = tempFactory.$hooks || new Map();
         this.$fields = new Map();
-        console.log(`Factory registered for class ${this.collectionName} with datasource ${this.datasource}`);
     }
 
     init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
