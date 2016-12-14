@@ -28,9 +28,11 @@ function releaseBuildingFactory(collectionName: string, myClass: any): IModelFac
     return f;
 }
 
-function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOptions): IModelFactory[] {
-    // Build a program using the set of root file names in fileNames
-    let program = ts.createProgram(fileNames, options);
+function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IModelFactory[] {
+    console.log("files:",files);
+    // Build a program using the set of root file names in files
+    // files is an object, with ts files names as keys
+    let program = ts.createProgram(Object.keys(files), options);
 
     // Get the checker, we will use it to find more about classes
     let checker = program.getTypeChecker();
@@ -89,7 +91,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         // consider only classes with @collection(...) decorator
         if (!isModelClass(node)) return;
-        let fName = sf.fileName.replace(/\.[^/.]+$/, "");
+        let fName = files[sf.fileName];
+        //console.log("fName:",fName)
         const r = require(fName);
         let myClass = r[className];
         if (!myClass) {
@@ -381,14 +384,20 @@ export class SchemaCompiler {
                 var stats = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
                     browseDir(filePath);
-                } else if (stats.isFile() && /\.ts$/.test(file)) {
-                    // Only keep the .ts files
+                } else if (stats.isFile() && /\.js.map$/.test(file)) {
+                    // Only keep the .js.map files
                     //console.log("File:",file)
-                    modelFiles.push(path.join(dir, file));;
+
+                    let srcMap = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+                    srcMap.sources.forEach((s) => {
+                        let tsPath = path.normalize(path.join(dir, srcMap.sourceRoot, s)).replace(/\\/g, '/');
+                        let jsPath = path.normalize(path.join(dir, srcMap.file)).replace(/\\/g, '/');
+                        modelFiles[tsPath] = jsPath;
+                    });
                 }
             });
         }
-        let modelFiles = [];
+        let modelFiles = {};
         contract.modelsLocations.forEach(function(dir) {
             browseDir(dir);
         });
