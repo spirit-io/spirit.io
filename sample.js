@@ -1,16 +1,14 @@
 "use strict";
 
-require("streamline").register({});
-require('streamline-runtime');
-let spirit = require('./lib');
-let MockConnector = require('./test/fixtures/mockConnector').MockConnector;
+let Server = require('./dist/lib/application/server').Server;
+let MockConnector = require('./dist/test/fixtures/mockConnector').MockConnector;
 const path = require('path');
 const port = 3001;
 const baseUrl = 'http://localhost:' + port;
 
 const config = {
     // defaultDatasource: 'mock',
-    modelsLocation: path.resolve(path.join(__dirname, './test/models')),
+    modelsLocation: path.resolve(path.join(__dirname, './dist/test/models')),
     connectors: {
         mock: {
             datasources: {
@@ -21,19 +19,16 @@ const config = {
 };
 
 
-let server = spirit(config);
-
-
-
-server.on('initialized', function () {
+let srv = new Server(config);
+srv.on('initialized', function () {
     console.log("========== Server initialized ============\n");
 });
-console.log("\n========== Initialize server begins ============");
+console.log("\n========== Initialize srv begins ============");
 let connector = new MockConnector(config.connectors.mock);
-server.addConnector(connector);
+srv.addConnector(connector);
 console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
-server.init();
-server.app.use('/test', (req, res, cb) => {
+srv.init();
+srv.app.use('/test', (req, res, cb) => {
     res.send('It works !');
 });
-server.start(port);
+srv.start(port);

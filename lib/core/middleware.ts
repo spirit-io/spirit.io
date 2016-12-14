@@ -40,7 +40,6 @@ export class Middleware {
     }
 
     setApiRoutes() {
-        console.log("this.authMiddleware:", this.authMiddleware)
         let apiAuth = auth.for('api').use(this.authMiddleware || function(req: Request, res: Response, next: NextFunction) {
             // Default auth middleware does nothing 
             req['authenticated'] = true;

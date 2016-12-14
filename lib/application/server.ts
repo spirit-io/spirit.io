@@ -9,14 +9,6 @@ import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
 
 const express = require('express');
-const expressPromise = require('express-promise');
-
-// // store init standard function
-// let appInit = express.application.init;
-// // patch express to be compliant with streamline
-// require('express-streamline');
-// // restore init standard function overrided by express-streamline
-// express.application.init = appInit;
 
 export class Server extends EventEmitter {
 
@@ -30,7 +22,6 @@ export class Server extends EventEmitter {
         this.config = config;
 
         this.app = express();
-        //this.app.use(expressPromise());
         this.middleware = new Middleware(this);
         this.contract = new Contract(this.config);
     }
@@ -39,7 +30,7 @@ export class Server extends EventEmitter {
         // register models
         this.contract.init();
         run(() => SchemaCompiler.registerModels(this.middleware.routers, this.contract))
-            .then(() => { }, err => { throw err; });
+            .catch(err => { throw err; });
 
         return this;
     }

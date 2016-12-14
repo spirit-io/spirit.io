@@ -48,7 +48,7 @@ export class Fixtures {
         let firstSetup = true;
         let connector;
         if (!context().__server) {
-            let server: Server = context().__server = require('../../lib')(config);
+            let server: Server = context().__server = new Server(config);
             server.on('initialized', function() {
                 console.log("========== Server initialized ============\n");
                 done();

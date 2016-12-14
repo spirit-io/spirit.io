@@ -5,37 +5,31 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "compile": "mkdir -p dist/test; cp -rf lib test dist; find dist -type f -name \"*.ts\" -exec rm -f {} \\; node_modules/typescript/bin/tsc",
-    "build": "node build",
-    "test:dev": "node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha",
-    "test": "npm run build && npm run test:dev",
+    "prepublish": "rm -r build; node_modules/typescript/bin/tsc",
+    "test": "node_modules/typescript/bin/tsc && node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha --opts mocha.opts",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
   "repository": "https://github.com/spirit-io/spirit.io",
   "dependencies": {
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.14.0",
+    "express-authentication": "^0.3.2",
+    "f-promise": "^1.0.4",
+    "method-override": "^2.3.6",
+    "mz": "^2.6.0",
+    "typescript": "^2.0.3",
+    "uuid": "^3.0.0"
+  },
+  "devDependencies": {
     "@types/body-parser": "0.0.33",
     "@types/cookie-parser": "^1.3.30",
     "@types/express": "^4.0.33",
     "@types/express-serve-static-core": "^4.0.37",
     "@types/method-override": "0.0.29",
     "@types/node": "^6.0.45",
-    "body-parser": "^1.15.2",
-    "cookie-parser": "^1.4.3",
-    "express": "^4.14.0",
-    "express-authentication": "^0.3.2",
-    "express-streamline": "^0.5.3",
-    "ez-streams": "^3.0.10",
-    "f-promise": "^1.0.4",
-    "method-override": "^2.3.6",
-    "mz": "^2.6.0",
-    "streamline": "^2.0.10",
-    "streamline-runtime": "^1.0.31",
-    "typescript": "^2.0.3",
-    "uuid": "^3.0.0"
-  },
-  "devDependencies": {
     "@types/chai": "^3.4.34",
     "@types/chai-http": "0.0.29",
     "@types/mocha": "^2.2.32",
@@ -46,7 +40,6 @@
     "f-mocha": "^1.0.2",
     "f-streams": "^1.0.8",
     "mocha": "^3.0.2",
-    "nyc": "^8.3.1",
-    "streamline-node": "^2.0.1"
+    "nyc": "^8.3.1"
   }
 }

@@ -29,7 +29,6 @@ function releaseBuildingFactory(collectionName: string, myClass: any): IModelFac
 }
 
 function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IModelFactory[] {
-    console.log("files:",files);
     // Build a program using the set of root file names in files
     // files is an object, with ts files names as keys
     let program = ts.createProgram(Object.keys(files), options);
