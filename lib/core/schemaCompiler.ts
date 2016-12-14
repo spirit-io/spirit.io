@@ -387,7 +387,6 @@ export class SchemaCompiler {
                 } else if (stats.isFile() && /\.js.map$/.test(file)) {
                     // Only keep the .js.map files
                     //console.log("File:",file)
-
                     let srcMap = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
                     srcMap.sources.forEach((s) => {
                         let tsPath = path.normalize(path.join(dir, srcMap.sourceRoot, s)).replace(/\\/g, '/');
