@@ -1,7 +1,6 @@
 import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, ISaveParameters, IFetchParameters, IQueryParameters } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
-import { Connection } from 'mongoose';
 import express = require('express');
 const uuid = require('uuid');
 
