@@ -2,15 +2,15 @@
     "compilerOptions": {
         "target": "es2015",
         "module": "commonjs",
+        "moduleResolution": "node",
         "noEmitOnError": true,
         "noImplicitAny": false,
+        "strictNullChecks": false,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+        "declaration": true,
         "sourceMap": true,
-        "inlineSources": true,
-        "outDir": "dist",
-        "moduleResolution": "node",
-        "strictNullChecks": false
+        "outDir": "dist"
     },
     "exclude": [
         "node_modules",

@@ -9,8 +9,8 @@ export class ConnectorHelper {
 
     @synchronize()
     public static getConnector(ds: string): IConnector {
-        _.context['connectors'] = _.context['connectors'] || new Map<string, IConnector>();
-        let c = _.context['connectors'].get(ds);
+        context()['connectors'] = context()['connectors'] || new Map<string, IConnector>();
+        let c = context()['connectors'].get(ds);
         if (!c) {
             throw new Error(`No connector registered for datasource ${ds}`);
         }

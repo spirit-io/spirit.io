@@ -47,7 +47,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
     trace && trace("Classes loaded: ", classes.keys());
     trace && trace("Model factory loaded: ", ModelRegistry.factories.keys());
     // second loop to compile and build schemas
-    modelElements.forEach(function (elt) {
+    modelElements.forEach(function(elt) {
         trace && trace("\n\n==========================\nInspect class: ", elt.name);
         inspectClass(elt.node, elt.factory);
     });
@@ -89,7 +89,8 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         // consider only classes with @collection(...) decorator
         if (!isModelClass(node)) return;
-        const r = require(sf.fileName);
+        let fName = sf.fileName.replace(/\.[^/.]+$/, "");
+        const r = require(fName);
         let myClass = r[className];
         if (!myClass) {
             console.log(`Class ${className} not found in module ${sf.fileName}. Please check it is correctly exported`);
@@ -262,7 +263,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
         if (node.members) {
             let members = node.members.map(inspectMembers);
-            members && members.reduce(function (prev: any, curr: any) {
+            members && members.reduce(function(prev: any, curr: any) {
                 if (curr) {
                     // the field is maybe already existing in the schemaDef because the a decorator set it.
                     if (typeof prev[curr.name] === 'object' && prev[curr.name]) {
@@ -343,7 +344,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
         // get decorators
         if (node.decorators) {
             let decorators = node.decorators.map(inspectDecorator);
-            decorators && decorators.forEach(function (d) {
+            decorators && decorators.forEach(function(d) {
                 if (d.name.indexOf("collection(") !== -1) _isModelClass = true;
             });
         }
@@ -364,7 +365,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
     }
 
     function hasModifier(node: ts.Node, kind: ts.SyntaxKind) {
-        return node.modifiers && node.modifiers.some(function (m) {
+        return node.modifiers && node.modifiers.some(function(m) {
             return m.kind === kind;
         });
     }
@@ -375,7 +376,7 @@ export class SchemaCompiler {
 
         function browseDir(dir) {
             // Add each .js file to the mocha instance
-            wait(fs.readdir(dir)).forEach(function (file) {
+            wait(fs.readdir(dir)).forEach(function(file) {
                 let filePath = path.join(dir, file);
                 var stats = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
@@ -388,12 +389,12 @@ export class SchemaCompiler {
             });
         }
         let modelFiles = [];
-        contract.modelsLocations.forEach(function (dir) {
+        contract.modelsLocations.forEach(function(dir) {
             browseDir(dir);
         });
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-        }).forEach(function (modelFactory: IModelFactory) {
+        }).forEach(function(modelFactory: IModelFactory) {
             trace && trace("\n\n===============================\nModel factory:", modelFactory);
             trace && trace("\n");
             // setup model actions

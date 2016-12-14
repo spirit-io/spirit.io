@@ -12,7 +12,7 @@ export class Contract {
 
     constructor(private config: any) {
         if (this.config.defaultDatasource) {
-            _.context.__defaultDatasource = this.config.defaultDatasource;
+            context().__defaultDatasource = this.config.defaultDatasource;
         }
     };
 
