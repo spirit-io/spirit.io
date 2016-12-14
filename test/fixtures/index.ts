@@ -67,7 +67,7 @@ export class Fixtures {
         connector.resetStorage();
         //
         if (!firstSetup) done();
-        return _.context.__server;
+        return context().__server;
     }
 
     static dumpStorage = () => {
