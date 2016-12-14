@@ -1,4 +1,4 @@
-import { _ } from 'streamline-runtime';
+import { context } from 'f-promise';
 import { Router } from 'express';
 import { NonPersistentModelFactory } from '../base';
 import { IModelFactory, IConnector } from '../interfaces';
@@ -20,8 +20,8 @@ export class ConnectorHelper {
     @synchronize()
     public static setConnector(connector: IConnector): void {
         let ds = connector.datasource;
-        _.context['connectors'] = _.context['connectors'] || new Map<string, IConnector>();
-        _.context['connectors'].set(ds, connector);
+        context()['connectors'] = context()['connectors'] || new Map<string, IConnector>();
+        context()['connectors'].set(ds, connector);
     }
 
     public static createModelFactory(name: string, modelClass: any): IModelFactory {
@@ -29,7 +29,7 @@ export class ConnectorHelper {
         if (tempFactory.persistent === false) {
             return new NonPersistentModelFactory(name, modelClass);
         } else {
-            let datasource: string = tempFactory.datasource || _.context.__defaultDatasource || 'mongodb';
+            let datasource: string = tempFactory.datasource || context().__defaultDatasource || 'mongodb';
             let dsId: string = datasource.indexOf(':') === -1 ? datasource : datasource.split(':')[0];
             // console.log(`Register model ${name} with datasource ${datasource}`)
             return ConnectorHelper.getConnector(dsId).createModelFactory(name, modelClass);

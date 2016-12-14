@@ -1,5 +1,3 @@
-import { _ } from 'streamline-runtime';
-//import express = require("express");
 import * as express from "express";
 
 export interface IModelController {
@@ -36,7 +34,7 @@ export interface IModelFactory {
     getReferenceType(refName: string): string;
     instanciateReference(type: string, data: any): any;
     getHookFunction(name: string): Function;
-    populateField(_: _, parameters: IFetchParameters | IQueryParameters, item: any, key: string): void;
+    populateField(parameters: IFetchParameters | IQueryParameters, item: any, key: string): void;
     simplifyReferences(item: any): any;
 }
 
@@ -49,7 +47,7 @@ export interface IField {
     isUnique: boolean;
     isRequired: boolean;
     isIndexed: boolean;
-    isVisible(_, instance: any): boolean;
+    isVisible(instance: any): boolean;
 }
 
 export interface IRoute {
@@ -59,20 +57,20 @@ export interface IRoute {
 }
 
 export interface IModelActions {
-    query(_: _, filter?: any, parameters?: IQueryParameters): any;
-    read(_: _, filter: any, parameters?: IFetchParameters): any;
-    create(_: _, item: any, options?: any): any;
-    update(_: _, _id: string, item: any, options?: any): any;
-    delete(_: _, _id: any): any;
-    //count(_, filter: any): number;
+    query(filter?: any, parameters?: IQueryParameters): any;
+    read(filter: any, parameters?: IFetchParameters): any;
+    create(item: any, options?: any): any;
+    update(_id: string, item: any, options?: any): any;
+    delete(_id: any): any;
+    //count(filter: any): number;
 }
 
 export interface IModelHelper {
-    fetchInstances(_, filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions): any[];
-    fetchInstance(_, filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions): any;
-    saveInstance(_, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions): any;
-    deleteInstance(_: _, instance: any): any;
-    serialize(_, instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
+    fetchInstances(filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions): any[];
+    fetchInstance(filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions): any;
+    saveInstance(instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions): any;
+    deleteInstance(instance: any): any;
+    serialize(instance: any, parameters?: IFetchParameters | IQueryParameters, options?: ISerializeOptions): any;
     updateValues(instance: any, item: any, options?: any): void;
     getMetadata(instance: any, metadataName: string): any;
     isModified(instance: any, property: string): boolean;

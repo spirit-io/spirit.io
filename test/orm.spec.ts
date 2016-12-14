@@ -1,11 +1,15 @@
-import { _ } from 'streamline-runtime';
 import { Fixtures } from './fixtures';
 import { Server } from '../lib/application';
 import { MyModel, MyModelRel } from './models/myModel';
 import { ModelRegistry, AdminHelper } from '../lib/core';
 import { IModelFactory } from '../lib/interfaces';
 import { helper as objectHelper } from '../lib/utils';
+import { setup } from 'f-mocha';
+
 const expect = require('chai').expect;
+
+// this call activates f-mocha wrapper.
+setup();
 
 let trace;// = console.log;
 let server: Server;
@@ -15,42 +19,39 @@ let myModelMeta = {
     $plurals: ['aString', 'aNumber', 'aDate', 'aBoolean', 'invs', 'rels']
 };
 
-function removaAllDocuments(_) {
+function removaAllDocuments() {
     // delete all myModelRels
     let db = AdminHelper.model(MyModelRel);
-    let rels = db.fetchInstances(_);
-    rels.forEach_(_, function (_, r) {
-        db.deleteInstance(_, r);
+    let rels = db.fetchInstances();
+    rels.forEach(function(r) {
+        db.deleteInstance(r);
     });
-    rels = db.fetchInstances(_);
+    rels = db.fetchInstances();
     expect(rels.length).to.equal(0);
 
     // delete all myModels
     db = AdminHelper.model(MyModel);
-    rels = db.fetchInstances(_);
-    rels.forEach_(_, function (_, r) {
-        db.deleteInstance(_, r);
+    rels = db.fetchInstances();
+    rels.forEach(function(r) {
+        db.deleteInstance(r);
     });
-    rels = db.fetchInstances(_);
+    rels = db.fetchInstances();
     expect(rels.length).to.equal(0);
 }
 
 describe('Spirit.io ORM Framework Tests:', () => {
 
-    before(function (done) {
+    before(function(done) {
         this.timeout(10000);
-        Fixtures.setup(function (err, res) {
-            if (err) throw err;
-            server = res;
-        }, done);
+        server = Fixtures.setup(done);
     });
 
-    it('config should be not empty', (done) => {
+    it('config should be not empty', () => {
         expect(server.config).to.not.null;
-        done();
+
     });
 
-    it('Try to retrieve a model factory that does not exist should raise an error', (done) => {
+    it('Try to retrieve a model factory that does not exist should raise an error', () => {
         let err;
         try {
             AdminHelper.model("NotExistingModel");
@@ -59,10 +60,9 @@ describe('Spirit.io ORM Framework Tests:', () => {
         } finally {
             expect(err).to.equal(`Model factory not found for 'NotExistingModel'`);
         }
-        done();
     });
 
-    it('prototype should be formatted correctly', (done) => {
+    it('prototype should be formatted correctly', () => {
         let myModelFactory: IModelFactory = ModelRegistry.getFactory("MyModel");
         trace && trace("$prototype:" + JSON.stringify(myModelFactory.$prototype, null, 2));
         expect(myModelFactory.$prototype).to.have.all.keys(myModelMeta.$properties);
@@ -104,112 +104,101 @@ describe('Spirit.io ORM Framework Tests:', () => {
         expect(myModelFactory.$prototype.aBoolean).to.be.a('array');
         expect(myModelFactory.$prototype.aBoolean[0]).to.equal("boolean");
 
-        done();
     });
 
 
-    it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function (_) {
-            removaAllDocuments(_);
-        });
+    it('Delete instances should work as expected', () => {
+        removaAllDocuments();
     });
 
-    it('Instanciate class should work either with adminHelper or ModelBase methods', (done) => {
-        Fixtures.execAsync(done, function (_) {
-            // this test does not validate populate as it is not the purpose !
+    it('Instanciate class should work either with adminHelper or ModelBase methods', () => {
+        // this test does not validate populate as it is not the purpose !
+        // instanciate class with ModelBase's save method
+        let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
+        mRel1.save();
+        expect(mRel1.p1).to.equal("prop1");
+        let mRel2: MyModelRel = new MyModelRel({ p1: "prop2" });
+        mRel2.save();
+        expect(mRel2.p1).to.equal("prop2");
+        let mRel3: MyModelRel = new MyModelRel({ p1: "prop3" });
+        mRel3 = mRel3.save();
+        expect(mRel3.p1).to.equal("prop3");
 
-            // instanciate class with ModelBase's save method
-            let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
-            mRel1.save(_);
-            expect(mRel1.p1).to.equal("prop1");
-            let mRel2: MyModelRel = new MyModelRel({ p1: "prop2" });
-            mRel2.save(_);
-            expect(mRel2.p1).to.equal("prop2");
-            let mRel3: MyModelRel = new MyModelRel({ p1: "prop3" });
-            mRel3 = mRel3.save(_);
-            expect(mRel3.p1).to.equal("prop3");
+        mRel3.p1 = "prop3modified";
+        mRel3 = mRel3.save();
+        expect(mRel3.p1).to.equal("prop3modified");
+        // instanciate class with AdminHelper
+        let data = {
+            "pString": "pString",
+            "pNumber": 20,
+            "pDate": new Date(),
+            "pBoolean": true,
+            "aString": ["s1", "s2"],
+            "aNumber": [0, 1, 2],
+            "aDate": [new Date(), new Date('234567')],
+            "aBoolean": [false, true, false],
+            "inv": mRel1,
+            "rels": [mRel2, mRel3]
+        };
+        let db = AdminHelper.model(MyModel);
+        let m1: MyModel = new MyModel();
+        db.updateValues(m1, null); // update with null data for test coverage
+        db.saveInstance(m1, data);
 
-            mRel3.p1 = "prop3modified";
-            mRel3 = mRel3.save(_);
-            expect(mRel3.p1).to.equal("prop3modified");
-            // instanciate class with AdminHelper
-            let data = {
-                "pString": "pString",
-                "pNumber": 20,
-                "pDate": new Date(),
-                "pBoolean": true,
-                "aString": ["s1", "s2"],
-                "aNumber": [0, 1, 2],
-                "aDate": [new Date(), new Date('234567')],
-                "aBoolean": [false, true, false],
-                "inv": mRel1,
-                "rels": [mRel2, mRel3]
-            };
-            let db = AdminHelper.model(MyModel);
-            let m1: MyModel = new MyModel();
-            db.updateValues(m1, null); // update with null data for test coverage
-            db.saveInstance(_, m1, data);
+        expect(m1.id).to.be.a("string");
+        expect(m1.createdAt).to.be.a("Date");
+        expect(m1.updatedAt).to.be.a("Date");
+        expect(m1.serialize()).to.be.a("object");
+        expect(m1.pString).to.equal("pString");
+        expect(m1.pNumber).to.equal(20);
+        expect(m1.pDate).to.be.a("Date");
+        expect(m1.pBoolean).to.equal(true);
+        expect(m1.aString).to.have.members(['s1', 's2']);
+        expect(m1.aNumber).to.have.members([0, 1, 2]);
+        expect(m1.aBoolean).to.have.members([false, true, false]);
+        expect(m1.inv).to.be.a("object");
+        expect(objectHelper.areEqual(m1.inv.serialize(), mRel1.serialize())).to.be.true;
+        expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
+        expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
 
-            expect(m1.id).to.be.a("string");
-            expect(m1.createdAt).to.be.a("Date");
-            expect(m1.updatedAt).to.be.a("Date");
-            expect(m1.serialize(_, )).to.be.a("object");
-            expect(m1.pString).to.equal("pString");
-            expect(m1.pNumber).to.equal(20);
-            expect(m1.pDate).to.be.a("Date");
-            expect(m1.pBoolean).to.equal(true);
-            expect(m1.aString).to.have.members(['s1', 's2']);
-            expect(m1.aNumber).to.have.members([0, 1, 2]);
-            expect(m1.aBoolean).to.have.members([false, true, false]);
-            expect(m1.inv).to.be.a("object");
-            expect(objectHelper.areEqual(m1.inv.serialize(_, ), mRel1.serialize(_, ))).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[0].serialize(_, ), mRel2.serialize(_, ))).to.be.true;
-            expect(objectHelper.areEqual(m1.rels[1].serialize(_, ), mRel3.serialize(_, ))).to.be.true;
-
-        });
     });
 
 
-    it('Fetch instances should allow to get relations', (done) => {
-        Fixtures.execAsync(done, function (_) {
-            let db = AdminHelper.model(MyModel);
-            let rels: MyModel[] = db.fetchInstances(_);
-            expect(rels.length).to.equal(1);
-            expect(rels[0].inv).to.be.not.undefined;
-            expect(rels[0].inv.p1).to.equal('prop1');
-            expect(rels[0].rels).to.be.not.undefined;
-            expect(rels[0].rels.length).to.equal(2);
-            expect(rels[0].rels[0].p1).to.equal('prop2');
-            expect(rels[0].rels[1].p1).to.equal('prop3modified');
-        });
+    it('Fetch instances should allow to get relations', () => {
+        let db = AdminHelper.model(MyModel);
+        let rels: MyModel[] = db.fetchInstances();
+        expect(rels.length).to.equal(1);
+        expect(rels[0].inv).to.be.not.undefined;
+        expect(rels[0].inv.p1).to.equal('prop1');
+        expect(rels[0].rels).to.be.not.undefined;
+        expect(rels[0].rels.length).to.equal(2);
+        expect(rels[0].rels[0].p1).to.equal('prop2');
+        expect(rels[0].rels[1].p1).to.equal('prop3modified');
+
     });
 
-    it('Fetch instances should return correct results even after deleting some instances', (done) => {
-        Fixtures.execAsync(done, function (_) {
-            let db = AdminHelper.model(MyModelRel);
-            let rels = db.fetchInstances(_);
-            expect(rels.length).to.equal(3);
+    it('Fetch instances should return correct results even after deleting some instances', () => {
+        let db = AdminHelper.model(MyModelRel);
+        let rels = db.fetchInstances();
+        expect(rels.length).to.equal(3);
 
-            let rel0 = db.fetchInstance(_, "1234");
-            expect(rel0).to.be.null;
+        let rel0 = db.fetchInstance("1234");
+        expect(rel0).to.be.null;
 
-            let rel1 = db.fetchInstance(_, rels[0]._id, {});
-            expect(rel1).to.be.not.null;
-            expect(objectHelper.areEqual(rel1, rels[0])).to.equal(true);
+        let rel1 = db.fetchInstance(rels[0]._id, {});
+        expect(rel1).to.be.not.null;
+        expect(objectHelper.areEqual(rel1, rels[0])).to.equal(true);
 
-            db.deleteInstance(_, rel1);
-            expect(db.fetchInstance(_, rels[0]._id)).to.be.null;
-            expect(db.fetchInstances(_).length).to.equal(2);
+        db.deleteInstance(rel1);
+        expect(db.fetchInstance(rels[0]._id)).to.be.null;
+        expect(db.fetchInstances().length).to.equal(2);
 
-            let rel3 = db.fetchInstance(_, rels[2]._id, {});
-            expect(rel3.p1).to.equal("prop3modified");
-        });
+        let rel3 = db.fetchInstance(rels[2]._id, {});
+        expect(rel3.p1).to.equal("prop3modified");
     });
 
-    it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function (_) {
-            removaAllDocuments(_);
-        });
+    it('Delete instances should work as expected', () => {
+        removaAllDocuments();
     });
 
 });

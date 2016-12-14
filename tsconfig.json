@@ -12,9 +12,6 @@
         "moduleResolution": "node",
         "strictNullChecks": false
     },
-    "filesGlob": [
-        "./**/*.ts"
-    ],
     "exclude": [
         "node_modules",
         "dist"

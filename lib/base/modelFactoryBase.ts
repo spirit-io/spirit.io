@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import { Request, Response, Router, RequestHandler } from 'express';
 import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IFetchParameters, IQueryParameters } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
@@ -38,11 +37,11 @@ class Field implements IField {
         }
     }
 
-    isVisible(_, instance: any): boolean {
+    isVisible(instance: any): boolean {
         if (typeof this._invisible === 'boolean') {
             return !<boolean>this._invisible;
         } else {
-            return !this._invisible(_, instance);
+            return !this._invisible(instance);
         }
     }
 }
@@ -168,7 +167,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return this.$hooks.get(name);
     }
 
-    populateField(_: _, parameters: IFetchParameters | IQueryParameters = {}, item: any = {}, key: string): void {
+    populateField(parameters: IFetchParameters | IQueryParameters = {}, item: any = {}, key: string): void {
         let include = parameters.includes && parameters.includes.filter((i) => { return i.path === key; })[0];
         if (include && item && item[key] != null) {
             let type = this.getReferenceType(key);
@@ -176,8 +175,8 @@ export abstract class ModelFactoryBase implements IModelFactory {
             let relValue;
             if (Array.isArray(item[key])) {
                 relValue = [];
-                item[key].forEach_(_, (_, id) => {
-                    let ref = mf.actions.read(_, id);
+                item[key].forEach((id) => {
+                    let ref = mf.actions.read(id);
                     if (include.select) {
                         let data = { _id: ref._id };
                         data[include.select] = ref[include.select];
@@ -187,7 +186,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
                     }
                 });
             } else {
-                let ref = mf.actions.read(_, item[key]);
+                let ref = mf.actions.read(item[key]);
                 if (include.select) {
                     let data = { _id: ref._id };
                     data[include.select] = ref[include.select];
@@ -221,28 +220,28 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return transformed;
     }
 
-    private executeService(req: Request, res: Response, _: _): void {
+    private executeService(req: Request, res: Response): void {
         let _name: string = req.params['_name'];
         if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
             res.sendStatus(404);
             return;
         }
         let params = req.body;
-        let result = this.targetClass[_name](_, params);
+        let result = this.targetClass[_name](params);
         res.json(result);
     }
 
-    private executeMethod(req: Request, res: Response, _: _): void {
+    private executeMethod(req: Request, res: Response): void {
         let _id: string = req.params['_id'];
         let _name: string = req.params['_name'];
-        let inst = this.helper.fetchInstance(_, _id);
+        let inst = this.helper.fetchInstance(_id);
         if (this.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
             res.sendStatus(404);
             return;
         }
 
         let params = req.body;
-        let result = inst[_name](_, params);
+        let result = inst[_name](params);
         res.json(result);
     }
 

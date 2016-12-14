@@ -1,5 +1,6 @@
-import { _ } from 'streamline-runtime';
-import { Router, Application, Request, Response } from 'express';
+import { context } from 'f-promise';
+import { Server } from '../application';
+import { Router, Application, Request, Response, NextFunction } from 'express';
 import * as bodyParser from "body-parser";
 const express = require('express');
 const methodOverride = require("method-override");
@@ -18,13 +19,11 @@ export class Middleware {
 
     routers: Map<string, Router>;
     authMiddleware: Function;
-
-    constructor(private app: Application, options?: any) {
-        options = options || {};
+    app: Application;
+    constructor(private srv: Server) {
+        this.app = srv.app;
         this.routers = new Map();
         this.routers.set('v1', express.Router());
-        // set authentication middleware function
-        if (options.auth) this.authMiddleware = options.auth;
     }
 
     configure() {
@@ -33,17 +32,19 @@ export class Middleware {
             extended: true
         }));
 
-        this.app.use(function (req: Request, res: Response, _: _) {
-            _.context['request'] = req;
+        this.app.use(function(req: Request, res: Response, next: NextFunction) {
+            context()['request'] = req;
+            next();
         });
 
     }
 
     setApiRoutes() {
-
-        let apiAuth = auth.for('api').use(this.authMiddleware || function (req, res, _) {
+        console.log("this.authMiddleware:", this.authMiddleware)
+        let apiAuth = auth.for('api').use(this.authMiddleware || function(req: Request, res: Response, next: NextFunction) {
             // Default auth middleware does nothing 
-            req.authenticated = true;
+            req['authenticated'] = true;
+            next();
         });
 
         for (var [key, router] of this.routers) {
@@ -52,8 +53,9 @@ export class Middleware {
     }
 
     setErrorHandler() {
-        this.app.use(function (err: Error, req: Request, res: Response, _: _) {
-            console.error(`*****\nError handled when processing HTTP request\n\t- ${req.method} ${req.url}\n\t- Headers: ${JSON.stringify(req['headers'])}\n\t- Data: ${JSON.stringify(req['body'])}\n\t- ${err['error'] || err.stack}\n*****`);
+        this.app.use(function(err: Error, req: Request, res: Response, next: NextFunction) {
+            let exposeStack = this.srv.config.system && this.srv.config.system.exposeStack;
+            console.error(`*****\nError handled when processing HTTP request\n\t- ${req.method} ${req.url}\n\t- Status: ${err['status'] || res.statusCode}\n\t- Headers: ${JSON.stringify(req['headers'])}\n\t- Data: ${JSON.stringify(req['body'])}\n\t- Cause: ${exposeStack ? (err['error'] || err.stack) : err.message}\n*****`);
             if (res.headersSent) {
                 return;
             }
@@ -61,11 +63,12 @@ export class Middleware {
             res.json({
                 $diagnoses: [{
                     $severity: 'error',
-                    $message: err['error'] ? err['error'] : err.toString(),
-                    $stack: err.stack
+                    $message: err['error'] ? err['error'] : err.message,
+                    $stack: exposeStack ? err.stack : undefined
                 }]
             });
-        });
+            next();
+        }.bind(this));
     }
 }
 Object.seal(Middleware);

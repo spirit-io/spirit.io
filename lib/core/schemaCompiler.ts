@@ -1,6 +1,6 @@
-import { _ } from 'streamline-runtime';
+import { wait } from 'f-promise';
 import * as ts from "typescript";
-import * as fs from "fs";
+import * as fs from "mz/fs";
 import * as path from 'path';
 import * as qs from "querystring";
 import { helper as objectHelper } from '../utils/object';
@@ -311,23 +311,23 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
                     name: expression.getText()
                 };
 
-            case ts.SyntaxKind.CallExpression:
-                // console.log("Call expression: "+require('util').inspect(decorator,null,1));
-                expression = <ts.CallExpression>decorator.expression;
-                if (!expression) return;
-                let symbol = checker.getSymbolAtLocation(expression.getFirstToken());
-                let args = <ts.NodeArray<ts.Node>>expression.arguments;
-                let decoratorType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
-                let callSig = decoratorType.getCallSignatures()[0];
-                var params: ts.Symbol[] = callSig.getParameters();
-                return {
-                    name: symbol.getName(),
-                    args: args.reduce(function (prev: any, curr: ts.Node, idx: number) {
-                        var paramName = params[idx].getName();
-                        prev[paramName] = curr.getText().replace(/\"/g, '');
-                        return prev;
-                    }, {})
-                }
+            // case ts.SyntaxKind.CallExpression:
+            //     // console.log("Call expression: "+require('util').inspect(decorator,null,1));
+            //     expression = <ts.CallExpression>decorator.expression;
+            //     if (!expression) return;
+            //     let symbol = checker.getSymbolAtLocation(expression.getFirstToken());
+            //     let args = <ts.NodeArray<ts.Node>>expression.arguments;
+            //     let decoratorType = checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration);
+            //     let callSig = decoratorType.getCallSignatures()[0];
+            //     var params: ts.Symbol[] = callSig.getParameters();
+            //     return {
+            //         name: symbol.getName(),
+            //         args: args.reduce(function (prev: any, curr: ts.Node, idx: number) {
+            //             var paramName = params[idx].getName();
+            //             prev[paramName] = curr.getText().replace(/\"/g, '');
+            //             return prev;
+            //         }, {})
+            //     }
             default:
                 console.log(`Decorator ${decorator.kind} management not yet implemented`);
         }
@@ -352,7 +352,7 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 
     /** True if this is visible outside this file, false otherwise */
     function isNodeExported(node: ts.Node): boolean {
-        return (node.flags & ts.NodeFlags.Export) !== 0 || (node.parent && node.parent.kind === ts.SyntaxKind.SourceFile);
+        return (node.flags & ts.ModifierFlags.Export) !== 0 || (node.parent && node.parent.kind === ts.SyntaxKind.SourceFile);
     }
 
     function isStatic(node: ts.Node) {
@@ -371,15 +371,15 @@ function generateSchemaDefinitions(fileNames: string[], options: ts.CompilerOpti
 }
 
 export class SchemaCompiler {
-    static registerModels = (_, routers: Map<string, express.Router>, contract: Contract) => {
+    static registerModels = (routers: Map<string, express.Router>, contract: Contract) => {
 
-        function browseDir(_, dir) {
+        function browseDir(dir) {
             // Add each .js file to the mocha instance
-            fs.readdirSync(dir).forEach_(_, function (_, file) {
+            wait(fs.readdir(dir)).forEach(function (file) {
                 let filePath = path.join(dir, file);
-                var stats = fs.lstat(filePath, _);
+                var stats = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
-                    browseDir(_, filePath);
+                    browseDir(filePath);
                 } else if (stats.isFile() && /\.ts$/.test(file)) {
                     // Only keep the .ts files
                     //console.log("File:",file)
@@ -388,8 +388,8 @@ export class SchemaCompiler {
             });
         }
         let modelFiles = [];
-        contract.modelsLocations.forEach_(_, function (_, dir) {
-            browseDir(_, dir);
+        contract.modelsLocations.forEach(function (dir) {
+            browseDir(dir);
         });
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS

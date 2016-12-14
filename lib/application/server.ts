@@ -1,4 +1,4 @@
-import { _ } from 'streamline-runtime';
+import { run, wait } from 'f-promise';
 import { Application } from 'express';
 
 import { json, urlencoded } from "body-parser";
@@ -9,12 +9,14 @@ import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
 
 const express = require('express');
-// store init standard function
-let appInit = express.application.init;
-// patch express to be compliant with streamline
-require('express-streamline');
-// restore init standard function overrided by express-streamline
-express.application.init = appInit;
+const expressPromise = require('express-promise');
+
+// // store init standard function
+// let appInit = express.application.init;
+// // patch express to be compliant with streamline
+// require('express-streamline');
+// // restore init standard function overrided by express-streamline
+// express.application.init = appInit;
 
 export class Server extends EventEmitter {
 
@@ -28,19 +30,21 @@ export class Server extends EventEmitter {
         this.config = config;
 
         this.app = express();
-        this.middleware = new Middleware(this.app);
+        //this.app.use(expressPromise());
+        this.middleware = new Middleware(this);
         this.contract = new Contract(this.config);
     }
 
-    init(_: _) {
+    init() {
         // register models
         this.contract.init();
-        SchemaCompiler.registerModels(_, this.middleware.routers, this.contract);
+        run(() => SchemaCompiler.registerModels(this.middleware.routers, this.contract))
+            .then(() => { }, err => { throw err; });
 
         return this;
     }
 
-    start(_: _, port: number) {
+    start(port: number) {
         // configure middleware standard rules
         this.middleware.configure();
         // initialize versioned api routes
@@ -49,7 +53,7 @@ export class Server extends EventEmitter {
         this.middleware.setErrorHandler();
         this.emit('initialized');
         // start http server
-        this.app.listen(port, function () {
+        this.app.listen(port, function() {
             console.log(`Server listening on port ${port}!`);
         });
 

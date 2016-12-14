@@ -1,7 +1,7 @@
-import { _ } from 'streamline-runtime';
 import { ConnectorHelper } from '../core/connectorHelper';
 import { IModelOptions } from '../interfaces';
 import { helper as objectHelper } from '../utils/object';
+import { context } from 'f-promise';
 import * as path from 'path';
 
 export class Contract {
@@ -21,7 +21,7 @@ export class Contract {
             let datasources = this.config.connectors[key].datasources;
             for (let ds in datasources) {
                 let dsId: string = ds.indexOf(':') === -1 ? ds : ds.split(':')[0];
-                if (!_.context.__defaultDatasource) _.context.__defaultDatasource = dsId;
+                if (!context().__defaultDatasource) context().__defaultDatasource = dsId;
                 ConnectorHelper.getConnector(dsId).connect(ds, datasources[ds]);
             }
         }

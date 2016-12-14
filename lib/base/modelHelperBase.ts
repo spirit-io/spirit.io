@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import {
     IModelFactory,
     IModelHelper,
@@ -85,23 +84,23 @@ export abstract class ModelHelperBase implements IModelHelper {
         return includes;
     }
 
-    fetchInstances(_: _, filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstances(filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instances ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let instances: any = [];
-        let docs = this.modelFactory.actions.query(_, filter, parameters);
+        let docs = this.modelFactory.actions.query(filter, parameters);
         for (var doc of docs) {
             let inst = new this.modelFactory.targetClass.prototype.constructor();
             this.updateValues(inst, doc);
-            instances.push(serializeOptions ? this.serialize(_, inst, parameters, serializeOptions) : inst);
+            instances.push(serializeOptions ? this.serialize(inst, parameters, serializeOptions) : inst);
         }
         return instances;
     }
 
-    fetchInstance(_: _, filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstance(filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instance ##");
         parameters = this._patchParameters(parameters, serializeOptions);
-        let doc = this.modelFactory.actions.read(_, filter, parameters);
+        let doc = this.modelFactory.actions.read(filter, parameters);
 
 
         if (!doc) return null;
@@ -115,46 +114,46 @@ export abstract class ModelHelperBase implements IModelHelper {
             inst = new this.modelFactory.targetClass.prototype.constructor();
             this.updateValues(inst, doc);
         }
-        return serializeOptions ? this.serialize(_, inst, parameters, serializeOptions) : inst;
+        return serializeOptions ? this.serialize(inst, parameters, serializeOptions) : inst;
     }
 
-    saveInstance(_: _, instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
+    saveInstance(instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Save instance ##");
         if (!instance._id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
         let exists, item;
         if (instance._id) {
-            instance.$snapshot = this.fetchInstance(_, instance._id);
+            instance.$snapshot = this.fetchInstance(instance._id);
         } else {
             instance.$isCreated;
         }
         // Call beforeSave hook
-        this.applyHook(_, 'beforeSave', instance);
+        this.applyHook('beforeSave', instance);
 
         // special options are needed for pre update serialization
         let customSerializeOptions = serializeOptions ? objectHelper.clone(serializeOptions) : {};
         customSerializeOptions.includeInvisible = true;
-        let serialized = this.serialize(_, instance, null, customSerializeOptions);
+        let serialized = this.serialize(instance, null, customSerializeOptions);
 
         if (!instance.$isCreated) {
             options.deleteReadOnly = true;
-            item = this.modelFactory.actions.update(_, instance._id, serialized, options);
+            item = this.modelFactory.actions.update(instance._id, serialized, options);
         } else {
-            item = this.modelFactory.actions.create(_, serialized, options);
+            item = this.modelFactory.actions.create(serialized, options);
         }
 
         this.updateValues(instance, item, { deleteMissing: true });
-        this.applyHook(_, 'afterSave', instance);
+        this.applyHook('afterSave', instance);
         if (!serializeOptions) return instance;
-        return this.serialize(_, instance, null, serializeOptions);
+        return this.serialize(instance, null, serializeOptions);
     }
 
-    deleteInstance(_: _, instance: any): any {
-        return this.modelFactory.actions.delete(_, instance._id);
+    deleteInstance(instance: any): any {
+        return this.modelFactory.actions.delete(instance._id);
     }
 
-    serialize(_: _, instance: any, parameters?: IQueryParameters | IFetchParameters, options?: ISerializeOptions): any {
+    serialize(instance: any, parameters?: IQueryParameters | IFetchParameters, options?: ISerializeOptions): any {
         options = options || {};
         parameters = parameters || {};
         // consider correct modelFactory (for relation potentially)
@@ -181,7 +180,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                         let notInclude = options.serializeRef && includes.indexOf(key) === -1;
 
 
-                        item[key] = instance[key].map_(_, function (_, inst) {
+                        item[key] = instance[key].map(function (inst) {
                             //only ids if reference serialization is not expected and it is not embedded
                             if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
                                 trace && trace("Not include ref ", key);
@@ -191,7 +190,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                             else {
                                 trace && trace("Include ref ", key);
                                 let _db = AdminHelper.model(inst.constructor);
-                                let sRef = _db.serialize(_, inst, null, options);
+                                let sRef = _db.serialize(inst, null, options);
                                 if (sRef && sRef._id || field.isEmbedded) return sRef;
                             }
                             return null;
@@ -207,7 +206,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                         else {
                             trace && trace("Include ref ", key);
                             let _db = AdminHelper.model(instance[key].constructor);
-                            let sRef = _db.serialize(_, instance[key], null, options);
+                            let sRef = _db.serialize(instance[key], null, options);
                             if (sRef && sRef._id || field.isEmbedded) item[key] = sRef
                         }
                     }
@@ -227,7 +226,7 @@ export abstract class ModelHelperBase implements IModelHelper {
 
         if (!options.includeInvisible) {
             for (let [key, field] of mf.$fields) {
-                if (!field.isVisible(_, instance)) {
+                if (!field.isVisible(instance)) {
                     delete item[key];
                 }
             }
@@ -281,17 +280,17 @@ export abstract class ModelHelperBase implements IModelHelper {
         }
     }
 
-    applyHook(_, name: string, instance: any) {
+    applyHook(name: string, instance: any) {
         let fn: Function = this.modelFactory.getHookFunction(name);
         if (!fn) return;
         try {
             instance.__hooksRunning = instance.__hooksRunning || {};
             if (!instance.__hooksRunning[name]) {
                 instance.__hooksRunning[name] = true;
-                fn(_, instance);
+                fn(instance);
             }
         } catch (e) {
-            throw new Error(`An error occured while applying hook '${name}: ${e.message}`);
+            throw new Error(`An error occured while applying hook '${name}: ${e.message} ${e.stack}`);
         } finally {
             delete instance.__hooksRunning[name];
         }

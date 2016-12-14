@@ -1,9 +1,8 @@
-//require('streamline').register({});
-import { _ } from 'streamline-runtime';
 import { Server } from '../../lib/application';
 import { MockConnector } from './mockConnector';
 import { ConnectorHelper } from '../../lib/core';
-import { devices } from 'ez-streams'
+import { context } from 'f-promise';
+import { devices } from 'f-streams';
 const path = require('path');
 
 let trace;// = console.log;
@@ -12,7 +11,6 @@ const port = 3001;
 const baseUrl = 'http://localhost:' + port;
 
 const config = {
-    // defaultDatasource: 'mock',
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
     connectors: {
         mock: {
@@ -20,11 +18,14 @@ const config = {
                 "mock": {}
             }
         }
+    },
+    system: {
+        exposeStack: false
     }
 };
 
 
-function request(_: _, method: string, url: string, data?: any, headers?: any) {
+function request(method: string, url: string, data?: any, headers?: any) {
     headers = headers || {
         'content-type': 'application/json'
     };
@@ -33,22 +34,22 @@ function request(_: _, method: string, url: string, data?: any, headers?: any) {
         url: baseUrl + url,
         method: method,
         headers: headers
-    }).end(JSON.stringify(data)).response(_);
+    }).proxyConnect().end(data ? JSON.stringify(data) : undefined).response();
     return {
         status: resp.statusCode,
         headers: resp.headers,
-        body: resp.readAll(_)
+        body: resp.readAll()
     };
 }
 
 export class Fixtures {
 
-    static setup = (_, done) => {
+    static setup = (done) => {
         let firstSetup = true;
         let connector;
-        if (!_.context.__server) {
-            let server: Server = _.context.__server = require('../..')(config);
-            server.on('initialized', function () {
+        if (!context().__server) {
+            let server: Server = context().__server = require('../../lib')(config);
+            server.on('initialized', function() {
                 console.log("========== Server initialized ============\n");
                 done();
             });
@@ -56,8 +57,8 @@ export class Fixtures {
             connector = new MockConnector(config.connectors.mock);
             server.addConnector(connector);
             console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
-            server.init(_);
-            server.start(_, 3001);
+            server.init();
+            server.start(3001);
         } else {
             firstSetup = false;
         }
@@ -73,28 +74,28 @@ export class Fixtures {
         return (<MockConnector>ConnectorHelper.getConnector('mock')).dumpStorage();
     }
 
-    static get = (_: _, url: string, headers?: any) => {
-        return request(_, 'GET', url, null, headers);
+    static get = (url: string, headers?: any) => {
+        return request('GET', url, null, headers);
     }
 
-    static post = (_: _, url: string, data: any, headers?: any) => {
-        return request(_, 'POST', url, data, headers);
+    static post = (url: string, data: any, headers?: any) => {
+        return request('POST', url, data, headers);
     }
 
-    static put = (_: _, url: string, data: any, headers?: any) => {
-        return request(_, 'PUT', url, data, headers);
+    static put = (url: string, data: any, headers?: any) => {
+        return request('PUT', url, data, headers);
     }
 
-    static delete = (_: _, url: string, headers?: any) => {
-        return request(_, 'DELETE', url, null, headers);
+    static delete = (url: string, headers?: any) => {
+        return request('DELETE', url, null, headers);
     }
 
-    static patch = (_: _, url: string, headers?: any) => {
-        return request(_, 'PATCH', url, headers);
+    static patch = (url: string, headers?: any) => {
+        return request('PATCH', url, headers);
     }
 
     static execAsync = (done, fn): void => {
-        fn(function (err, res) {
+        fn(function(err, res) {
             if (err) done(err);
             else done();
         });

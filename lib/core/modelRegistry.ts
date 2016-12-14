@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import { IModelFactory } from '../interfaces';
 import { ConnectorHelper } from './connectorHelper';
 export class ModelRegistry {
@@ -11,7 +10,7 @@ export class ModelRegistry {
     public static getFactoryByName(collectionName: string): IModelFactory {
         return this.factories.get(collectionName);
     }
-    
+
     public static getFactory(target: any): IModelFactory {
         if (typeof target === 'string') {
             return this.factories.get(target);

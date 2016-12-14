@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import { ICollection } from '../interfaces';
 import { IModelFactory } from '../interfaces';
 import { ModelRegistry } from '../core/modelRegistry';

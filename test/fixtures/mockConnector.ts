@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, ISaveParameters, IFetchParameters, IQueryParameters } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
@@ -17,27 +16,27 @@ class MockActions implements IModelActions {
     constructor(private modelFactory: MockFactory) { }
 
 
-    private _populate(_: _, item: any, parameters: IFetchParameters | IQueryParameters) {
+    private _populate(item: any, parameters: IFetchParameters | IQueryParameters) {
         function getRel(_type: string, _id: string) {
             return storage[_type] && storage[_type][_id];
         }
 
         parameters = parameters || {};
-        Object.keys(this.modelFactory.$references).forEach_(_, (_, key) => {
-            this.modelFactory.populateField(_, parameters, item, key);
+        Object.keys(this.modelFactory.$references).forEach((key) => {
+            this.modelFactory.populateField(parameters, item, key);
         });
     }
 
 
 
-    query(_: _, filter: Object = {}, parameters?: IQueryParameters) {
+    query(filter: Object = {}, parameters?: IQueryParameters) {
         let res = [];
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
 
         let data = objectHelper.clone(storage[this.modelFactory.collectionName], true);
         let keys = Object.keys(data);
 
-        keys.forEach_(_, (_, k) => {
+        keys.forEach((k) => {
             let doc = data[k];
             let filterMatch = true;
             let filterKeys = Object.keys(filter);
@@ -47,14 +46,14 @@ class MockActions implements IModelActions {
                 if (doc[key] !== value) filterMatch = false;
             }
             if (filterMatch) {
-                this._populate(_, doc, parameters);
+                this._populate(doc, parameters);
                 res.push(doc);
             }
         });
         return res;
     }
 
-    read(_: _, id: any, parameters?: IFetchParameters) {
+    read(id: any, parameters?: IFetchParameters) {
         //console.log(`Read ${this.modelFactory.collectionName}: id: ${id} ; options: ${JSON.stringify(options, null, 2)}`);
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         let res = objectHelper.clone(storage[this.modelFactory.collectionName][id], true);
@@ -64,26 +63,26 @@ class MockActions implements IModelActions {
 
             if (this.modelFactory.$plurals.indexOf(parameters.ref) !== -1) {
                 let ids = Array.isArray(res[parameters.ref]) ? res[parameters.ref] : [res[parameters.ref]];
-                let all = refModelFactory.actions.query(_);
+                let all = refModelFactory.actions.query();
                 return all.filter((elt) => {
                     return res[parameters.ref].indexOf(elt._id) !== -1;
                 });
             } else {
-                return refModelFactory.actions.read(_, res[parameters.ref]);
+                return refModelFactory.actions.read(res[parameters.ref]);
             }
         } else {
-            this._populate(_, res, parameters);
+            this._populate(res, parameters);
             return res;
         }
     }
 
-    create(_: _, item: any, options?: any) {
+    create(item: any, options?: any) {
         ensureId(item);
         item._createdAt = new Date();
-        return this.update(_, item._id, item, options);
+        return this.update(item._id, item, options);
     }
 
-    update(_: _, _id: any, item: any, options?: ISaveParameters) {
+    update(_id: any, item: any, options?: ISaveParameters) {
         item._updatedAt = new Date();
         let storedItem = this.modelFactory.simplifyReferences(item);
         storedItem._id = _id;
@@ -100,7 +99,7 @@ class MockActions implements IModelActions {
         return item;
     }
 
-    delete(_: _, _id: any) {
+    delete(_id: any) {
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         delete storage[this.modelFactory.collectionName][_id];
     }

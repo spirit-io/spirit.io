@@ -1,4 +1,3 @@
-import { _ } from 'streamline-runtime';
 import { AdminHelper } from '../core/adminHelper';
 import { IModelHelper } from '../interfaces';
 import { readonly } from '../../lib/decorators';
@@ -28,18 +27,17 @@ export abstract class ModelBase {
 
     /**
      * function save
-     * @param _ _ streamline callback
      * @param options any Can be the following :
      * let options = {
      *      deleteMissing: true // allows to add $unset properties in order to remove values from the updated document
      * }
      */
-    save(_: _, data?: any, options?: any): any {
-        return this._db.saveInstance(_, this, data, options);
+    save(data?: any, options?: any): any {
+        return this._db.saveInstance(this, data, options);
     }
 
-    serialize(_: _): any {
-        return this._db.serialize(_, this);
+    serialize(): any {
+        return this._db.serialize(this);
     }
 
     updateValues(item: any, options?: any): void {
