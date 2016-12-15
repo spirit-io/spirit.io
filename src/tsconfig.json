@@ -10,7 +10,7 @@
         "emitDecoratorMetadata": true,
         "declaration": true,
         "sourceMap": true,
-        "outDir": "dist"
+        "outDir": ".."
     },
     "exclude": [
         "node_modules",

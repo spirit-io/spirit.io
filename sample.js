@@ -1,14 +1,14 @@
 "use strict";
 
-let Server = require('./dist/lib/application/server').Server;
-let MockConnector = require('./dist/test/fixtures/mockConnector').MockConnector;
+let Server = require('./lib/application/server').Server;
+let MockConnector = require('./test/fixtures/mockConnector').MockConnector;
 const path = require('path');
 const port = 3001;
 const baseUrl = 'http://localhost:' + port;
 
 const config = {
     // defaultDatasource: 'mock',
-    modelsLocation: path.resolve(path.join(__dirname, './dist/test/models')),
+    modelsLocation: path.resolve(path.join(__dirname, './test/models')),
     connectors: {
         mock: {
             datasources: {

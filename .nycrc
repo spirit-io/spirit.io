@@ -1,10 +1,10 @@
 {
     "include": [
-      "dist/lib/*.js",
-      "dist/lib/**/*.js"
+      "lib/*.js",
+      "lib/**/*.js"
     ],
     "exclude": [
-      "dist/lib/**/index.js"
+      "lib/**/index.js"
     ],
     "extension": [
       ".js"
