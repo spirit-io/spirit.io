@@ -1,6 +1,10 @@
 language: node_js
 node_js:
-  - "6"
+  - "4"
+before_script:
+  - npm install -g typescript
+  - npm install
+  - tsc -p src
 notifications:
   email:
     recipients:
