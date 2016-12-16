@@ -67,27 +67,28 @@ export class Server extends EventEmitter {
     constructor(config: any = {}) {
         super();
         this.config = config;
-
-        this.app = express();
-        let router = express.Router();
-
-        // TODO later: patch express to handle transparently f-promise
-        // patchExpress(this.app);
-        // patchRouter(router)
-        this.middleware = new Middleware(this, router);
         this.contract = new Contract(this.config);
     }
 
     init() {
-        // register models
-        this.contract.init();
-        run(() => SchemaCompiler.registerModels(this.middleware.routers, this.contract))
-            .then(() => {
-                this.emit('initialized');
-            })
-            .catch(err => {
-                throw err;
-            });
+
+        run(() => {
+            this.app = express();
+            let router = express.Router();
+
+            // TODO later: patch express to handle transparently f-promise
+            // patchExpress(this.app);
+            // patchRouter(router)
+            this.middleware = new Middleware(this, router);
+
+
+            // register models
+            this.contract.init();
+            SchemaCompiler.registerModels(this.middleware.routers, this.contract);
+            this.emit('initialized');
+        }).catch(err => {
+            throw err;
+        });
 
         return this;
     }
