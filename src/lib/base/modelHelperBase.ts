@@ -180,7 +180,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                         let notInclude = options.serializeRef && includes.indexOf(key) === -1;
 
 
-                        item[key] = instance[key].map(function (inst) {
+                        item[key] = instance[key].map(function(inst) {
                             //only ids if reference serialization is not expected and it is not embedded
                             if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
                                 trace && trace("Not include ref ", key);
