@@ -1,8 +1,5 @@
 [![Build Status](https://travis-ci.org/spirit-io/spirit.io.svg?branch=master)](https://travis-ci.org/spirit-io/spirit.io)
 [![Coverage Status](https://coveralls.io/repos/github/spirit-io/spirit.io/badge.svg?branch=master)](https://coveralls.io/github/spirit-io/spirit.io?branch=master)
-
-This project is currently in development...
-
 # spirit.io
 
 spirit.io is an extensible Node.JS ORM framework written with Typescript.  
@@ -14,58 +11,78 @@ At the end, the framework will produce CRUD operations usable from server side u
 ## Getting Started
 
 First of all, spirit.io is a framework, so you need to create your own project to be able to use it.  
-Then, it's important to understand that spirit.io uses `streamline` generators, so please take a look to streamline documentation to learn all the benefits you will encounter.  
+Then, it's important to understand that spirit.io uses [f-promise](https://github.com/Sage/f-promise) API, so please take a look to its documentation to learn all the benefits you will encounter.  
 
-When using `streamline` with `Typescript`, the Typescript compilation is not done by common typescript compiler like `tsc`.  
-Streamline does its own compilation of .ts files at application startup.  
-That means you don't have to build your application, it's ready to be used directly by executing `node .` command in your project.  
+When using `spirit.io` with `Typescript`, the Typescript compilation is done by common typescript compiler `tsc`.  
 But the first entry point is that you need to create a standard Javascript file.  
 
 `index.js`:  
 
 ```js
 "use strict";
+const fpromise = require('f-promise');
 
-require("streamline").register({}); // necessary to use streamline
-require ('streamline-runtime'); // necessary to use node executable instead of _node, and also .js extension files instead of ._js
-
-let spirit = require('spirit.io'); // here you require the framework
-
-// then simply create your application wrapper
-let App = require('./app'); // app is app.ts file described below
-var port = parseInt(process.env.PORT, 10) || 3000;
-new App(spirit(port)).init(function(err) {
-    if (err) throw err;
+let MyApp = require('./lib/app').MyApp;
+let app = new MyApp().init();
+app.on('initialized', () => {
+    fpromise.run(() => {
+        app.start();
+    }).catch(err => {
+        console.error(err.stack);
+    });
 });
 ```
 
 `app.ts`:  
 
 ```ts
-/// <reference path="node_modules/spirit.io/typings/index.d.ts" />
-import { _ } from 'streamline-runtime'; // every ts file with this import will be handled by streamline generator
-import { Server } from 'spirit.io/lib/application'; // the spirit.io Server class need to be in your constructor arguments
+import { Server } from 'spirit.io/lib/application';
+import { MongodbConnector } from 'spirit.io-mongodb-connector/lib/connector';
+import { run } from 'f-promise';
 
-class App {
-    constructor(private server: Server) {}
-    init = (_: _) => {
-        this.server.start(_); // here we start the express application server
-        
-        // then you can register your own routes
-        this.server.app.use('/test' , (req, res, cb) => {
-            res.send('It works !');
-        });
+export class MyApp extends Server {
+    constructor(config?: any) {
+        if (!config) config = require('./config').config;
+        super(config);
+    }
+
+    init() {
+        run(() => {
+            console.log("\n========== Initialize server begins ============");
+            
+            // create a connector. Here mongodb for instance
+            let mongoConnector = new MongodbConnector(this.config.connectors.mongodb);
+            this.addConnector(mongoConnector);
+            console.log("Mongo connector config: " + JSON.stringify(mongoConnector.config, null, 2));
+            
+            // register your own models
+            this.contract.registerModelsByPath(path.resolve(path.join(__dirname, './models')));
+
+            // load models
+            super.init();
+            this.on('initialized', () => {
+                // Do your stuff here !!!
+                console.log("========== Server initialized ============\n");
+            });
+
+        }).catch(err => {
+            console.error(err.stack);
+        })
+
+        return this;
+    }
+
+    start(port?: number) {
+        super.start(port || this.config.expressPort);
     }
 }
-
-module.exports = App; // Do not forget to export your class as module to let him being visible from index.js file
 ```
 
 
 ### Prerequisities
 
 To use spirit.io, you need :
-* Node.JS 4.X
+* Node.JS 6.X
 * At least one spirit.io connector. eg: spirit.io-mongodb-connector
 * The connectors associated runtimes. eg: MongoDB server
 
@@ -84,7 +101,7 @@ npm install --save spirit.io-mongodb-connector
 ## Running the tests
 
 ```sh
-node node_modules/spirit.io/test
+npm test
 ```
 
 ## Authors
