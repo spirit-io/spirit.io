@@ -1,0 +1,7 @@
+{
+    "source": "./lib",
+    "destination": "./doc",
+    "includeds": [
+        "\\.(d.ts)$"
+    ]
+}

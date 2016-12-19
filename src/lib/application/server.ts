@@ -1,14 +1,12 @@
 import { run, wait } from 'f-promise';
 import { Application } from 'express';
-
 import { json, urlencoded } from "body-parser";
 import { SchemaCompiler, Middleware } from "../core";
 import { Contract } from "./contract";
 import { IConnector } from '../interfaces';
 import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
-
-const express = require('express');
+import * as express from 'express';
 
 function patchExpress(app) {
     let _handle = app.handle.bind(app);
@@ -56,20 +54,35 @@ function patchRouter(router) {
     }
 }
 
-
+/**
+ * Create a spirit.io server.
+ * This is main entry point of the application.
+ */
 export class Server extends EventEmitter {
-
-    public app: Application;
+    /** The config object */
     public config: any;
+    /** The express application */
+    public app: Application;
+    /** The server's middleware */
     public middleware: Middleware;
+    /** The server's contract */
     public contract: Contract;
 
+    /**
+     * A config object must be passed in the constructor.
+     * See config file documentation.
+     */
     constructor(config: any = {}) {
         super();
         this.config = config;
         this.contract = new Contract(this.config);
     }
 
+    /**
+     * Initialize the express application and the middleware rules.
+     * All the models registered in the contract would be compiled during this phase.
+     * An event `initialized` will be emitted when the server would be ready to be started.
+     */
     init() {
 
         run(() => {
@@ -93,20 +106,32 @@ export class Server extends EventEmitter {
         return this;
     }
 
+    /**
+     * Configure the main middleware rules.
+     * It will also set all the API routes for every registered models.
+     * And finally starts the HTTP server regarding the HTTP config elements.
+     */
     start(port: number) {
-        // configure middleware standard rules
-        this.middleware.configure();
-        // initialize versioned api routes
-        this.middleware.setApiRoutes();
-        // set default error handler
-        this.middleware.setErrorHandler();
+        run(() => {
+            // configure middleware standard rules
+            this.middleware.configure();
+            // initialize versioned api routes
+            this.middleware.setApiRoutes();
+            // set default error handler
+            this.middleware.setErrorHandler();
 
-        // start http server
-        this.app.listen(port, function () {
-            console.log(`Server listening on port ${port}!`);
+            // start http server
+            this.app.listen(port, function () {
+                console.log(`Server listening on port ${port}!`);
+            });
+        }).catch(err => {
+            throw err;
         });
     }
 
+    /**
+     * Allows the register spirit.io connectors.
+     */
     addConnector(connector: IConnector): void {
         ConnectorHelper.setConnector(connector);
     }
