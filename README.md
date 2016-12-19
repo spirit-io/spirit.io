@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/spirit-io/spirit.io.svg?branch=master)](https://travis-ci.org/spirit-io/spirit.io)
+[![Coverage Status](https://coveralls.io/repos/github/spirit-io/spirit.io/badge.svg?branch=master)](https://coveralls.io/github/spirit-io/spirit.io?branch=master)
+
 # spirit.io
 
 spirit.io is an extensible Node.JS ORM framework written with Typescript.  
