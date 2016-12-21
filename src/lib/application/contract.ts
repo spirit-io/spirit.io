@@ -1,21 +1,35 @@
 import { ConnectorHelper } from '../core/connectorHelper';
-import { IModelOptions } from '../interfaces';
 import { helper as objectHelper } from '../utils/object';
 import { context } from 'f-promise';
 import * as path from 'path';
 
+/**
+ * The spirit.io application contract is responsible for managing datasources and their connection.
+ * It allows also to manage classes models locations that would be used by the typescript compiler.
+ */
 export class Contract {
 
+    /** Datasources Map identified by a string that could contains a colon `:` separator. */
     public datasources: Map<string, any>;
-    private _extendsModels: any;
+    /** A string array that contains all the models paths registered. */
     private _modelsLocation: string[] = [];
 
+    /**
+     * A config object must be passed in the constructor.
+     * See config file documentation.
+     * @param any The config object.
+     */
     constructor(private config: any) {
         if (this.config.defaultDatasource) {
             context().__defaultDatasource = this.config.defaultDatasource;
         }
     };
 
+    /**
+     * Initialize connections for all datasources defined in config `connectors` section.
+     * And register models location defined by config `modelsLocation` section.
+     * See configuration file documentation for mode details.
+     */
     public init() {
         for (let key in this.config.connectors) {
             let datasources = this.config.connectors[key].datasources;
@@ -33,18 +47,20 @@ export class Contract {
                 this.registerModelsByPath(loc);
             });
         }
-
-
-        // TODO: validation
-        this._extendsModels = this.config.models;
     };
 
+    /**
+     * Allows to register new models location specifying its path.
+     * @param string An absolute path
+     */
     public registerModelsByPath(path: string) {
         if (this._modelsLocation.indexOf(path) === -1) this._modelsLocation.push(path);
     }
 
 
-
+    /**
+     * Allows to get all registered models paths.
+     */
     public get modelsLocations(): string[] {
         return this._modelsLocation;
     }

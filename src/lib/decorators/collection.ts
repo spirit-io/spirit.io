@@ -1,4 +1,3 @@
-import { ICollection } from '../interfaces';
 import { IModelFactory } from '../interfaces';
 import { ModelRegistry } from '../core/modelRegistry';
 import { ConnectorHelper } from '../core/connectorHelper';
@@ -6,7 +5,21 @@ import { ModelFactoryBase } from '../base';
 
 const helpers = require('./helpers');
 
-export function collection(options?: ICollection): any {
+/**
+ * These are the options that allows to define special cases for your models.
+ * @param datasource Allows to assign different datasource that is defined as default for this model.
+ * @param persistent Allows to set your model as non persistent. 
+ * It could be useful in some cases where you don't need to store data, but you need services.
+ */
+export interface IModel {
+    datasource?: string;
+    persistent?: boolean;
+}
+/**
+ * The class decorator necessary to register your model.
+ * @param IModel Some specific model's options. See IModel interface.
+ */
+export function model(options?: IModel): any {
     options = options || {};
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
         // set collection name

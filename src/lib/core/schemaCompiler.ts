@@ -6,7 +6,7 @@ import * as qs from "querystring";
 import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
 import { Middleware, ModelRegistry } from './';
-import { IModelFactory, IModelOptions } from '../interfaces';
+import { IModelFactory } from '../interfaces';
 import { ConnectorHelper } from '../core/connectorHelper';
 
 import express = require('express');
@@ -48,7 +48,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
     trace && trace("Classes loaded: ", classes.keys());
     trace && trace("Model factory loaded: ", ModelRegistry.factories.keys());
     // second loop to compile and build schemas
-    modelElements.forEach(function(elt) {
+    modelElements.forEach(function (elt) {
         trace && trace("\n\n==========================\nInspect class: ", elt.name);
         inspectClass(elt.node, elt.factory);
     });
@@ -88,7 +88,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         //console.log(`Symbol: ${require('util').inspect(symbol,null,1)}`);
         let className = symbol.getName();
 
-        // consider only classes with @collection(...) decorator
+        // consider only classes with @model(...) decorator
         if (!isModelClass(node)) return;
         let fName = files[sf.fileName];
         //console.log("fName:",fName)
@@ -265,7 +265,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
 
         if (node.members) {
             let members = node.members.map(inspectMembers);
-            members && members.reduce(function(prev: any, curr: any) {
+            members && members.reduce(function (prev: any, curr: any) {
                 if (curr) {
                     // the field is maybe already existing in the schemaDef because the a decorator set it.
                     if (typeof prev[curr.name] === 'object' && prev[curr.name]) {
@@ -346,8 +346,8 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         // get decorators
         if (node.decorators) {
             let decorators = node.decorators.map(inspectDecorator);
-            decorators && decorators.forEach(function(d) {
-                if (d.name.indexOf("collection(") !== -1) _isModelClass = true;
+            decorators && decorators.forEach(function (d) {
+                if (d.name.indexOf("model(") !== -1) _isModelClass = true;
             });
         }
         return _isModelClass;
@@ -367,7 +367,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
     }
 
     function hasModifier(node: ts.Node, kind: ts.SyntaxKind) {
-        return node.modifiers && node.modifiers.some(function(m) {
+        return node.modifiers && node.modifiers.some(function (m) {
             return m.kind === kind;
         });
     }
@@ -378,7 +378,7 @@ export class SchemaCompiler {
 
         function browseDir(dir) {
             // Add each .js file to the mocha instance
-            wait(fs.readdir(dir)).forEach(function(file) {
+            wait(fs.readdir(dir)).forEach(function (file) {
                 let filePath = path.join(dir, file);
                 var stats = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
@@ -396,12 +396,12 @@ export class SchemaCompiler {
             });
         }
         let modelFiles = {};
-        contract.modelsLocations.forEach(function(dir) {
+        contract.modelsLocations.forEach(function (dir) {
             browseDir(dir);
         });
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-        }).forEach(function(modelFactory: IModelFactory) {
+        }).forEach(function (modelFactory: IModelFactory) {
             trace && trace("\n\n===============================\nModel factory:", modelFactory);
             trace && trace("\n");
             // setup model actions

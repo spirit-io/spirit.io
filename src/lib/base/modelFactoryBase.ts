@@ -1,5 +1,5 @@
 import { Request, Response, Router, RequestHandler, NextFunction } from 'express';
-import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IFetchParameters, IQueryParameters } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 import { helper as objectHelper } from '../utils'
@@ -48,7 +48,9 @@ class Field implements IField {
 }
 
 
-
+/**
+ * This is an abstract class, so every spirit.io connector MUST provide a ModelFactory class that inherit of this base class.
+ */
 export abstract class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
@@ -58,8 +60,6 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public $methods: string[];
     public $routes: IRoute[]
     public $fields: Map<string, IField>;
-
-    public $readOnly: string[];
     public $plurals: string[];
     public $references: any;
     public $prototype: Object;
@@ -148,7 +148,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return this.$prototype[refName] && (typeIsPlural ? this.$prototype[refName][0] && this.$prototype[refName][0].ref : this.$prototype[refName].ref);
     }
 
-    instanciateReference(type: string, data: any): any {
+    instanciateReference(type: string, data?: any): any {
         let mf = ModelRegistry.getFactoryByName(type);
         let constructor = mf.targetClass.prototype.constructor;
         if (data instanceof constructor) {
@@ -168,7 +168,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return this.$hooks.get(name);
     }
 
-    populateField(parameters: IFetchParameters | IQueryParameters = {}, item: any = {}, key: string): void {
+    populateField(parameters: IParameters = {}, item: any = {}, key: string): void {
         let include = parameters.includes && parameters.includes.filter((i) => { return i.path === key; })[0];
         if (include && item && item[key] != null) {
             let type = this.getReferenceType(key);

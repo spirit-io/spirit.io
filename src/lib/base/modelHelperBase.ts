@@ -2,9 +2,7 @@ import {
     IModelFactory,
     IModelHelper,
     IModelActions,
-    IQueryParameters,
-    IFetchParameters,
-    ISaveParameters,
+    IParameters,
     ISerializeOptions,
     IField
 } from '../interfaces';
@@ -20,7 +18,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         this.modelFactory = modelFactory;
     }
 
-    private _patchParameters(parameters?: IQueryParameters | IFetchParameters, serializeOptions?: ISerializeOptions) {
+    private _patchParameters(parameters?: IParameters, serializeOptions?: ISerializeOptions) {
         parameters = parameters || {};
         serializeOptions = serializeOptions || {};
 
@@ -84,7 +82,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         return includes;
     }
 
-    fetchInstances(filter?: any, parameters?: IQueryParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstances(filter?: any, parameters?: IParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instances ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let instances: any = [];
@@ -97,7 +95,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         return instances;
     }
 
-    fetchInstance(filter: any, parameters?: IFetchParameters, serializeOptions?: ISerializeOptions) {
+    fetchInstance(filter: any, parameters?: IParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Fetch instance ##");
         parameters = this._patchParameters(parameters, serializeOptions);
         let doc = this.modelFactory.actions.read(filter, parameters);
@@ -117,7 +115,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         return serializeOptions ? this.serialize(inst, parameters, serializeOptions) : inst;
     }
 
-    saveInstance(instance: any, data?: any, options?: ISaveParameters, serializeOptions?: ISerializeOptions) {
+    saveInstance(instance: any, data?: any, options?: IParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Save instance ##");
         if (!instance._id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
@@ -133,7 +131,7 @@ export abstract class ModelHelperBase implements IModelHelper {
 
         // special options are needed for pre update serialization
         let customSerializeOptions = serializeOptions ? objectHelper.clone(serializeOptions) : {};
-        customSerializeOptions.includeInvisible = true;
+        customSerializeOptions.ignorePostSerialization = true;
         let serialized = this.serialize(instance, null, customSerializeOptions);
 
         if (!instance.$isCreated) {
@@ -153,7 +151,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         return this.modelFactory.actions.delete(instance._id);
     }
 
-    serialize(instance: any, parameters?: IQueryParameters | IFetchParameters, options?: ISerializeOptions): any {
+    serialize(instance: any, parameters?: IParameters, options?: ISerializeOptions): any {
         options = options || {};
         parameters = parameters || {};
         // consider correct modelFactory (for relation potentially)
@@ -166,10 +164,8 @@ export abstract class ModelHelperBase implements IModelHelper {
         //console.log("Instance: ", require('util').inspect(instance, null, 2));
 
 
-
+        // first loop is done to consider every fields
         for (var [key, field] of mf.$fields) {
-
-
             trace && trace("====== Field ", key);
             if (instance[key] !== undefined) {
                 // References
@@ -180,7 +176,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                         let notInclude = options.serializeRef && includes.indexOf(key) === -1;
 
 
-                        item[key] = instance[key].map(function(inst) {
+                        item[key] = instance[key].map(function (inst) {
                             //only ids if reference serialization is not expected and it is not embedded
                             if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
                                 trace && trace("Not include ref ", key);
@@ -224,13 +220,17 @@ export abstract class ModelHelperBase implements IModelHelper {
         }
 
 
-        if (!options.includeInvisible) {
+        if (!options.ignorePostSerialization) {
+            // A second loop is done for post serialization validation
             for (let [key, field] of mf.$fields) {
-                if (!field.isVisible(instance)) {
-                    delete item[key];
+                if (item[key] != null) {
+                    if (!field.isVisible(instance)) {
+                        delete item[key];
+                    }
                 }
             }
         }
+
         trace && trace("Serialize:", item);
         trace && trace("********** End serialization *************\n");
 

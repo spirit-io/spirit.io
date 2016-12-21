@@ -1,4 +1,4 @@
-import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, ISaveParameters, IFetchParameters, IQueryParameters } from '../../lib/interfaces'
+import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, IParameters } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
 import express = require('express');
@@ -15,20 +15,14 @@ class MockActions implements IModelActions {
     constructor(private modelFactory: MockFactory) { }
 
 
-    private _populate(item: any, parameters: IFetchParameters | IQueryParameters) {
-        function getRel(_type: string, _id: string) {
-            return storage[_type] && storage[_type][_id];
-        }
-
+    private _populate(item: any, parameters: IParameters) {
         parameters = parameters || {};
         Object.keys(this.modelFactory.$references).forEach((key) => {
             this.modelFactory.populateField(parameters, item, key);
         });
     }
 
-
-
-    query(filter: Object = {}, parameters?: IQueryParameters) {
+    query(filter: Object = {}, parameters?: IParameters) {
         let res = [];
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
 
@@ -52,7 +46,7 @@ class MockActions implements IModelActions {
         return res;
     }
 
-    read(id: any, parameters?: IFetchParameters) {
+    read(id: any, parameters?: IParameters) {
         //console.log(`Read ${this.modelFactory.collectionName}: id: ${id} ; options: ${JSON.stringify(options, null, 2)}`);
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         let res = objectHelper.clone(storage[this.modelFactory.collectionName][id], true);
@@ -81,7 +75,7 @@ class MockActions implements IModelActions {
         return this.update(item._id, item, options);
     }
 
-    update(_id: any, item: any, options?: ISaveParameters) {
+    update(_id: any, item: any, options?: IParameters) {
         item._updatedAt = new Date();
         let storedItem = this.modelFactory.simplifyReferences(item);
         storedItem._id = _id;

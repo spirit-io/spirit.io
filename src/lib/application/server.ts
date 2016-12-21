@@ -8,51 +8,51 @@ import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
 import * as express from 'express';
 
-function patchExpress(app) {
-    let _handle = app.handle.bind(app);
+// function patchExpress(app) {
+//     let _handle = app.handle.bind(app);
 
-    function logerror(err) {
-        /* istanbul ignore next */
-        if (this.get('env') !== 'test') console.error(err.stack || err.toString());
-    }
+//     function logerror(err) {
+//         /* istanbul ignore next */
+//         if (this.get('env') !== 'test') console.error(err.stack || err.toString());
+//     }
 
-    app.handle = function (req, res, cb) {
-        var done = cb || require('finalhandler')(req, res, {
-            env: this.get('env'),
-            onerror: logerror.bind(app)
-        });
-        run(() => _handle(req, res, cb)).then(() => { done(); }).catch(e => { console.log("ERROROROR:", e.stack); done(e) });
-    }
+//     app.handle = function (req, res, cb) {
+//         var done = cb || require('finalhandler')(req, res, {
+//             env: this.get('env'),
+//             onerror: logerror.bind(app)
+//         });
+//         run(() => _handle(req, res, cb)).then(() => { done(); }).catch(e => { console.log("ERROROROR:", e.stack); done(e) });
+//     }
 
-}
+// }
 
 
-function patchRouter(router) {
-    function restore(fn, ...obj) {
-        var props = new Array(arguments.length - 2);
-        var vals = new Array(arguments.length - 2);
+// function patchRouter(router) {
+//     function restore(fn, ...obj) {
+//         var props = new Array(arguments.length - 2);
+//         var vals = new Array(arguments.length - 2);
 
-        for (var i = 0; i < props.length; i++) {
-            props[i] = arguments[i + 2];
-            vals[i] = obj[props[i]];
-        }
+//         for (var i = 0; i < props.length; i++) {
+//             props[i] = arguments[i + 2];
+//             vals[i] = obj[props[i]];
+//         }
 
-        return function (err) {
-            // restore vals
-            for (var i = 0; i < props.length; i++) {
-                obj[props[i]] = vals[i];
-            }
+//         return function (err) {
+//             // restore vals
+//             for (var i = 0; i < props.length; i++) {
+//                 obj[props[i]] = vals[i];
+//             }
 
-            return fn.apply(this, arguments);
-        };
-    }
+//             return fn.apply(this, arguments);
+//         };
+//     }
 
-    let _handle = router.handle.bind(router);
-    router.handle = function (req, res, out) {
-        var done = restore(out, req, 'baseUrl', 'next', 'params');
-        run(() => _handle(req, res, out)).catch(e => { console.log("ERROROROR:", e.stack); done(e) });
-    }
-}
+//     let _handle = router.handle.bind(router);
+//     router.handle = function (req, res, out) {
+//         var done = restore(out, req, 'baseUrl', 'next', 'params');
+//         run(() => _handle(req, res, out)).catch(e => { console.log("ERROROROR:", e.stack); done(e) });
+//     }
+// }
 
 /**
  * Create a spirit.io server.

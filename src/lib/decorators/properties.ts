@@ -1,4 +1,3 @@
-import { IReference } from '../interfaces';
 import { helper as objectHelper } from '../utils/object';
 const helpers = require('./helpers');
 

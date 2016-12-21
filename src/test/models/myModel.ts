@@ -1,7 +1,7 @@
-import { collection, unique, required, index, reverse, embedded, readonly, hook } from '../../lib/decorators';
+import { model, unique, required, index, reverse, embedded, readonly, hook } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 
-@collection({ datasource: 'mock' })
+@model({ datasource: 'mock' })
 export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);
@@ -11,7 +11,7 @@ export class MyModelRel extends ModelBase {
     relinvs: MyModel[];
 }
 
-@collection()
+@model()
 export class MyModelRelExtend extends MyModelRel {
     constructor(data) {
         super(data);
@@ -20,7 +20,7 @@ export class MyModelRelExtend extends MyModelRel {
     p2: string;
 }
 
-@collection()
+@model()
 export class MyModel extends ModelBase {
     constructor() {
         super();
