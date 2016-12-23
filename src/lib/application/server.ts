@@ -84,24 +84,19 @@ export class Server extends EventEmitter {
      * An event `initialized` will be emitted when the server would be ready to be started.
      */
     init() {
+        this.app = express();
+        let router = express.Router();
 
-        run(() => {
-            this.app = express();
-            let router = express.Router();
-
-            // TODO later: patch express to handle transparently f-promise
-            // patchExpress(this.app);
-            // patchRouter(router)
-            this.middleware = new Middleware(this, router);
+        // TODO later: patch express to handle transparently f-promise
+        // patchExpress(this.app);
+        // patchRouter(router)
+        this.middleware = new Middleware(this, router);
 
 
-            // register models
-            this.contract.init();
-            SchemaCompiler.registerModels(this.middleware.routers, this.contract);
-            this.emit('initialized');
-        }).catch(err => {
-            console.error(err.stack);
-        });
+        // register models
+        this.contract.init();
+        SchemaCompiler.registerModels(this.middleware.routers, this.contract);
+        this.emit('initialized');
 
         return this;
     }
@@ -112,21 +107,17 @@ export class Server extends EventEmitter {
      * And finally starts the HTTP server regarding the HTTP config elements.
      */
     start(port: number) {
-        run(() => {
-            // configure middleware standard rules
-            this.middleware.configure();
-            // initialize versioned api routes
-            this.middleware.setApiRoutes();
-            // set default error handler
-            this.middleware.setErrorHandler();
+        // configure middleware standard rules
+        this.middleware.configure();
+        // initialize versioned api routes
+        this.middleware.setApiRoutes();
+        // set default error handler
+        this.middleware.setErrorHandler();
 
-            // start http server
-            this.app.listen(port, () => {
-                console.log(`Server listening on port ${port}!`);
-                this.emit('started');
-            });
-        }).catch(err => {
-            console.error(err);
+        // start http server
+        this.app.listen(port, () => {
+            console.log(`Server listening on port ${port}!`);
+            this.emit('started');
         });
     }
 

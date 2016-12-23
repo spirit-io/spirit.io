@@ -1,7 +1,7 @@
 import { Server } from '../../lib/application';
 import { MockConnector } from './mockConnector';
 import { ConnectorHelper } from '../../lib/core';
-import { context } from 'f-promise';
+import { context, run } from 'f-promise';
 import { devices } from 'f-streams';
 import { setup } from 'f-mocha';
 
@@ -51,18 +51,33 @@ export class Fixtures {
         let connector;
         if (!context().__server) {
             let server: Server = context().__server = new Server(config);
-            server.on('initialized', function () {
-                console.log("========== Server initialized ============\n");
-                // this call activates f-mocha wrapper.
-                setup();
-                done();
+            run(() => {
+                console.log("\n========== Initialize server begins ============");
+                connector = new MockConnector(config.connectors.mock);
+                server.addConnector(connector);
+                console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
+                server.init();
+            }).catch(err => {
+                done(err);
             });
-            console.log("\n========== Initialize server begins ============");
-            connector = new MockConnector(config.connectors.mock);
-            server.addConnector(connector);
-            console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
-            server.init();
-            server.start(3001);
+            server.on('initialized', function () {
+                run(() => {
+                    console.log("========== Server initialized ============\n");
+                    server.start(port);
+                }).catch(err => {
+                    done(err);
+                });
+            });
+            server.on('started', function () {
+                run(() => {
+                    console.log("========== Server started ============\n");
+                    // this call activates f-mocha wrapper.
+                    setup();
+                    done();
+                }).catch(err => {
+                    done(err);
+                });
+            });
         } else {
             firstSetup = false;
         }
