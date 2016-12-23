@@ -111,8 +111,8 @@ class MockController extends ModelControllerBase implements IModelController {
 }
 
 class MockFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any) {
-        super(name, targetClass);
+    constructor(name: string, targetClass: any, connector: IConnector) {
+        super(name, targetClass, connector);
     }
 
     setup(routers: Map<string, express.Router>) {
@@ -124,7 +124,7 @@ class MockFactory extends ModelFactoryBase implements IModelFactory {
 export class MockConnector implements IConnector {
     private _datasource: string = 'mock';
     private _config: any;
-
+    public connections: Map<string, any>;
     constructor(config: any) {
         this.config = config;
     }
@@ -141,9 +141,11 @@ export class MockConnector implements IConnector {
     }
 
     connect(datasourceKey: string, parameters: any): any { }
-
+    getConnection(datasourceKey: string): any {
+        return undefined;
+    }
     createModelFactory(name: string, myClass: any): IModelFactory {
-        return new MockFactory(name, myClass);
+        return new MockFactory(name, myClass, this);
     }
 
     resetStorage(): any {

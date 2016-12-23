@@ -27,12 +27,13 @@ export class ConnectorHelper {
     public static createModelFactory(name: string, modelClass: any): IModelFactory {
         let tempFactory = modelClass.__factory__[name];
         if (tempFactory.persistent === false) {
-            return new NonPersistentModelFactory(name, modelClass);
+            return new NonPersistentModelFactory(name, modelClass, null);
         } else {
             let datasource: string = tempFactory.datasource || context().__defaultDatasource || 'mongodb';
             let dsId: string = datasource.indexOf(':') === -1 ? datasource : datasource.split(':')[0];
             // console.log(`Register model ${name} with datasource ${datasource}`)
-            return ConnectorHelper.getConnector(dsId).createModelFactory(name, modelClass);
+            let c = ConnectorHelper.getConnector(dsId);
+            return c.createModelFactory(name, modelClass);
         }
     }
 }

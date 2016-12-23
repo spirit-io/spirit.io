@@ -1,12 +1,11 @@
 import { Request, Response, Router, RequestHandler, NextFunction } from 'express';
-import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
+import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
 import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 import { helper as objectHelper } from '../utils'
 import { run } from 'f-promise';
 
-let trace = console.log;
-
+let debug = require('debug')('sio:factory');
 
 class Field implements IField {
     name: string;
@@ -55,6 +54,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
+    public connector: IConnector;
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
@@ -70,9 +70,10 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public datasource: string;
     public persistent: boolean = true;
 
-    constructor(name: string, targetClass: any) {
+    constructor(name: string, targetClass: any, connector: IConnector) {
         this.collectionName = name;
         this.targetClass = targetClass;
+        this.connector = connector;
         let tempFactory = targetClass.__factory__[name];
         if (tempFactory.persistent != null) this.persistent = tempFactory.persistent;
         if (tempFactory.datasource) this.datasource = tempFactory.datasource;
@@ -89,7 +90,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     }
 
     init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
-        trace && trace(`\n============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
+        debug(`============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
 
         // compute fields
         this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
@@ -105,7 +106,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             this.controller = controller;
 
             if (this.actions) {
-                trace && trace(`\n--> Register routes: /${routeName}`);
+                debug(`--> Register routes: /${routeName}`);
                 // handle main requests
                 v1.get(`/${routeName}`, this.controller.query);
                 v1.get(`/${routeName}/:_id`, this.controller.read);
@@ -148,8 +149,8 @@ export abstract class ModelFactoryBase implements IModelFactory {
         return this.$prototype[refName] && (typeIsPlural ? this.$prototype[refName][0] && this.$prototype[refName][0].ref : this.$prototype[refName].ref);
     }
 
-    instanciateReference(type: string, data?: any): any {
-        let mf = ModelRegistry.getFactoryByName(type);
+    createNew(data?: any, type?: string): any {
+        let mf = type == null ? this : ModelRegistry.getFactoryByName(type);
         let constructor = mf.targetClass.prototype.constructor;
         if (data instanceof constructor) {
             return data;
@@ -263,8 +264,8 @@ export abstract class ModelFactoryBase implements IModelFactory {
 
 
 export class NonPersistentModelFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any) {
-        super(name, targetClass);
+    constructor(name: string, targetClass: any, connector: IConnector) {
+        super(name, targetClass, connector);
     }
     setup(routers: Map<string, Router>) {
         super.init(routers, null, null, null);

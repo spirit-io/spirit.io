@@ -256,11 +256,11 @@ export abstract class ModelHelperBase implements IModelHelper {
                         refValue = [];
                         if (item[key].length) {
                             item[key].forEach((it) => {
-                                if (it) refValue.push(this.modelFactory.instanciateReference(type, it));
+                                if (it) refValue.push(this.modelFactory.createNew(it, type));
                             });
                         }
                     } else {
-                        if (item[key]) refValue = this.modelFactory.instanciateReference(type, item[key]);
+                        if (item[key]) refValue = this.modelFactory.createNew(item[key], type);
                     }
                     instance[key] = refValue;
                 } else {

@@ -27,7 +27,7 @@ const config = {
 };
 
 
-function request(method: string, url: string, data?: any, headers?: any) {
+function execRequest(method: string, url: string, data?: any, headers?: any) {
     headers = headers || {
         'content-type': 'application/json'
     };
@@ -79,30 +79,23 @@ export class Fixtures {
     }
 
     static get = (url: string, headers?: any) => {
-        return request('GET', url, null, headers);
+        return execRequest('GET', url, null, headers);
     }
 
     static post = (url: string, data: any, headers?: any) => {
-        return request('POST', url, data, headers);
+        return execRequest('POST', url, data, headers);
     }
 
     static put = (url: string, data: any, headers?: any) => {
-        return request('PUT', url, data, headers);
+        return execRequest('PUT', url, data, headers);
     }
 
     static delete = (url: string, headers?: any) => {
-        return request('DELETE', url, null, headers);
+        return execRequest('DELETE', url, null, headers);
     }
 
     static patch = (url: string, headers?: any) => {
-        return request('PATCH', url, headers);
-    }
-
-    static execAsync = (done, fn): void => {
-        fn(function (err, res) {
-            if (err) done(err);
-            else done();
-        });
+        return execRequest('PATCH', url, headers);
     }
 }
 

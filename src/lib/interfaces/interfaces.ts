@@ -39,6 +39,10 @@ export interface IModelFactory {
      */
     datasource: string;
     /**
+     * The connector itself. It will be used to retrieve connections.
+     */
+    connector: IConnector;
+    /**
      * A string array that contains all the class singular properties names.
      */
     $properties: string[];
@@ -134,13 +138,14 @@ export interface IModelFactory {
      */
     getReferenceType(refName: string): string;
     /**
-     * A kind of helper that allows to make a new instance of the specified reference.
+     * A kind of helper that allows to make a new instance.
+     * If a type is provided the instance created will be of the specified reference type.
      * 
      * It is also possible to pass data directly during this call.
-     * @param string The reference's stringified type.
-     * @param string optional The data as JSON format to set on the instance.
+     * @param string `optional` The data as JSON format to set on the instance.
+     * @param string `optional` The reference's stringified type.
      */
-    instanciateReference(type: string, data?: any): any;
+    createNew(data?: any, type?: string): any;
     /**
      * Allows to get the hook function matching to a name.
      * 
@@ -336,6 +341,7 @@ export interface IConnector {
     datasource: string;
     config: any;
     connect(datasourceKey: string, parameters: any): any;
+    getConnection(datasourceKey: string);
     createModelFactory(name: string, myClass: any): IModelFactory;
 }
 

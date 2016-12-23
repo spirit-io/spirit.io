@@ -100,7 +100,7 @@ export class Server extends EventEmitter {
             SchemaCompiler.registerModels(this.middleware.routers, this.contract);
             this.emit('initialized');
         }).catch(err => {
-            throw err;
+            console.error(err.stack);
         });
 
         return this;
@@ -121,11 +121,12 @@ export class Server extends EventEmitter {
             this.middleware.setErrorHandler();
 
             // start http server
-            this.app.listen(port, function () {
+            this.app.listen(port, () => {
                 console.log(`Server listening on port ${port}!`);
+                this.emit('started');
             });
         }).catch(err => {
-            throw err;
+            console.error(err);
         });
     }
 
