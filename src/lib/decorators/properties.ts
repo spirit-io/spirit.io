@@ -1,12 +1,11 @@
-import { helper as objectHelper } from '../utils/object';
-const helpers = require('./helpers');
+import * as helpers from './helpers';
 
 // !!!!!!!!!!!!!!!
 // properties metadata have to be stored on class constructor
 // !!!!!!!!!!!!!!!
 
 
-export function unique(target: any, propertyKey: string | symbol) {
+export function unique(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { unique: true });
 }
 

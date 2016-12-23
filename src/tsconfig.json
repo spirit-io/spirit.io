@@ -6,6 +6,7 @@
         "moduleResolution": "node",
         "noEmitOnError": true,
         "noImplicitAny": false,
+        "noUnusedLocals": true,
         "strictNullChecks": false,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,

@@ -2,16 +2,11 @@ import { context } from 'f-promise';
 import { Server } from '../application';
 import { Router, Application, Request, Response, NextFunction } from 'express';
 import * as bodyParser from "body-parser";
-const express = require('express');
-const methodOverride = require("method-override");
-//
-import { IModelFactory } from '../interfaces';
-import { helper as objectHelper } from '../utils';
-import * as debug from 'debug';
-const trace = debug('sio:middleware')
 
-const router = express.Router();
-const authentication = require('express-authentication')
+import * as debug from 'debug';
+import * as authentication from 'express-authentication';
+
+const trace = debug('sio:middleware')
 let auth = authentication();
 
 export class Middleware {
@@ -19,7 +14,9 @@ export class Middleware {
     routers: Map<string, Router>;
     authMiddleware: Function;
     app: Application;
-    constructor(private srv: Server, router: Router) {
+    srv: Server;
+    constructor(srv: Server, router: Router) {
+        this.srv = srv;
         this.app = srv.app;
         this.routers = new Map();
         this.routers.set('v1', router);

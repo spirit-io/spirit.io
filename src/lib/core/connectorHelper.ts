@@ -1,5 +1,4 @@
 import { context } from 'f-promise';
-import { Router } from 'express';
 import { NonPersistentModelFactory } from '../base';
 import { IModelFactory, IConnector } from '../interfaces';
 import { synchronize } from '../utils';

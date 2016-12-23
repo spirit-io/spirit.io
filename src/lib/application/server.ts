@@ -1,6 +1,4 @@
-import { run, wait } from 'f-promise';
 import { Application } from 'express';
-import { json, urlencoded } from "body-parser";
 import { SchemaCompiler, Middleware } from "../core";
 import { Contract } from "./contract";
 import { IConnector } from '../interfaces';

@@ -1,5 +1,5 @@
 import { IModelFactory } from '../interfaces';
-import { ConnectorHelper } from './connectorHelper';
+
 export class ModelRegistry {
     static factories: Map<string, IModelFactory> = new Map();
 

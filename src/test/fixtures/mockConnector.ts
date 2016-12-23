@@ -51,11 +51,9 @@ class MockActions implements IModelActions {
         storage[this.modelFactory.collectionName] = storage[this.modelFactory.collectionName] || {};
         let res = objectHelper.clone(storage[this.modelFactory.collectionName][id], true);
         if (parameters && parameters.ref) {
-            let refRes: any;
             let refModelFactory: IModelFactory = this.modelFactory.getModelFactoryByPath(parameters.ref);
 
             if (this.modelFactory.$plurals.indexOf(parameters.ref) !== -1) {
-                let ids = Array.isArray(res[parameters.ref]) ? res[parameters.ref] : [res[parameters.ref]];
                 let all = refModelFactory.actions.query();
                 return all.filter((elt) => {
                     return res[parameters.ref].indexOf(elt._id) !== -1;

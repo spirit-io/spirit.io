@@ -1,11 +1,10 @@
-import { Request, Response, Router, RequestHandler, NextFunction } from 'express';
+import { Request, Response, Router, NextFunction } from 'express';
 import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
-import { ModelHelperBase, ModelControllerBase } from '../base';
 import { ModelRegistry } from '../core';
 import { helper as objectHelper } from '../utils'
 import { run } from 'f-promise';
-
-let debug = require('debug')('sio:factory');
+import * as debug from 'debug';
+const trace = debug('sio:factory');
 
 class Field implements IField {
     name: string;
@@ -90,7 +89,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     }
 
     init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
-        debug(`============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
+        trace(`============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
 
         // compute fields
         this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
@@ -106,7 +105,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             this.controller = controller;
 
             if (this.actions) {
-                debug(`--> Register routes: /${routeName}`);
+                trace(`--> Register routes: /${routeName}`);
                 // handle main requests
                 v1.get(`/${routeName}`, this.controller.query);
                 v1.get(`/${routeName}/:_id`, this.controller.read);
@@ -172,7 +171,6 @@ export abstract class ModelFactoryBase implements IModelFactory {
     populateField(parameters: IParameters = {}, item: any = {}, key: string): void {
         let include = parameters.includes && parameters.includes.filter((i) => { return i.path === key; })[0];
         if (include && item && item[key] != null) {
-            let type = this.getReferenceType(key);
             let mf = this.getModelFactoryByPath(key);
             let relValue;
             if (Array.isArray(item[key])) {

@@ -1,8 +1,4 @@
 import { Fixtures } from './fixtures';
-import { Server } from '../lib/application';
-import { MyModel, MyModelRel } from './models/myModel';
-import { ModelRegistry, AdminHelper } from '../lib/core';
-import { IModelFactory } from '../lib/interfaces';
 import { helper as objectHelper } from '../lib/utils';
 import { setup } from 'f-mocha';
 
@@ -12,18 +8,8 @@ const expect = chai.expect;
 // this call activates f-mocha wrapper.
 setup();
 
-let trace;// = console.log;
-let server: Server;
-
-let myModelMeta = {
-    $properties: ['_id', '_createdAt', '_updatedAt', 'pString', 'pNumber', 'pDate', 'pBoolean', 'aString', 'aNumber', 'aDate', 'aBoolean', 'inv', 'invs', 'rel', 'rels'],
-    $plurals: ['aString', 'aNumber', 'aDate', 'aBoolean', 'invs', 'rels']
-};
-
-
-
 describe('Spirit.io REST Express routes Tests:', () => {
-    before(function(done) {
+    before(function (done) {
         this.timeout(10000);
         Fixtures.setup(done);
     });

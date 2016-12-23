@@ -1,9 +1,4 @@
-import { IModelFactory } from '../interfaces';
-import { ModelRegistry } from '../core/modelRegistry';
-import { ConnectorHelper } from '../core/connectorHelper';
-import { ModelFactoryBase } from '../base';
-
-const helpers = require('./helpers');
+import * as helpers from './helpers';
 
 /**
  * These are the options that allows to define special cases for your models.

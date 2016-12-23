@@ -2,10 +2,9 @@ import { wait } from 'f-promise';
 import * as ts from "typescript";
 import * as fs from "mz/fs";
 import * as path from 'path';
-import * as qs from "querystring";
 import { helper as objectHelper } from '../utils/object';
 import { Contract } from "../application/contract";
-import { Middleware, ModelRegistry } from './';
+import { ModelRegistry } from './modelRegistry';
 import { IModelFactory } from '../interfaces';
 import { ConnectorHelper } from '../core/connectorHelper';
 
@@ -242,14 +241,11 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         }
 
         //////////////////////////////////////////////////
-        let symbol = checker.getSymbolAtLocation(node.name);
-
         let superClassName = getClassExtendsHeritageClauseElement(node);
         if (superClassName) {
             superClassName = (<ts.CallExpression>superClassName.expression).getText();
             trace && trace("  --> inspect super class:", superClassName);
             if (classes.has(superClassName)) {
-                let sf: ts.SourceFile = <ts.SourceFile>node.parent;
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
                 let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
                 if (superModelFactory) {

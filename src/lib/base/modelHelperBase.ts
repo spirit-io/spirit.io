@@ -1,12 +1,5 @@
-import {
-    IModelFactory,
-    IModelHelper,
-    IModelActions,
-    IParameters,
-    ISerializeOptions,
-    IField
-} from '../interfaces';
-import { ModelRegistry, AdminHelper } from '../core';
+import { IModelFactory, IModelHelper, IParameters, ISerializeOptions } from '../interfaces';
+import { AdminHelper } from '../core';
 import { helper as objectHelper } from '../utils';
 
 let trace;// = console.log;
@@ -120,7 +113,7 @@ export abstract class ModelHelperBase implements IModelHelper {
         if (!instance._id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
-        let exists, item;
+        let item;
         if (instance._id) {
             instance.$snapshot = this.fetchInstance(instance._id);
         } else {

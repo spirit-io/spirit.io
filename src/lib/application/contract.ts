@@ -1,7 +1,5 @@
 import { ConnectorHelper } from '../core/connectorHelper';
-import { helper as objectHelper } from '../utils/object';
 import { context } from 'f-promise';
-import * as path from 'path';
 
 /**
  * The spirit.io application contract is responsible for managing datasources and their connection.

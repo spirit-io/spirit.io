@@ -1,9 +1,7 @@
 import { helper as objectHelper } from '../utils';
 import { IModelFactory } from '../interfaces';
-import { ModelRegistry } from '../core/modelRegistry'
-import { ConnectorHelper } from '../core/connectorHelper';
 
-exports.initFactory = function (target: any) {
+export function initFactory(target: any) {
     let fName = target.toString().match(/\w+/g)[1];
     target.__factory__ = target.__factory__ || {};
     let tempFactory = target.__factory__[fName];
