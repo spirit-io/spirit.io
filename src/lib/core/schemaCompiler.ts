@@ -10,7 +10,8 @@ import { ConnectorHelper } from '../core/connectorHelper';
 
 import express = require('express');
 
-let trace;// = console.log;
+import * as debug from 'debug';
+let trace = debug('sio:compiler');
 
 interface ILoadedElement {
     name: string;
@@ -20,7 +21,7 @@ interface ILoadedElement {
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
     let f: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass);
-    trace && trace(" => Release building model factory: ", f.collectionName);
+    trace(" => Release building model factory: ", f.collectionName);
     ModelRegistry.register(f);
     myClass.__factory__[collectionName] = null;
     if (Object.keys(myClass.__factory__).length === 0) myClass.__factory__ = null;
@@ -44,11 +45,11 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         // Walk the tree to search for classes
         ts.forEachChild(sourceFile, visit);
     }
-    trace && trace("Classes loaded: ", classes.keys());
-    trace && trace("Model factory loaded: ", ModelRegistry.factories.keys());
+    trace("Classes loaded: ", classes.keys());
+    trace("Model factory loaded: ", ModelRegistry.factories.keys());
     // second loop to compile and build schemas
     modelElements.forEach(function (elt) {
-        trace && trace("\n\n==========================\nInspect class: ", elt.name);
+        trace("\n\n==========================\nInspect class: ", elt.name);
         inspectClass(elt.node, elt.factory);
     });
     return modelElements.map(elt => { return elt.factory; });
@@ -69,7 +70,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
             let elt: ILoadedElement = loadModelFactories((<ts.ClassDeclaration>node));
             if (elt) {
                 modelElements.push(elt);
-                trace && trace(`Loaded: ${elt.factory.collectionName}`);
+                trace(`Loaded: ${elt.factory.collectionName}`);
             }
             //}
             // No need to walk any further, class expressions/inner declarations
@@ -197,7 +198,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
 
-                    trace && trace(`    - Property '${propertyName}' type: ${type}`);
+                    trace(`    - Property '${propertyName}' type: ${type}`);
                     let _isArray = type.indexOf('[]') !== -1;
                     if (_isArray) {
                         type = type.substring(0, type.length - 2);
@@ -217,7 +218,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     //console.log("Member type:", res);
                     return res;
                 default:
-                    trace && trace(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
+                    trace(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
             }
 
         }
@@ -244,14 +245,14 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         let superClassName = getClassExtendsHeritageClauseElement(node);
         if (superClassName) {
             superClassName = (<ts.CallExpression>superClassName.expression).getText();
-            trace && trace("  --> inspect super class:", superClassName);
+            trace("  --> inspect super class:", superClassName);
             if (classes.has(superClassName)) {
                 let superClass: ts.ClassDeclaration = classes.get(superClassName);
                 let superModelFactory = ModelRegistry.getFactoryByName(superClassName)
                 if (superModelFactory) {
                     objectHelper.merge(superModelFactory.$prototype, modelFactory.$prototype);
                 } else {
-                    trace && trace("No model factory found for super class: ", superClassName);
+                    trace("No model factory found for super class: ", superClassName);
                 }
                 inspectClass(superClass, modelFactory);
             }
@@ -398,8 +399,8 @@ export class SchemaCompiler {
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-            trace && trace("\n\n===============================\nModel factory:", modelFactory);
-            trace && trace("\n");
+            trace("\n\n===============================\nModel factory:", modelFactory);
+            trace("\n");
             // setup model actions
             modelFactory.setup(routers);
         });

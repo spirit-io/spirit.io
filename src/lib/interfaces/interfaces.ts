@@ -340,8 +340,10 @@ export interface IRoute {
 export interface IConnector {
     datasource: string;
     config: any;
+    connections: Map<string, any>;
     connect(datasourceKey: string, parameters: any): any;
     getConnection(datasourceKey: string);
+    cleanDb(cds: string): void;
     createModelFactory(name: string, myClass: any): IModelFactory;
 }
 

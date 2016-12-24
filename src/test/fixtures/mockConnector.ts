@@ -146,7 +146,7 @@ export class MockConnector implements IConnector {
         return new MockFactory(name, myClass, this);
     }
 
-    resetStorage(): any {
+    cleanDb(ds: string): void {
         storage = {};
     }
 

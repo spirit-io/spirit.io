@@ -1,11 +1,11 @@
 import { Server } from '../../lib/application';
 import { MockConnector } from './mockConnector';
 import { ConnectorHelper } from '../../lib/core';
+import { IConnector } from '../../lib/interfaces';
 import { context, run } from 'f-promise';
 import { devices } from 'f-streams';
 import { setup } from 'f-mocha';
-
-const path = require('path');
+import * as path from 'path';
 
 let trace;// = console.log;
 
@@ -45,7 +45,13 @@ function execRequest(method: string, url: string, data?: any, headers?: any) {
 }
 
 export class Fixtures {
-
+    static cleanDatabases = (connectors: IConnector[]) => {
+        connectors.forEach((c) => {
+            for (var ds of c.connections.keys()) {
+                c.cleanDb(ds);
+            }
+        })
+    }
     static setup = (done) => {
         let firstSetup = true;
         let connector;
@@ -83,7 +89,7 @@ export class Fixtures {
         }
         //
         connector = <MockConnector>ConnectorHelper.getConnector('mock');
-        connector.resetStorage();
+        connector.cleanDb();
         //
         if (!firstSetup) done();
         return context().__server;
