@@ -1,6 +1,6 @@
-import { Request, Response, Router, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
-import { ModelRegistry } from '../core';
+import { Registry } from '../core';
 import { helper as objectHelper } from '../utils'
 import { run } from 'f-promise';
 import * as debug from 'debug';
@@ -88,7 +88,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.$fields = new Map();
     }
 
-    init(routers: Map<string, Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
+    init(actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
         trace(`============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
 
         // compute fields
@@ -97,7 +97,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         });
 
         let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
-        let v1 = routers.get('v1');
+        let v1 = Registry.getApiRouter('v1');
 
         if (this.persistent) {
             this.actions = actions;
@@ -138,7 +138,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         if (!_ref) throw new Error(`path '${path}' not found in '${this.collectionName}' factory's prototype`);
 
         // specifying model when populate is necessary for multiple database usage
-        let mf = ModelRegistry.getFactoryByName(_ref);
+        let mf = Registry.getFactory(_ref);
         if (!mf) throw new Error(`Class hasn't been registered for model '${path}'.`);
         return mf;
     }
@@ -149,7 +149,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
     }
 
     createNew(data?: any, type?: string): any {
-        let mf = type == null ? this : ModelRegistry.getFactoryByName(type);
+        let mf = type == null ? this : Registry.getFactory(type);
         let constructor = mf.targetClass.prototype.constructor;
         if (data instanceof constructor) {
             return data;
@@ -255,7 +255,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
         });
     }
 
-    abstract setup(routers: Map<string, Router>): void;
+    abstract setup(): void;
 
 
 }
@@ -265,7 +265,7 @@ export class NonPersistentModelFactory extends ModelFactoryBase implements IMode
     constructor(name: string, targetClass: any, connector: IConnector) {
         super(name, targetClass, connector);
     }
-    setup(routers: Map<string, Router>) {
-        super.init(routers, null, null, null);
+    setup() {
+        super.init(null, null, null);
     }
 }

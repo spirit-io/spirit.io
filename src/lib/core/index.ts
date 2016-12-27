@@ -1,5 +1,5 @@
 export * from './connectorHelper';
 export * from './middleware';
-export * from './modelRegistry';
-export * from './schemaCompiler';
+export * from './registry';
+export * from './compiler';
 export * from './adminHelper';

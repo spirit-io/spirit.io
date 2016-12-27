@@ -1,25 +1,24 @@
 import { context } from 'f-promise';
 import { Server } from '../application';
-import { Router, Application, Request, Response, NextFunction } from 'express';
-import * as bodyParser from "body-parser";
-
-import * as debug from 'debug';
+import { Registry } from './registry';
+import { Application, Request, Response, NextFunction } from 'express';
+import * as express from 'express';
 import * as authentication from 'express-authentication';
+import * as bodyParser from "body-parser";
+import * as debug from 'debug';
 
 const trace = debug('sio:middleware')
 let auth = authentication();
 
 export class Middleware {
-
-    routers: Map<string, Router>;
     authMiddleware: Function;
     app: Application;
     srv: Server;
-    constructor(srv: Server, router: Router) {
+    constructor(srv: Server, ) {
         this.srv = srv;
         this.app = srv.app;
-        this.routers = new Map();
-        this.routers.set('v1', router);
+        let router = express.Router();
+        Registry.setApiRouter('v1', router);
     }
 
     configure() {
@@ -42,7 +41,7 @@ export class Middleware {
             next();
         });
 
-        for (var [key, router] of this.routers) {
+        for (var [key, router] of Registry.apiRouters) {
             this.app.use(`/api/${key}`, apiAuth.required(), router);
         }
     }

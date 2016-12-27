@@ -1,7 +1,6 @@
 import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, IParameters } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
-import express = require('express');
 const uuid = require('uuid');
 
 function ensureId(item: any) {
@@ -113,8 +112,8 @@ class MockFactory extends ModelFactoryBase implements IModelFactory {
         super(name, targetClass, connector);
     }
 
-    setup(routers: Map<string, express.Router>) {
-        super.init(routers, new MockActions(this), new MockHelper(this), new MockController(this));
+    setup() {
+        super.init(new MockActions(this), new MockHelper(this), new MockController(this));
     }
 
 }

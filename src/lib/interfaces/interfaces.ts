@@ -117,14 +117,14 @@ export interface IModelFactory {
      * after receiving or before sending data when calling IModelActions operations.
      * @param IModelController An IModelController instance which MUST implements all request handlers for CRUD operations.
      */
-    init(routers: Map<string, express.Router>, actions: IModelActions, helper: IModelHelper, controller: IModelController);
+    init(actions: IModelActions, helper: IModelHelper, controller: IModelController);
     /**
      * MUST be implemented by connectors ModelFactory to handle specific needs related to the connector itself.
      * 
      * Usually initializes connection with a remote server.
      * @param Map<string, express.Router> Several express Routers could be passed here.
      */
-    setup(routers: Map<string, express.Router>);
+    setup();
     /**
      * Allows to retrieve ModelFactory corresponding to a reference field.
      * @param string The property reference name as it is defined in the model's class.

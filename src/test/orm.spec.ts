@@ -1,7 +1,7 @@
 import { Fixtures } from './fixtures';
 import { Server } from '../lib/application';
 import { MyModel, MyModelRel } from './models/myModel';
-import { ModelRegistry, AdminHelper } from '../lib/core';
+import { Registry, AdminHelper } from '../lib/core';
 import { IModelFactory } from '../lib/interfaces';
 import { helper as objectHelper } from '../lib/utils';
 
@@ -61,7 +61,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
     });
 
     it('prototype should be formatted correctly', () => {
-        let myModelFactory: IModelFactory = ModelRegistry.getFactory("MyModel");
+        let myModelFactory: IModelFactory = Registry.getFactory("MyModel");
         trace && trace("$prototype:" + JSON.stringify(myModelFactory.$prototype, null, 2));
         expect(myModelFactory.$prototype).to.have.all.keys(myModelMeta.$properties);
         expect(Array.from(myModelFactory.$fields.keys())).to.have.members(myModelMeta.$properties);
