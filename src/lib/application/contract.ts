@@ -1,4 +1,5 @@
 import { ConnectorHelper } from '../core/connectorHelper';
+import { Compiler } from "../core";
 import { context } from 'f-promise';
 
 /**
@@ -45,6 +46,9 @@ export class Contract {
                 this.registerModelsByPath(loc);
             });
         }
+
+
+        Compiler.registerModels(this.modelsLocations);
     };
 
     /**

@@ -1,5 +1,5 @@
 import { Application } from 'express';
-import { Compiler, Middleware } from "../core";
+import { Middleware } from "../core";
 import { Contract } from "./contract";
 import { IConnector } from '../interfaces';
 import { ConnectorHelper } from '../core';
@@ -84,18 +84,14 @@ export class Server extends EventEmitter {
     init() {
         this.app = express();
 
-
         // TODO later: patch express to handle transparently f-promise
         // patchExpress(this.app);
         // patchRouter(router)
         this.middleware = new Middleware(this);
 
-
-        // register models
+        // initialize the contract
         this.contract.init();
-        Compiler.registerModels(this.contract.modelsLocations);
         this.emit('initialized');
-
         return this;
     }
 
