@@ -341,7 +341,7 @@ export interface IConnector {
     datasource: string;
     config: any;
     connections: Map<string, any>;
-    connect(datasourceKey: string, parameters: any): any;
+    connect(datasourceKey: string): any;
     getConnection(datasourceKey: string);
     cleanDb(cds: string): void;
     createModelFactory(name: string, myClass: any): IModelFactory;

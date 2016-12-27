@@ -34,7 +34,7 @@ export class Contract {
             for (let ds in datasources) {
                 let dsId: string = ds.indexOf(':') === -1 ? ds : ds.split(':')[0];
                 if (!context().__defaultDatasource) context().__defaultDatasource = dsId;
-                ConnectorHelper.getConnector(dsId).connect(ds, datasources[ds]);
+                if (datasources[ds].autoConnect) ConnectorHelper.getConnector(dsId).connect(ds);
             }
         }
 

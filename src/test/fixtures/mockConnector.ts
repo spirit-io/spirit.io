@@ -138,7 +138,7 @@ export class MockConnector implements IConnector {
         return this._config;
     }
 
-    connect(datasourceKey: string, parameters: any): any { }
+    connect(datasourceKey: string): any { }
     getConnection(datasourceKey: string): any {
         return undefined;
     }

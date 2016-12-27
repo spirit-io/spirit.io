@@ -104,7 +104,7 @@ export class Server extends EventEmitter {
      * It will also set all the API routes for every registered models.
      * And finally starts the HTTP server regarding the HTTP config elements.
      */
-    start(port: number) {
+    start(port?: number) {
         // configure middleware standard rules
         this.middleware.configure();
         // initialize versioned api routes
@@ -112,6 +112,8 @@ export class Server extends EventEmitter {
         // set default error handler
         this.middleware.setErrorHandler();
 
+        port = port || this.config.port;
+        if (!port) throw new Error("HTTP port is mandatory ! It can be provided in start function parameter or in the config.");
         // start http server
         this.app.listen(port, () => {
             console.log(`Server listening on port ${port}!`);
