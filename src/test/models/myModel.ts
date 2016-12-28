@@ -1,4 +1,4 @@
-import { model, unique, required, index, reverse, embedded, readonly, hook } from '../../lib/decorators';
+import { model, required, reverse, embedded, readonly, hook } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 
 @model({ datasource: 'mock' })
@@ -29,10 +29,8 @@ export class MyModel extends ModelBase {
     @required // twice for coverage
     pString: string;
 
-    @unique
     pNumber: number;
 
-    @index
     pDate: Date;
 
     pBoolean: boolean;

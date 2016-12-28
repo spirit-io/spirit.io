@@ -4,17 +4,13 @@ import * as helpers from './helpers';
 // properties metadata have to be stored on class constructor
 // !!!!!!!!!!!!!!!
 
-
-export function unique(target: any, propertyKey: string) {
-    helpers.addMetadata(target.constructor, propertyKey, { unique: true });
-}
-
+/**
+ * Property decorator that allows to set `required` metadata on factory's prototype property.
+ * This would add the capability on the property to be required using standard mongoose `required` validator.
+ * See http://mongoosejs.com/docs/api.html#schematype_SchemaType-required for details.
+ */
 export function required(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { required: true });
-}
-
-export function index(target: any, propertyKey: string) {
-    helpers.addMetadata(target.constructor, propertyKey, { index: true });
 }
 
 export function embedded(target: any, propertyKey: string) {
@@ -34,17 +30,5 @@ export function invisible(value: boolean | Function): any {
 export function reverse(refName: string): any {
     return function (target: Symbol, propertyKey: string): any {
         helpers.addMetadata(target.constructor, propertyKey, null, { registerReverse: refName });
-    }
-}
-
-export function hook(name: string): any {
-    return function (target: Symbol, propertyKey: string): any {
-        helpers.addHook(target, propertyKey, name);
-    }
-}
-
-export function route(method: string, path: string): any {
-    return function (target: Symbol, propertyKey: string): any {
-        helpers.addRoute(target, propertyKey, method, path);
     }
 }

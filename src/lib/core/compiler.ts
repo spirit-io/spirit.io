@@ -379,7 +379,7 @@ export class Compiler {
                     browseDir(filePath);
                 } else if (stats.isFile() && /\.js.map$/.test(file)) {
                     // Only keep the .js.map files
-                    console.log("File:", file)
+                    //console.log("File:", file)
                     let srcMap = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
                     srcMap.sources.forEach((s) => {
                         let tsPath = path.normalize(path.join(dir, srcMap.sourceRoot, s)).replace(/\\/g, '/');
@@ -394,15 +394,15 @@ export class Compiler {
         directories = Array.isArray(directories) ? directories : [directories];
         let modelFiles = {};
         directories.forEach(function (dir) {
-            console.log("Browse dir:", dir)
+            //console.log("Browse dir:", dir)
             browseDir(dir);
         });
-        console.log("Model files:", modelFiles)
+        //console.log("Model files:", modelFiles)
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
         }).forEach(function (modelFactory: IModelFactory) {
-            trace("\n\n===============================\nModel factory:", modelFactory);
-            trace("\n");
+            trace("===============================");
+            trace("Model factory:", modelFactory);
             // setup model actions
             modelFactory.setup();
         });

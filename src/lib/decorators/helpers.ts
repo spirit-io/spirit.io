@@ -27,7 +27,7 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
     //console.log("Add metadata: ", key);
     options = options || {};
     // Get model factory
-    let factory = exports.initFactory(target);
+    let factory = initFactory(target);
     // registerIn is used for standard meta _id, _createdAt and _updatedAt
     if (options.registerIn) {
         factory[options.registerIn].push(key);
@@ -52,7 +52,7 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
 
 export function addHook(target: Symbol, propertyKey: string, name: string) {
     // Get model factory
-    let factory: IModelFactory = exports.initFactory(target);
+    let factory: IModelFactory = initFactory(target);
     // Set hook
     factory.$hooks.set(name, target[propertyKey]);
     return target;
@@ -60,7 +60,7 @@ export function addHook(target: Symbol, propertyKey: string, name: string) {
 
 export function addRoute(target: Symbol, propertyKey: string, method: string, path: string) {
     // Get model factory
-    let factory: IModelFactory = exports.initFactory(target.constructor);
+    let factory: IModelFactory = initFactory(target.constructor);
     // Set hook
     factory.$routes.push({
         method: method,

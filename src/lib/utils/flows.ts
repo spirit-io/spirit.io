@@ -6,7 +6,6 @@ export function synchronize() {
         return _funnel(() => {
             return descriptor;
         });
-
     }
     return synchronize;
 }

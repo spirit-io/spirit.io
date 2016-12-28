@@ -55,7 +55,7 @@ export class Middleware {
             }
             res.status(err['status'] || 500);
             res.json({
-                $diagnoses: [{
+                $diagnoses: err['$diagnoses'] || [{
                     $severity: 'error',
                     $message: err['error'] ? err['error'] : err.message,
                     $stack: exposeStack ? err.stack : undefined

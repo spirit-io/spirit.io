@@ -131,6 +131,8 @@ export abstract class ModelHelperBase implements IModelHelper {
             options.deleteReadOnly = true;
             item = this.modelFactory.actions.update(instance._id, serialized, options);
         } else {
+            // deleteMissing will force required validation
+            options.deleteMissing = true;
             item = this.modelFactory.actions.create(serialized, options);
         }
 
