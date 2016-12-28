@@ -80,13 +80,11 @@ describe('Spirit.io ORM Framework Tests:', () => {
         expect(myModelFactory.$prototype.pString.required).to.equal(true);
         expect(myModelFactory.$prototype.pString.type).to.equal('string');
 
-        expect(myModelFactory.$prototype.pNumber).to.be.a('object');
-        expect(myModelFactory.$prototype.pNumber.unique).to.equal(true);
-        expect(myModelFactory.$prototype.pNumber.type).to.equal('number');
+        expect(myModelFactory.$prototype.pNumber).to.be.a('string');
+        expect(myModelFactory.$prototype.pNumber).to.equal('number');
 
-        expect(myModelFactory.$prototype.pDate).to.be.a('object');
-        expect(myModelFactory.$prototype.pDate.index).to.equal(true);
-        expect(myModelFactory.$prototype.pDate.type).to.equal('Date');
+        expect(myModelFactory.$prototype.pDate).to.be.a('string');
+        expect(myModelFactory.$prototype.pDate).to.equal('Date');
 
         expect(myModelFactory.$prototype.aString).to.be.a('array');
         expect(myModelFactory.$prototype.aString[0]).to.be.a("object");
