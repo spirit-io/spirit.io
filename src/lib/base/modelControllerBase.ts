@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IModelController, IModelFactory, IParameters } from '../interfaces';
-import { HttpError } from '../common';
+import { HttpError } from '../utils';
 import { run } from 'f-promise';
 
 export abstract class ModelControllerBase implements IModelController {

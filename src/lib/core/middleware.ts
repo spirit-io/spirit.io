@@ -49,7 +49,7 @@ export class Middleware {
     setErrorHandler() {
         this.app.use(function (err: Error, req: Request, res: Response, next: NextFunction) {
             let exposeStack = this.srv.config.system && this.srv.config.system.exposeStack;
-            trace(`*****\nError handled when processing HTTP request\n\t- ${req.method} ${req.url}\n\t- Status: ${err['status'] || res.statusCode}\n\t- Headers: ${JSON.stringify(req['headers'])}\n\t- Data: ${JSON.stringify(req['body'])}\n\t- Cause: ${exposeStack ? (err['error'] || err.stack) : err.message}\n*****`);
+            trace(`*****\nError handled when processing HTTP request\n\t- ${req.method} ${req.url}\n\t- Status: ${err['status'] || 500}\n\t- Headers: ${JSON.stringify(req['headers'])}\n\t- Data: ${JSON.stringify(req['body'])}\n\t- Cause: ${exposeStack ? (err['error'] || err.stack) : err.message}\n*****`);
             if (res.headersSent) {
                 return;
             }

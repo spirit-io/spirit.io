@@ -1,4 +1,4 @@
-import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, IParameters } from '../../lib/interfaces'
+import { IConnector, IModelFactory, IModelHelper, IModelActions, IModelController, IParameters, IValidator } from '../../lib/interfaces'
 import { ModelFactoryBase, ModelHelperBase, ModelControllerBase } from '../../lib/base'
 import { helper as objectHelper } from '../../lib/utils'
 const uuid = require('uuid');
@@ -122,6 +122,8 @@ export class MockConnector implements IConnector {
     private _datasource: string = 'mock';
     private _config: any;
     public connections: Map<string, any>;
+    public validators: Map<string, IValidator> = new Map();
+
     constructor(config: any) {
         this.config = config;
     }
@@ -151,5 +153,13 @@ export class MockConnector implements IConnector {
 
     dumpStorage() {
         return storage;
+    }
+
+    registerValidator(validator: IValidator) {
+        this.validators.set(validator.name, validator);
+    }
+
+    getValidator(key: string): IValidator {
+        return this.validators.get(key);
     }
 }

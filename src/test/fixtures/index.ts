@@ -27,7 +27,7 @@ const config = {
 };
 
 
-function execRequest(method: string, url: string, data?: any, headers?: any) {
+function execRequest(method: string, url: string, data?: any, headers?: any): any {
     headers = headers || {
         'content-type': 'application/json'
     };

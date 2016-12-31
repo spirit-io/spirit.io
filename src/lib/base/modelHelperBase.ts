@@ -1,4 +1,4 @@
-import { IModelFactory, IModelHelper, IParameters, ISerializeOptions } from '../interfaces';
+import { IModelFactory, IModelHelper, IParameters, ISerializeOptions, IField } from '../interfaces';
 import { AdminHelper } from '../core';
 import { helper as objectHelper } from '../utils';
 
@@ -122,6 +122,9 @@ export abstract class ModelHelperBase implements IModelHelper {
         // Call beforeSave hook
         this.applyHook('beforeSave', instance);
 
+        // Call validate function on every validators concerned
+        this.modelFactory.validate(instance);
+
         // special options are needed for pre update serialization
         let customSerializeOptions = serializeOptions ? objectHelper.clone(serializeOptions) : {};
         customSerializeOptions.ignorePostSerialization = true;
@@ -240,7 +243,8 @@ export abstract class ModelHelperBase implements IModelHelper {
         let mf: IModelFactory = options.modelFactory || this.modelFactory;
         // update new values
         for (let key of Object.keys(item)) {
-            if (mf.$fields.has(key)) {
+            let field: IField = mf.$fields.get(key);
+            if (field) {
                 trace && trace(`Update key ${key} with value: ${require('util').inspect(item[key], null, 1)}`)
 
                 // instanciate references

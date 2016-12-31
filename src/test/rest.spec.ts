@@ -2,13 +2,13 @@ import { Fixtures } from './fixtures';
 import { helper as objectHelper } from '../lib/utils';
 import { setup } from 'f-mocha';
 
-const chai = require('chai');
+import * as chai from 'chai';
 const expect = chai.expect;
 
 // this call activates f-mocha wrapper.
 setup();
 
-describe('Spirit.io REST Express routes Tests:', () => {
+describe('*** Spirit.io REST Express routes Tests ***', () => {
     before(function (done) {
         this.timeout(10000);
         Fixtures.setup(done);
@@ -223,7 +223,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
     it('update complex instance with only one property should work and return only provided values', () => {
-        let resp = Fixtures.put('/api/v1/myModel/' + myModel[0], { pString: "s0updatedAgain", pNumber: 0 });
+        let resp = Fixtures.put('/api/v1/myModel/' + myModel[0], { pString: "s0updatedAgain", pNumber: 0, aString: ['a'] });
         expect(resp.status).to.equal(200);
         let body = JSON.parse(resp.body);
 
@@ -231,7 +231,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
         expect(body.pNumber).to.equal(0);
         expect(body.pDate).to.equal(undefined);
         expect(body.pBoolean).to.equal(undefined);
-        expect(body.aString).to.be.empty;
+        expect(body.aString).to.be.not.empty;
         expect(body.aNumber).to.be.empty;
         expect(body.aBoolean).be.empty;
         expect(body.inv).to.equal(undefined);

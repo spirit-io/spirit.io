@@ -6,6 +6,7 @@ export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);
     }
+    @required
     p1: string;
     relinv: MyModel;
     relinvs: MyModel[];

@@ -1,9 +1,11 @@
-import { IModelFactory } from '../interfaces';
+import { IModelFactory, IValidator } from '../interfaces';
 import { Router } from 'express';
 
 export class Registry {
     static factories: Map<string, IModelFactory> = new Map();
     static apiRouters: Map<string, Router> = new Map();
+    static validators: Map<string, IValidator> = new Map();
+
     /**
      * Allows to register a model's factory. The model's name used as identifier is automatically retrieved from the class itself.
      * @param Class The class wanted to be registered by the framework.
@@ -33,6 +35,7 @@ export class Registry {
         this.apiRouters.set(key, router);
     }
 
+
     /**
      * Allows to retrieve an API router giving a key.
      * @param string The router identifier.
@@ -40,6 +43,15 @@ export class Registry {
      */
     public static getApiRouter(key: string): Router {
         return this.apiRouters.get(key);
+    }
+
+
+    public static registerValidator(validator: IValidator) {
+        if (!this.validators.has(validator.name)) this.validators.set(validator.name, validator);
+    }
+
+    public static getValidator(key: string): IValidator {
+        return this.validators.get(key);
     }
 
 

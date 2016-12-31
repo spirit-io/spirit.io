@@ -108,6 +108,12 @@ export interface IModelFactory {
      */
     controller: IModelController;
     /**
+     * Contains only the validators names required by the factory to validates instances.
+     * 
+     * The real validators are register in the core registry.
+     */
+    validators: IValidator[];
+    /**
      * Store the ModelActions, the ModelHelper and the ModelController locally if the factory is persistent.
      * 
      * It also initialize express requests handlers defined in ModelController for CRUD operations.
@@ -171,6 +177,14 @@ export interface IModelFactory {
      * @return any The full serialized object without serialized references.
      */
     simplifyReferences(item: any): any;
+    /**
+     * Validates the instance's properties. 
+     * 
+     * Each property can be related to prototype metadata that match to a validator registered in core registry.
+     * @param any The instance to validate
+     * @return boolean `true` if valid
+     */
+    validate(instance: any): void;
 }
 
 /**
@@ -325,10 +339,13 @@ export interface IField {
     isReverse: boolean;
     isEmbedded: boolean;
     isReadOnly: boolean;
-    isUnique: boolean;
-    isIndexed: boolean;
-    isRequired: boolean;
     isVisible(instance: any): boolean;
+    hasMetadata(name: string): boolean;
+}
+
+export interface IValidator {
+    name: string;
+    validate(instance: any, factory: IModelFactory);
 }
 
 export interface IRoute {
@@ -340,11 +357,14 @@ export interface IRoute {
 export interface IConnector {
     datasource: string;
     config: any;
+    ignoreValidators?: string[];
     connections: Map<string, any>;
     connect(datasourceKey: string): any;
     getConnection(datasourceKey: string);
     cleanDb(cds: string): void;
     createModelFactory(name: string, myClass: any): IModelFactory;
+    registerValidator(validator: IValidator): void;
+    getValidator(key: string): IValidator;
 }
 
 export interface IParameters {

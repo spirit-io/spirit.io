@@ -1,5 +1,6 @@
 import * as helpers from './helpers';
-
+import { Registry } from '../core';
+import { RequiredValidator } from '../validators';
 // !!!!!!!!!!!!!!!
 // properties metadata have to be stored on class constructor
 // !!!!!!!!!!!!!!!
@@ -11,6 +12,7 @@ import * as helpers from './helpers';
  */
 export function required(target: any, propertyKey: string) {
     helpers.addMetadata(target.constructor, propertyKey, { required: true });
+    Registry.registerValidator(new RequiredValidator());
 }
 
 export function embedded(target: any, propertyKey: string) {

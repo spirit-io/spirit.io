@@ -1,22 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters } from '../interfaces'
+import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
 import { Registry } from '../core';
-import { helper as objectHelper } from '../utils'
+import { helper as objectHelper } from '../utils';
+import { InstanceError } from '../utils';
 import { run } from 'f-promise';
 import * as debug from 'debug';
 const trace = debug('sio:factory');
 
 class Field implements IField {
     name: string;
+    metadatas: string[] = [];
+
     isPlural: boolean = false;
     isReference: boolean = false;
     isReverse: boolean = false;
     isEmbedded: boolean = false;
     isReadOnly: boolean = false;
-    isUnique: boolean = false;
-    isRequired: boolean = false;
-    isIndexed: boolean = false;
     private _invisible: boolean | Function;
+
 
     constructor(key: string, factory: IModelFactory) {
         this.name = key;
@@ -26,22 +27,30 @@ class Field implements IField {
             if (factory.$references[key].$reverse) this.isReverse = true;
         }
 
-        if (factory.$prototype.hasOwnProperty(key)) {
-            this.isReadOnly = factory.$prototype[key].readOnly;
-            this.isEmbedded = factory.$prototype[key].embedded;
-            this.isUnique = factory.$prototype[key].unique;
-            this.isRequired = factory.$prototype[key].required;
-            this.isIndexed = factory.$prototype[key].index;
-            this._invisible = factory.$prototype[key].invisible != null ? factory.$prototype[key].invisible : false;
+        let metaContainer = Array.isArray(factory.$prototype[key]) ? factory.$prototype[key][0] : factory.$prototype[key];
+        if (typeof metaContainer === 'object') {
+            if (factory.$prototype.hasOwnProperty(key)) {
+                this.isReadOnly = metaContainer.readOnly;
+                this.isEmbedded = metaContainer.embedded;
+                this._invisible = metaContainer.invisible != null ? metaContainer.invisible : false;
+            }
+            this.metadatas = Object.keys(metaContainer).filter((key) => {
+                return ['type', 'ref', 'readOnly', 'embedded', 'invisible'].indexOf(key) === -1 && (!factory.connector.ignoreValidators || factory.connector.ignoreValidators.indexOf(key) === -1);
+            });
         }
     }
 
     isVisible(instance: any): boolean {
+        if (this._invisible == null) return true;
         if (typeof this._invisible === 'boolean') {
             return !<boolean>this._invisible;
         } else {
             return !this._invisible(instance);
         }
+    }
+
+    hasMetadata(name: string): boolean {
+        return this.metadatas.indexOf(name) !== -1;
     }
 }
 
@@ -68,11 +77,13 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public controller: IModelController;
     public datasource: string;
     public persistent: boolean = true;
+    public validators: IValidator[];
 
     constructor(name: string, targetClass: any, connector: IConnector) {
         this.collectionName = name;
         this.targetClass = targetClass;
         this.connector = connector;
+        this.validators = [];
         let tempFactory = targetClass.__factory__[name];
         if (tempFactory.persistent != null) this.persistent = tempFactory.persistent;
         if (tempFactory.datasource) this.datasource = tempFactory.datasource;
@@ -86,15 +97,39 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.$references = tempFactory.$references || {};
         this.$hooks = tempFactory.$hooks || new Map();
         this.$fields = new Map();
+
     }
 
     init(actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
-        trace(`============= Prototype registered for collection ${this.collectionName} =============\n${require('util').inspect(this.$prototype, null, 2)}`)
+        trace(`============= Model registered '${this.collectionName}' on datasource '${this.datasource}' =============`);
+        trace(`Prototype: ${require('util').inspect(this.$prototype, null, 2)}`)
 
         // compute fields
         this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
-            this.$fields.set(key, new Field(key, this));
+            let field: Field = new Field(key, this);
+            field.metadatas.forEach((m) => {
+                trace(`${this.collectionName}: Try to find a validator for metadata '${m}'`)
+                // consider validator if available on the connector
+                // else consider the validator if available in the registry
+                let vc = this.connector.getValidator(m);
+
+                if (vc) {
+                    trace(`Validator found on connector`);
+                    this.validators.push(vc);
+                } else {
+                    let vr = Registry.getValidator(m);
+                    if (vr) {
+                        trace(`Validator found in registry`);
+                        this.validators.push(vr);
+                    } else {
+                        trace(`No validator found...`);
+                    }
+                }
+            });
+            // register field
+            this.$fields.set(key, field);
         });
+
 
         let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
         let v1 = Registry.getApiRouter('v1');
@@ -129,7 +164,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             let path = `/${routeName}${route.path}`;
             v1[route.method](path, route.fn);
         });
-
+        trace("=========================================================================");
     }
 
     getModelFactoryByPath(path: string): IModelFactory {
@@ -218,6 +253,17 @@ export abstract class ModelFactoryBase implements IModelFactory {
             }
         });
         return transformed;
+    }
+
+    validate(instance: any): void {
+        this.validators.every((validator) => {
+            return validator.validate(instance, this);
+        });
+
+        if (instance.$diagnoses && instance.$diagnoses.length) {
+            trace("Validation failed:", JSON.stringify(instance.$diagnoses, null, 2));
+            throw new InstanceError('Validation Error', instance.$diagnoses);
+        }
     }
 
     private executeService(req: Request, res: Response, next: NextFunction): void {
