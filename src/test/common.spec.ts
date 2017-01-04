@@ -5,6 +5,10 @@ import { IModelFactory } from '../lib/interfaces';
 import * as chai from 'chai';
 const expect = chai.expect;
 
+import { setup } from 'f-mocha';
+// this call activates f-mocha wrapper.
+setup();
+
 let trace;// = console.log;
 let server: Server;
 
@@ -23,7 +27,6 @@ describe('Spirit.io common Tests:', () => {
 
     it('config should be not empty', () => {
         expect(server.config).to.not.null;
-
     });
 
     it('Try to retrieve a model factory that does not exist should raise an error', () => {

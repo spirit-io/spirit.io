@@ -1,6 +1,7 @@
 import { AdminHelper } from '../core/adminHelper';
-import { IModelHelper } from '../interfaces';
+import { IModelHelper, IParameters, ISerializeOptions } from '../interfaces';
 import { readonly } from '../../lib/decorators';
+import * as diagsHelper from '../../lib/utils';
 
 export abstract class ModelBase {
     @readonly
@@ -32,12 +33,12 @@ export abstract class ModelBase {
      *      deleteMissing: true // allows to add $unset properties in order to remove values from the updated document
      * }
      */
-    save(data?: any, options?: any): any {
-        return this._db.saveInstance(this, data, options);
+    save(data?: any, options?: any, serializeOptions?: ISerializeOptions): any {
+        return this._db.saveInstance(this, data, options, serializeOptions);
     }
 
-    serialize(): any {
-        return this._db.serialize(this);
+    serialize(parameters?: IParameters, options?: ISerializeOptions): any {
+        return this._db.serialize(this, parameters, options);
     }
 
     updateValues(item: any, options?: any): void {
@@ -50,6 +51,10 @@ export abstract class ModelBase {
 
     isModified(property: string): boolean {
         return this._db.isModified(this, property);
+    }
+
+    addDiagnose(severity: string, message: string, stack?: string): void {
+        diagsHelper.addInstanceDiagnose(this, severity, message, stack);
     }
 
 }

@@ -19,9 +19,7 @@ export class Contract {
      * @param any The config object.
      */
     constructor(private config: any) {
-        if (this.config.defaultDatasource) {
-            context().__defaultDatasource = this.config.defaultDatasource;
-        }
+        context().__defaultDatasource = this.config.defaultDatasource;
     };
 
     /**

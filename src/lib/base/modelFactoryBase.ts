@@ -259,8 +259,9 @@ export abstract class ModelFactoryBase implements IModelFactory {
         this.validators.every((validator) => {
             return validator.validate(instance, this);
         });
-
-        if (instance.$diagnoses && instance.$diagnoses.length) {
+        if (instance.$diagnoses && instance.$diagnoses.some((diag) => {
+            return diag.$severity === 'error';
+        })) {
             trace("Validation failed:", JSON.stringify(instance.$diagnoses, null, 2));
             throw new InstanceError('Validation Error', instance.$diagnoses);
         }

@@ -17,7 +17,10 @@ const config = {
     connectors: {
         mock: {
             datasources: {
-                "mock": {}
+                "mock:1": {
+                    "autoConnect": true
+                },
+                "mock:2": {}
             }
         }
     },

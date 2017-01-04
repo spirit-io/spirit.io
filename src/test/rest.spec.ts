@@ -35,10 +35,12 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     });
 
     it('create simple instance should work', () => {
-        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1" });
+        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", pInvisible1: "invisble1", pInvisible2: "invisible2" });
         let body = JSON.parse(resp.body);
         expect(resp.status).to.equal(201);
         expect(body.p1).to.equal("prop1");
+        expect(body.pInvisible1).to.be.undefined;
+        expect(body.pInvisible2).to.be.undefined;
         expect(body._id).to.be.a("string");
         expect(body._createdAt).to.be.not.null;
         expect(body._updated).to.be.not.null;
@@ -46,7 +48,13 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(new Date(body._updated)).to.be.a("Date");
 
         // create 3 more
-        Fixtures.post('/api/v1/myModelRel', { p1: "prop2" });
+        resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" });
+        body = JSON.parse(resp.body);
+        expect(resp.status).to.equal(201);
+        expect(body.p1).to.equal("prop2");
+        expect(body.pInvisible1).to.be.undefined;
+        expect(body.pInvisible2).to.be.equal('invisible2'); // invisible field only when p1 equals 'prop1'
+
         Fixtures.post('/api/v1/myModelRel', { p1: "prop3" });
         Fixtures.post('/api/v1/myModelRel', { p1: "prop4" });
     });
@@ -257,13 +265,44 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body.pString).to.equal("pString updated by aMethod call");
     });
 
-    it('execute instance service should work and return expected value', () => {
+    it('execute instance method that throw an exception should return diagnoses', () => {
+        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0] + '/$execute/aMethodThatThrow', {});
+        expect(resp.status).to.equal(500);
+        let body = JSON.parse(resp.body);
+        expect(body.$diagnoses).to.be.not.null;
+        expect(body.$diagnoses.length).to.be.equal(1);
+        expect(body.$diagnoses[0].$severity).to.be.equal('error');
+        expect(body.$diagnoses[0].$message).to.be.equal(`Test error`);
+        expect(body.$diagnoses[0].$stack).to.be.not.null;
+    });
+
+    it('execute instance method that does not exist should return 404', () => {
+        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0].id + '/aMethodThatDoesNotExists', {});
+        expect(resp.status).to.equal(404);
+    });
+
+    it('execute model service should work and return expected value', () => {
         let resp = Fixtures.post('/api/v1/myModel/$service/aService', { a: 2.22, b: 3.33 });
         expect(resp.status).to.equal(200);
         let body = JSON.parse(resp.body);
         expect(body.c).to.equal('5.55');
     });
 
+    it('execute model service that throw an exception should return diagnoses', () => {
+        let resp = Fixtures.post('/api/v1/myModel/$service/aServiceThatThrow', {});
+        expect(resp.status).to.equal(500);
+        let body = JSON.parse(resp.body);
+        expect(body.$diagnoses).to.be.not.null;
+        expect(body.$diagnoses.length).to.be.equal(1);
+        expect(body.$diagnoses[0].$severity).to.be.equal('error');
+        expect(body.$diagnoses[0].$message).to.be.equal(`Test error`);
+        expect(body.$diagnoses[0].$stack).to.be.not.null;
+    });
+
+    it('execute model service that does not exist should return 404', () => {
+        let resp = Fixtures.post('/api/v1/myModel/$service/aServiceThatDoesNotExists', {});
+        expect(resp.status).to.equal(404);
+    });
 
     it('query should return nothing after deleting all elements', () => {
         myModelRels.forEach((r) => {
@@ -288,5 +327,22 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(resp.status).to.equal(200);
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
+    });
+
+    it('get request with querystring parameters on non persistent model\'s route', () => {
+        let resp = Fixtures.get('/api/v1/myNotPersistentModel/sumWithQueryStringParams?a=2.22&b=3.33');
+        expect(resp.status).to.be.equal(200);
+        let body = JSON.parse(resp.body);
+        expect(body.sum).to.be.equal(5.55);
+    });
+
+    it('post request with body parameters on non persistent model\'s route', () => {
+        let resp = Fixtures.post('/api/v1/myNotPersistentModel/sumWithBodyParams', {
+            a: 2.22,
+            b: 3.33
+        });
+        expect(resp.status).to.be.equal(200);
+        let body = JSON.parse(resp.body);
+        expect(body.sum).to.be.equal(5.55);
     });
 });

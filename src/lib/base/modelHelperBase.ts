@@ -229,6 +229,9 @@ export abstract class ModelHelperBase implements IModelHelper {
             }
         }
 
+        if (instance.$diagnoses && instance.$diagnoses.length) {
+            item.$diagnoses = instance.$diagnoses;
+        }
         trace && trace("Serialize:", item);
         trace && trace("********** End serialization *************\n");
 
@@ -265,7 +268,7 @@ export abstract class ModelHelperBase implements IModelHelper {
                 } else {
                     instance[key] = item[key];
                 }
-            } else if (key.indexOf('_') !== 0) {
+            } else if (key.indexOf('_') !== 0 && key.indexOf('$') !== 0) {
                 throw new Error(`Property '${key}' does not exist on model '${mf.collectionName}'`);
             }
         }
