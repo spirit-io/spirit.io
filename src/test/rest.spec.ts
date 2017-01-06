@@ -277,7 +277,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     });
 
     it('execute instance method that does not exist should return 404', () => {
-        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0].id + '/aMethodThatDoesNotExists', {});
+        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0].id + '/$execute/aMethodThatDoesNotExists', {});
         expect(resp.status).to.equal(404);
     });
 
@@ -301,6 +301,11 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
 
     it('execute model service that does not exist should return 404', () => {
         let resp = Fixtures.post('/api/v1/myModel/$service/aServiceThatDoesNotExists', {});
+        expect(resp.status).to.equal(404);
+    });
+
+    it('deleting non exiting document should return not found', () => {
+        let resp = Fixtures.delete('/api/v1/myModelRel/1');
         expect(resp.status).to.equal(404);
     });
 

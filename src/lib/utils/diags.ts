@@ -5,11 +5,12 @@ export interface IDiagnose {
 }
 
 export function createDiagnose(severity: string, message: string, stack?: string): IDiagnose {
-    return {
+    let d: any = {
         $severity: severity,
-        $message: message,
-        $stack: stack
+        $message: message
     };
+    if (stack) d.$stack = stack;
+    return d;
 }
 
 export function addInstanceDiagnose(instance: any, severity: string, message: string, stack?: string) {

@@ -87,6 +87,7 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
 
     });
 
+    let relId: string;
     it('Fetch instances should allow to get relations', () => {
         let db = AdminHelper.model(MyModel);
         let rels: MyModel[] = db.fetchInstances();
@@ -97,6 +98,39 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(rels[0].rels.length).to.equal(2);
         expect(rels[0].rels[0].p1).to.equal('prop2');
         expect(rels[0].rels[1].p1).to.equal('prop3modified');
+        relId = rels[0].getMetadata('_id');
+    });
+
+    it('Update instance should allow to know if a property is modified', () => {
+        let db = AdminHelper.model(MyModel);
+        let rel: MyModel = db.fetchInstance(relId);
+        let isModified = rel.isModified('pString');
+        expect(isModified).to.be.false;
+        rel.pString = "modifiedProp";
+        rel.save();
+        isModified = rel.isModified('pString');
+        expect(isModified).to.be.true;
+    });
+
+    it('Add instance\'s diagnose should allow to retrieve it on serialization', () => {
+        let db = AdminHelper.model(MyModel);
+        let rel: MyModel = db.fetchInstance(relId);
+        rel.addDiagnose('info', 'Diagnose added manually');
+        let serialized = rel.save(null, null, {});
+
+        let expectedMessages = [
+            'Diagnose added manually',
+            'aMethod has been called with parameters "test"'
+        ]
+
+        expect(serialized.$diagnoses).to.be.not.null;
+        expect(serialized.$diagnoses.length).to.be.equal(2);
+        expect(serialized.$diagnoses[0].$severity).to.be.equal('info');
+        expect(expectedMessages.indexOf(serialized.$diagnoses[0].$message) !== -1).to.be.true;
+        expect(serialized.$diagnoses[0].$stackTrace).to.be.undefined;
+        expect(serialized.$diagnoses[1].$severity).to.be.equal('info');
+        expect(expectedMessages.indexOf(serialized.$diagnoses[1].$message) !== -1).to.be.true;
+        expect(serialized.$diagnoses[1].$stackTrace).to.be.undefined;
 
     });
 
