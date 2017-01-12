@@ -46,17 +46,30 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body._updated).to.be.not.null;
         expect(new Date(body._createdAt)).to.be.a("Date");
         expect(new Date(body._updated)).to.be.a("Date");
+    });
 
-        // create 3 more
-        resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" });
-        body = JSON.parse(resp.body);
+    it('create simple instance with invisible fields should work and return values according to conditions', () => {
+        // create 2 more
+        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" });
+        let body = JSON.parse(resp.body);
         expect(resp.status).to.equal(201);
         expect(body.p1).to.equal("prop2");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.equal('invisible2'); // invisible field only when p1 equals 'prop1'
 
         Fixtures.post('/api/v1/myModelRel', { p1: "prop3" });
-        Fixtures.post('/api/v1/myModelRel', { p1: "prop4" });
+    });
+
+    it('create simple instance with readonly field modified should ignore it and raise a warning diagnose', () => {
+        // create 1 more
+        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop4", readOnlyProp: "testModifyReadOnlyVal" });
+        let body = JSON.parse(resp.body);
+        expect(body.readOnlyProp).to.be.equal("readOnlyVal");
+        expect(body.$diagnoses).to.be.not.null;
+        expect(body.$diagnoses.length).to.be.equal(1);
+        expect(body.$diagnoses[0].$severity).to.be.equal('warn');
+        expect(body.$diagnoses[0].$message).to.be.equal(`Property 'readOnlyProp' is readOnly and can't be modified. New value ignored: 'testModifyReadOnlyVal'; Old value kept: 'readOnlyVal'`);
+        expect(body.$diagnoses[0].$stack).to.be.undefined;
     });
 
     let myModelRels = [];

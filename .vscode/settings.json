@@ -5,5 +5,5 @@
     },
     // Met en forme un fichier au moment de l'enregistrement. Un formateur doit être disponible, le fichier ne doit pas être enregistré automatiquement, et l'éditeur ne doit pas être en cours d'arrêt.
     "editor.formatOnSave": true,
-    "typescript.tsdk": "../typescript/lib"
+    "typescript.tsdk": "node_modules/typescript/lib"
 }

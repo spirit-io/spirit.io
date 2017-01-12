@@ -1,6 +1,7 @@
 import { IModelFactory, IModelHelper, IParameters, ISerializeOptions, IField } from '../interfaces';
 import { AdminHelper } from '../core';
-import { helper as objectHelper } from '../utils';
+import { helper as objectHelper } from '../utils/object';
+import * as diagsHelper from '../utils/diags';
 
 let trace;// = console.log;
 
@@ -248,38 +249,56 @@ export abstract class ModelHelperBase implements IModelHelper {
         for (let key of Object.keys(item)) {
             let field: IField = mf.$fields.get(key);
             if (field) {
-                trace && trace(`Update key ${key} with value: ${require('util').inspect(item[key], null, 1)}`)
+                if (!field.isReadOnly) {
+                    trace && trace(`Update key ${key} with value: ${require('util').inspect(item[key], null, 1)}`)
 
-                // instanciate references
-                if (this.modelFactory.$references[key]) {
-                    let type = this.modelFactory.getReferenceType(key);
-                    let refValue;
-                    if (Array.isArray(item[key])) {
-                        refValue = [];
-                        if (item[key].length) {
-                            item[key].forEach((it) => {
-                                if (it) refValue.push(this.modelFactory.createNew(it, type));
-                            });
+                    // instanciate references
+                    if (this.modelFactory.$references[key]) {
+                        let type = this.modelFactory.getReferenceType(key);
+                        let refValue;
+                        if (Array.isArray(item[key])) {
+                            refValue = [];
+                            if (item[key].length) {
+                                item[key].forEach((it) => {
+                                    if (it) refValue.push(this.modelFactory.createNew(it, type));
+                                });
+                            }
+                        } else {
+                            if (item[key]) refValue = this.modelFactory.createNew(item[key], type);
                         }
+                        instance[key] = refValue;
                     } else {
-                        if (item[key]) refValue = this.modelFactory.createNew(item[key], type);
+                        instance[key] = item[key];
                     }
-                    instance[key] = refValue;
-                } else {
-                    instance[key] = item[key];
+                } else if (item[key] !== instance[key]) {
+                    diagsHelper.addInstanceDiagnose(instance, 'warn', `Property '${key}' is readOnly and can't be modified. New value ignored: '${item[key]}'; Old value kept: '${instance[key]}'`);
                 }
             } else if (key.indexOf('_') !== 0 && key.indexOf('$') !== 0) {
                 throw new Error(`Property '${key}' does not exist on model '${mf.collectionName}'`);
             }
         }
-        if (options.deleteMissing) {
-            // reinitialize deleted values
-            for (var [key, field] of mf.$fields) {
-                if (!field.isReadOnly && item[key] === undefined) {
+        // reinitialize deleted values
+        for (var [key, field] of mf.$fields) {
+            // console.log("Field:", JSON.stringify(field,null,2))
+            if (options.deleteMissing) {
+                if (!field.isInsertOnly && item[key] === undefined) {
                     instance[key] = undefined;
                 }
             }
         }
+
+        // // reinitialize deleted values
+        // for (var [key, field] of mf.$fields) {
+        //     if (options.deleteMissing) {
+        //         if (!field.isInsertOnly && item[key] === undefined) {
+        //             instance[key] = undefined;
+        //         }
+        //     }
+        //     if (instance[key] !== undefined && instance.$snapshot && field.isReadOnly) {
+        //         instance[key] = undefined;
+        //     }
+        // }
+
     }
 
     applyHook(name: string, instance: any) {

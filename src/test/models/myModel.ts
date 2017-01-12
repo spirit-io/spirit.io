@@ -1,4 +1,4 @@
-import { model, required, reverse, embedded, readonly, hook, route, invisible } from '../../lib/decorators';
+import { model, required, reverse, embedded, insertonly, hook, route, invisible } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
 import { Request, Response, NextFunction } from 'express';
 import * as diagsHelper from '../../lib/utils';
@@ -20,6 +20,8 @@ export class MyModelRel extends ModelBase {
         return instance.p1 === 'prop1';
     })
     pInvisible2: string
+
+    readonly readOnlyProp: string = 'readOnlyVal';
 }
 
 @model()
@@ -27,7 +29,7 @@ export class MyModelRelExtend extends MyModelRel {
     constructor(data) {
         super(data);
     }
-    @readonly
+    @insertonly
     p2: string;
 }
 

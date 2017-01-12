@@ -48,37 +48,37 @@ describe('Spirit.io common Tests:', () => {
         expect(myModelFactory.$plurals).to.have.members(myModelMeta.$plurals);
 
         expect(myModelFactory.$prototype._id).to.be.a('object');
-        expect(myModelFactory.$prototype._id.type).to.equal('string');
-        expect(myModelFactory.$prototype._id.readOnly).to.be.true;
+        expect(myModelFactory.$prototype._id.type).to.equal('String');
+        expect(myModelFactory.$prototype._id.insertOnly).to.be.true;
         expect(myModelFactory.$prototype._createdAt).to.be.a('object');
         expect(myModelFactory.$prototype._createdAt.type).to.equal('Date');
-        expect(myModelFactory.$prototype._createdAt.readOnly).to.be.true;
+        expect(myModelFactory.$prototype._createdAt.insertOnly).to.be.true;
         expect(myModelFactory.$prototype._updatedAt).to.be.a('object');
         expect(myModelFactory.$prototype._updatedAt.type).to.equal('Date');
 
         expect(myModelFactory.$prototype.pString).to.be.a('object');
         expect(myModelFactory.$prototype.pString.required).to.equal(true);
-        expect(myModelFactory.$prototype.pString.type).to.equal('string');
+        expect(myModelFactory.$prototype.pString.type).to.equal('String');
 
-        expect(myModelFactory.$prototype.pNumber).to.be.a('string');
-        expect(myModelFactory.$prototype.pNumber).to.equal('number');
+        expect(myModelFactory.$prototype.pNumber).to.be.a('object');
+        expect(myModelFactory.$prototype.pNumber.type).to.equal('Number');
 
-        expect(myModelFactory.$prototype.pDate).to.be.a('string');
-        expect(myModelFactory.$prototype.pDate).to.equal('Date');
+        expect(myModelFactory.$prototype.pDate).to.be.a('object');
+        expect(myModelFactory.$prototype.pDate.type).to.equal('Date');
 
         expect(myModelFactory.$prototype.aString).to.be.a('array');
         expect(myModelFactory.$prototype.aString[0]).to.be.a("object");
         expect(myModelFactory.$prototype.aString[0].required).to.equal(true);
-        expect(myModelFactory.$prototype.aString[0].type).to.equal("string");
+        expect(myModelFactory.$prototype.aString[0].type).to.equal("String");
 
         expect(myModelFactory.$prototype.aNumber).to.be.a('array');
-        expect(myModelFactory.$prototype.aNumber[0]).to.equal("number");
+        expect(myModelFactory.$prototype.aNumber[0].type).to.equal("Number");
 
         expect(myModelFactory.$prototype.aDate).to.be.a('array');
-        expect(myModelFactory.$prototype.aDate[0]).to.equal("Date");
+        expect(myModelFactory.$prototype.aDate[0].type).to.equal("Date");
 
         expect(myModelFactory.$prototype.aBoolean).to.be.a('array');
-        expect(myModelFactory.$prototype.aBoolean[0]).to.equal("boolean");
+        expect(myModelFactory.$prototype.aBoolean[0].type).to.equal("Boolean");
 
     });
 });

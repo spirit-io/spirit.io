@@ -17,11 +17,21 @@ interface ILoadedElement {
 }
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
+    // Manage fatories
     let f: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass);
     trace(" => Release building model factory: ", f.collectionName);
     Registry.setFactory(f);
+
+
+    // Manage validators
+    if (myClass.__factory__.validators) {
+
+    }
+
+    // Free memory
     myClass.__factory__[collectionName] = null;
     if (Object.keys(myClass.__factory__).length === 0) myClass.__factory__ = null;
+
     return f;
 }
 
@@ -114,7 +124,11 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
             // console.log("member: "+require('util').inspect(member,null,1));
 
             function log(prefix: String, obj: any) {
-                //console.log(`${prefix}: ${require('util').inspect(obj, null, 1)}`);
+                trace("Member of class: " + cn + " - Name: " + checker.getSymbolAtLocation(member.name).getName() + " - Kind: " + prefix + ",", obj.kind)
+            }
+
+            function nyi() {
+                console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed for member '${checker.getSymbolAtLocation(member.name).getName()}' in class '${cn}'`);
             }
 
             //////////////////////////////////////////
@@ -145,20 +159,24 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                 return isSpecialFunction('route');
             }
 
+            let cn = checker.getSymbolAtLocation(node.name).getName();
             let symbol: ts.Symbol;
-            let type: string;
+            let type: any;
             let decorators: any[];
             if (member.decorators) {
                 decorators = member.decorators.map(inspectDecorator);
             }
 
             switch (member && member.kind) {
+                case ts.SyntaxKind.Constructor:
+                    // Do nothing for constructors
+                    break;
                 case ts.SyntaxKind.VariableDeclaration:
                 case ts.SyntaxKind.VariableDeclarationList:
                     log("Variable", member);
                     break;
                 case ts.SyntaxKind.MethodDeclaration:
-                    log("Member", member);
+                    log("Method", member);
                     symbol = checker.getSymbolAtLocation(member.name);
                     // do not consider hooks and private functions
                     if (!isHookFunction() && !isRouteFunction() && !isPrivate(member)) {
@@ -173,10 +191,10 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     log("Function", member);
                     break;
                 case ts.SyntaxKind.GetAccessor:
-                    // log("Getter",member);
+                    nyi();
                     break;
                 case ts.SyntaxKind.SetAccessor:
-                    log("Setter", member);
+                    nyi();
                     break;
                 case ts.SyntaxKind.PropertyDeclaration:
                     let prop: ts.PropertyDeclaration = <ts.PropertyDeclaration>member;
@@ -184,7 +202,6 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     if (isPrivate(prop)) return;
                     // ignore properties assigned with an arrow function
                     if (prop.initializer && prop.initializer.kind === ts.SyntaxKind.ArrowFunction) return;
-
 
                     symbol = checker.getSymbolAtLocation(prop.name);
                     let propertyName = symbol.getName();
@@ -194,8 +211,8 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     // retrieve the real type. this part explains essentially why using this schema compiler
                     // reflect-metadata could have been used in decorators, but cyclic dependencies would have been a limitation
                     type = checker.typeToString(checker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration));
+                    trace("Member of class: " + cn + " - Name: " + propertyName + " - Kind: Property," + member.kind + " - Type: " + type);
 
-                    trace(`    - Property '${propertyName}' type: ${type}`);
                     let _isArray = type.indexOf('[]') !== -1;
                     if (_isArray) {
                         type = type.substring(0, type.length - 2);
@@ -204,25 +221,28 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                     if (!isNativeType(type)) {
                         type = transformPropertyType(propertyName, prop, type);
                         _isReference = true;
+                    } else {
+                        type = { type: type.slice(0, 1).toUpperCase() + type.slice(1) };
                     }
 
                     let res = {
                         name: propertyName,
                         value: type,
                         _isArray: _isArray,
-                        _isReference: _isReference
+                        _isReference: _isReference,
+                        _isReadonly: isReadonly(prop)
                     };
-                    //console.log("Member type:", res);
+                    // console.log("Member type:", res);
                     return res;
                 default:
-                    trace(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
+                    console.log(`# Warning: Syntax kind '${ts.SyntaxKind[member.kind]}' not yet managed`);
             }
 
         }
 
 
         function getClassExtendsHeritageClauseElement(node) {
-            var heritageClause = getHeritageClause(node.heritageClauses, 83 /* ExtendsKeyword */);
+            var heritageClause = getHeritageClause(node.heritageClauses, ts.SyntaxKind.ExtendsKeyword /* ExtendsKeyword */);
             return heritageClause && heritageClause.types.length > 0 ? heritageClause.types[0] : undefined;
         }
 
@@ -287,6 +307,10 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
                         modelFactory.$properties.push(curr.name);
                     } else if (curr._isReference && !modelFactory.$references[curr.name]) {
                         modelFactory.$references[curr.name] = {};
+                    }
+
+                    if (curr._isReadonly) {
+                        prev[curr.name].readOnly = true;
                     }
                 }
                 return prev;
@@ -358,6 +382,10 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
 
     function isPrivate(node: ts.Node) {
         return hasModifier(node, ts.SyntaxKind.PrivateKeyword);
+    }
+
+    function isReadonly(node: ts.Node) {
+        return hasModifier(node, ts.SyntaxKind.ReadonlyKeyword);
     }
 
     function hasModifier(node: ts.Node, kind: ts.SyntaxKind) {

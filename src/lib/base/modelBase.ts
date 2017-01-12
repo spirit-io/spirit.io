@@ -1,29 +1,19 @@
 import { AdminHelper } from '../core/adminHelper';
 import { IModelHelper, IParameters, ISerializeOptions } from '../interfaces';
-import { readonly } from '../../lib/decorators';
+import { insertonly } from '../../lib/decorators';
 import * as diagsHelper from '../../lib/utils';
 
 export abstract class ModelBase {
-    @readonly
-    protected _id: string;
-    @readonly
-    protected _createdAt: Date;
-    protected _updatedAt: Date;
+    @insertonly
+    _id: String;
+    @insertonly
+    _createdAt: Date;
+    _updatedAt: Date;
     private _db: IModelHelper;
 
     constructor(item: any = {}) {
         this._db = AdminHelper.model(this.constructor);
         if (Object.keys(item).length > 0) this.updateValues(item);
-    }
-
-    get id(): String {
-        return this._db.getMetadata(this, '_id');
-    }
-    get createdAt(): Date {
-        return this._db.getMetadata(this, '_createdAt');
-    }
-    get updatedAt(): Date {
-        return this._db.getMetadata(this, '_updatedAt');
     }
 
     /**

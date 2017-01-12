@@ -339,6 +339,7 @@ export interface IField {
     isReverse: boolean;
     isEmbedded: boolean;
     isReadOnly: boolean;
+    isInsertOnly: boolean;
     isVisible(instance: any): boolean;
     hasMetadata(name: string): boolean;
 }

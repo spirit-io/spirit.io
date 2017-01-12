@@ -6,7 +6,7 @@ export class RequiredValidator implements IValidator {
     validate(instance: any, factory: IModelFactory) {
         let fields: Map<string, IField> = factory.$fields;
         for (var [key, field] of fields) {
-            let isRequired = field.hasMetadata('required');
+            let isRequired = field.hasMetadata(this.name);
             if (isRequired && instance[key] == null) {
                 //console.log("Instance:", instance);
                 diagsHelper.addInstanceDiagnose(instance, 'error', `ValidatorError: Property \`${key}\` is required.`, new Error().stack);

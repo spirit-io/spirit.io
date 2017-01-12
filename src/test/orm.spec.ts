@@ -69,9 +69,9 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         db.updateValues(m1, null); // update with null data for test coverage
         db.saveInstance(m1, data);
 
-        expect(m1.id).to.be.a("string");
-        expect(m1.createdAt).to.be.a("Date");
-        expect(m1.updatedAt).to.be.a("Date");
+        expect(m1._id).to.be.a("string");
+        expect(m1._createdAt).to.be.a("Date");
+        expect(m1._updatedAt).to.be.a("Date");
         expect(m1.serialize()).to.be.a("object");
         expect(m1.pString).to.equal("pString");
         expect(m1.pNumber).to.equal(20);
@@ -84,7 +84,6 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(objectHelper.areEqual(m1.inv.serialize(), mRel1.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
-
     });
 
     let relId: string;

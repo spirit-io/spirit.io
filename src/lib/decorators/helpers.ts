@@ -1,5 +1,5 @@
 import { helper as objectHelper } from '../utils';
-import { IModelFactory } from '../interfaces';
+import { IModelFactory, IValidator } from '../interfaces';
 
 export function initFactory(target: any) {
     let fName = target.toString().match(/\w+/g)[1];
@@ -12,6 +12,9 @@ export function initFactory(target: any) {
     if (target.datasource) {
         tempFactory.datasource = target.datasource;
     }
+
+    tempFactory.validators = tempFactory.validators || [];
+
     tempFactory.$prototype = tempFactory.$prototype || {};
     tempFactory.$properties = tempFactory.$properties || [];
     tempFactory.$plurals = tempFactory.$plurals || [];
@@ -27,7 +30,7 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
     //console.log("Add metadata: ", key);
     options = options || {};
     // Get model factory
-    let factory = initFactory(target);
+    let factory: IModelFactory = initFactory(target);
     // registerIn is used for standard meta _id, _createdAt and _updatedAt
     if (options.registerIn) {
         factory[options.registerIn].push(key);
@@ -46,6 +49,17 @@ export function addMetadata(target: any, key: string, meta: any, options?: any) 
         } else {
             factory.$prototype[key] = meta;
         }
+    }
+    return target;
+}
+
+export function addValidator(target: any, validator: IValidator) {
+    // Get model factory
+    let factory: IModelFactory = initFactory(target);
+    if (!factory.validators.some((v) => {
+        return v.name === validator.name;
+    })) {
+        factory.validators.push(validator);
     }
     return target;
 }
