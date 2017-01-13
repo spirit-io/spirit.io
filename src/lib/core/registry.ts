@@ -11,7 +11,7 @@ export class Registry {
      * @param Class The class wanted to be registered by the framework.
      */
     public static setFactory(modelFactory: IModelFactory): void {
-        this.factories.set(modelFactory.collectionName, modelFactory);
+        this.factories.set(modelFactory.linkedFactory || modelFactory.collectionName, modelFactory);
     }
     /**
      * Allows to retrieve a model's factory giving a class itself or simply its name.

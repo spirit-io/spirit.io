@@ -114,6 +114,12 @@ export interface IModelFactory {
      */
     validators: IValidator[];
     /**
+     * Defines if an other factory overrided the current factory.
+     * 
+     * When it is the case, no express routes have to be declared for this factory.
+     */
+    linkedFactory: string;
+    /**
      * Store the ModelActions, the ModelHelper and the ModelController locally if the factory is persistent.
      * 
      * It also initialize express requests handlers defined in ModelController for CRUD operations.
@@ -363,7 +369,7 @@ export interface IConnector {
     connect(datasourceKey: string): any;
     getConnection(datasourceKey: string);
     cleanDb(cds: string): void;
-    createModelFactory(name: string, myClass: any): IModelFactory;
+    createModelFactory(name: string, myClass: any, options?: any): IModelFactory;
     registerValidator(validator: IValidator): void;
     getValidator(key: string): IValidator;
 }

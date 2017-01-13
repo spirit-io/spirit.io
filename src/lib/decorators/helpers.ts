@@ -1,8 +1,9 @@
 import { helper as objectHelper } from '../utils';
 import { IModelFactory, IValidator } from '../interfaces';
 
-export function initFactory(target: any) {
+export function initFactory(target: any, useFactory?: string) {
     let fName = target.toString().match(/\w+/g)[1];
+
     target.__factory__ = target.__factory__ || {};
     let tempFactory = target.__factory__[fName];
     if (!target._collectionName || target._collectionName !== fName) {
@@ -12,6 +13,7 @@ export function initFactory(target: any) {
     if (target.datasource) {
         tempFactory.datasource = target.datasource;
     }
+    if (useFactory) tempFactory._linkToFactory = useFactory;
 
     tempFactory.validators = tempFactory.validators || [];
 
@@ -24,6 +26,10 @@ export function initFactory(target: any) {
     tempFactory.$references = tempFactory.$references || {};
     tempFactory.$hooks = tempFactory.$hooks || new Map();
     return tempFactory;
+
+
+
+
 };
 
 export function addMetadata(target: any, key: string, meta: any, options?: any) {

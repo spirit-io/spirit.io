@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, Router } from 'express';
 import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
 import { Registry } from '../core';
 import { helper as objectHelper } from '../utils';
 import { InstanceError } from '../utils';
-import { run } from 'f-promise';
+import { run, context } from 'f-promise';
 import * as debug from 'debug';
 const factoryTrace = debug('sio:factory');
 const validatorsTrace = debug('sio:validators');
@@ -94,15 +94,18 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public datasource: string;
     public persistent: boolean = true;
     public validators: IValidator[];
+    public linkedFactory: string = null;
 
-    constructor(name: string, targetClass: any, connector: IConnector) {
+    constructor(name: string, targetClass: any, connector: IConnector, options?: any) {
+        options = options || {};
         this.collectionName = name;
         this.targetClass = targetClass;
         this.connector = connector;
+        this.linkedFactory = options.linkedFactory;
 
-        let tempFactory = targetClass.__factory__[name];
-        if (tempFactory.persistent != null) this.persistent = tempFactory.persistent;
-        if (tempFactory.datasource) this.datasource = tempFactory.datasource;
+        let tempFactory = this.targetClass.__factory__[this.collectionName];
+        this.persistent = tempFactory.persistent != null ? tempFactory.persistent : true;
+        this.datasource = tempFactory.datasource || context().__defaultDatasource;
         this.validators = tempFactory.validators || [];
 
         this.$prototype = tempFactory.$prototype || {};
@@ -118,8 +121,6 @@ export abstract class ModelFactoryBase implements IModelFactory {
     }
 
     init(actions: IModelActions, helper: IModelHelper, controller: IModelController): void {
-        factoryTrace(`============= Model registered '${this.collectionName}' on datasource '${this.datasource}' =============`);
-        factoryTrace(`Prototype: ${require('util').inspect(this.$prototype, null, 2)}`)
 
         // compute fields
         this.$properties.concat(Object.keys(this.$references)).forEach((key) => {
@@ -130,21 +131,21 @@ export abstract class ModelFactoryBase implements IModelFactory {
                     return v.name === m;
                 })) return;
 
-                factoryTrace(`${this.collectionName}: Try to find a validator for metadata '${m}'`)
+                validatorsTrace(`${this.collectionName}: Try to find a validator for metadata '${m}'`)
                 // consider validator if available on the connector
                 // else consider the validator if available in the registry
                 let vc = this.connector && this.connector.getValidator(m);
 
                 if (vc) {
-                    factoryTrace(`Validator found on connector`);
+                    validatorsTrace(`Validator found on connector`);
                     this.validators.push(vc);
                 } else {
                     let vr = Registry.getValidator(m);
                     if (vr) {
-                        factoryTrace(`Validator found in registry`);
+                        validatorsTrace(`Validator found in registry`);
                         this.validators.push(vr);
                     } else {
-                        factoryTrace(`No validator found...`);
+                        validatorsTrace(`No validator found...`);
                     }
                 }
             });
@@ -152,15 +153,27 @@ export abstract class ModelFactoryBase implements IModelFactory {
             this.$fields.set(key, field);
         });
 
-
-        let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
-        let v1 = Registry.getApiRouter('v1');
-
         if (this.persistent) {
             this.actions = actions;
             this.helper = helper;
             this.controller = controller;
+        }
 
+        factoryTrace(`============= Model registered '${this.linkedFactory || this.collectionName}' on datasource '${this.datasource}:${this.collectionName}' =============`);
+        factoryTrace(`Prototype: ${require('util').inspect(this.$prototype, null, 2)}`);
+        // Register express routes
+        this.setRoutes();
+        factoryTrace("=========================================================================");
+    }
+
+    private setRoutes() {
+        // Do not register any route for linked factory
+        if (this.linkedFactory) return;
+
+        let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
+        let v1: Router = Registry.getApiRouter('v1');
+
+        if (this.persistent) {
             if (this.actions) {
                 factoryTrace(`--> Register routes: /${routeName}`);
                 // handle main requests
@@ -186,7 +199,6 @@ export abstract class ModelFactoryBase implements IModelFactory {
             let path = `/${routeName}${route.path}`;
             v1[route.method](path, route.fn);
         });
-        factoryTrace("=========================================================================");
     }
 
     getModelFactoryByPath(path: string): IModelFactory {
@@ -323,6 +335,8 @@ export abstract class ModelFactoryBase implements IModelFactory {
             next(e);
         });
     }
+
+
 
     abstract setup(): void;
 

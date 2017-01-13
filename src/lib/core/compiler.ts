@@ -22,20 +22,23 @@ function releaseBuildingFactory(collectionName: string, myClass: any): IModelFac
     trace(" => Release building model factory: ", f.collectionName);
     Registry.setFactory(f);
 
-
-    // Manage validators
-    if (myClass.__factory__.validators) {
-
+    // Register same factory with super class name if the class is expected to replace super class
+    let linkedFactoryName: string = myClass.__factory__[collectionName]._linkToFactory;
+    if (linkedFactoryName) {
+        let linkedFactory: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass, {
+            linkedFactory: linkedFactoryName
+        });
+        Registry.setFactory(linkedFactory);
     }
 
     // Free memory
-    myClass.__factory__[collectionName] = null;
-    if (Object.keys(myClass.__factory__).length === 0) myClass.__factory__ = null;
+    delete myClass.__factory__[collectionName];
+    if (Object.keys(myClass.__factory__).length === 0) delete myClass.__factory__;
 
     return f;
 }
 
-function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IModelFactory[] {
+function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): void {
     // Build a program using the set of root file names in files
     // files is an object, with ts files names as keys
     let program = ts.createProgram(Object.keys(files), options);
@@ -59,7 +62,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): IMo
         trace("\n\n==========================\nInspect class: ", elt.name);
         inspectClass(elt.node, elt.factory);
     });
-    return modelElements.map(elt => { return elt.factory; });
+    //return modelElements.map(elt => { return elt.factory; });
 
     function visit(node: ts.Node) {
         // Only consider exported nodes
@@ -428,11 +431,13 @@ export class Compiler {
         //console.log("Model files:", modelFiles)
         generateSchemaDefinitions(modelFiles, {
             target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
-        }).forEach(function (modelFactory: IModelFactory) {
+        });
+
+        for (var modelFactory of Registry.factories.values()) {
             trace("===============================");
             trace("Model factory:", modelFactory);
             // setup model actions
             modelFactory.setup();
-        });
+        };
     }
 }

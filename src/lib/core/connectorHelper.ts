@@ -23,7 +23,7 @@ export class ConnectorHelper {
         context()['connectors'].set(ds, connector);
     }
 
-    public static createModelFactory(name: string, modelClass: any): IModelFactory {
+    public static createModelFactory(name: string, modelClass: any, options?: any): IModelFactory {
         let tempFactory = modelClass.__factory__[name];
         if (tempFactory.persistent === false) {
             return new NonPersistentModelFactory(name, modelClass, null);
@@ -32,7 +32,7 @@ export class ConnectorHelper {
             let dsId: string = datasource.indexOf(':') === -1 ? datasource : datasource.split(':')[0];
             // console.log(`Register model ${name} with datasource ${datasource}`)
             let c = ConnectorHelper.getConnector(dsId);
-            return c.createModelFactory(name, modelClass);
+            return c.createModelFactory(name, modelClass, options);
         }
     }
 }

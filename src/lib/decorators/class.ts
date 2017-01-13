@@ -9,6 +9,7 @@ import * as helpers from './helpers';
 export interface IModel {
     datasource?: string;
     persistent?: boolean;
+    useFactory?: string;
 }
 /**
  * The class decorator necessary to register your model.
@@ -18,7 +19,7 @@ export function model(options?: IModel): any {
     options = options || {};
     return function (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
         // set collection name
-        let modelFactory: any = helpers.initFactory(target);
+        let modelFactory: any = helpers.initFactory(target, options.useFactory);
         // define datasource
         if (options.datasource) modelFactory.datasource = options.datasource;
 

@@ -108,8 +108,8 @@ class MockController extends ModelControllerBase implements IModelController {
 }
 
 class MockFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any, connector: IConnector) {
-        super(name, targetClass, connector);
+    constructor(name: string, targetClass: any, connector: IConnector, options?: any) {
+        super(name, targetClass, connector, options);
     }
 
     setup() {
@@ -143,8 +143,8 @@ export class MockConnector implements IConnector {
     getConnection(datasourceKey: string): any {
         return undefined;
     }
-    createModelFactory(name: string, myClass: any): IModelFactory {
-        return new MockFactory(name, myClass, this);
+    createModelFactory(name: string, myClass: any, options?: any): IModelFactory {
+        return new MockFactory(name, myClass, this, options);
     }
 
     cleanDb(ds: string): void {
