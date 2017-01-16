@@ -11,8 +11,10 @@ export class Registry {
      * Allows to register a model's factory. The model's name used as identifier is automatically retrieved from the class itself.
      * @param Class The class wanted to be registered by the framework.
      */
-    public static setFactory(modelFactory: IModelFactory): void {
-        this.factories.set(modelFactory.linkedFactory || modelFactory.collectionName, modelFactory);
+    public static setFactory(modelFactory: IModelFactory, override?: boolean): void {
+        let factoryName = modelFactory.linkedFactory || modelFactory.collectionName;
+        if (!override && this.factories.has(factoryName)) return;
+        this.factories.set(factoryName, modelFactory);
     }
     /**
      * Allows to retrieve a model's factory giving a class itself or simply its name.

@@ -28,7 +28,7 @@ function releaseBuildingFactory(collectionName: string, myClass: any): IModelFac
         let linkedFactory: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass, {
             linkedFactory: linkedFactoryName
         });
-        Registry.setFactory(linkedFactory);
+        Registry.setFactory(linkedFactory, true);
     }
 
     // Free memory
