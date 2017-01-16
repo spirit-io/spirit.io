@@ -10,6 +10,7 @@ const validatorsTrace = debug('sio:validators');
 
 class Field implements IField {
     name: string;
+    type: string;
     metadatas: string[] = [];
 
     isPlural: boolean = false;
@@ -18,6 +19,7 @@ class Field implements IField {
     isEmbedded: boolean = false;
     isReadOnly: boolean = false;
     isInsertOnly: boolean = false;
+    isEnum: string = undefined;
     private _invisible: boolean | Function;
 
 
@@ -32,7 +34,9 @@ class Field implements IField {
         let metaContainer = Array.isArray(factory.$prototype[key]) ? factory.$prototype[key][0] : factory.$prototype[key];
         if (typeof metaContainer === 'object') {
             if (factory.$prototype.hasOwnProperty(key)) {
+                this.type = metaContainer.type;
                 this.isReadOnly = metaContainer.readOnly;
+                this.isEnum = metaContainer.isEnum;
                 this.isInsertOnly = metaContainer.insertOnly;
                 this.isEmbedded = metaContainer.embedded;
                 this._invisible = metaContainer.invisible != null ? metaContainer.invisible : false;
@@ -59,13 +63,15 @@ class Field implements IField {
     toJSON() {
         return {
             name: this.name,
+            type: this.type,
             metadatas: this.metadatas,
             isPlural: this.isPlural,
             isReference: this.isReference,
             isReverse: this.isReverse,
             isEmbedded: this.isEmbedded,
             isReadOnly: this.isReadOnly,
-            isInsertOnly: this.isInsertOnly
+            isInsertOnly: this.isInsertOnly,
+            isEnum: this.isEnum
         };
     }
 }

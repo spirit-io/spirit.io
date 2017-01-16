@@ -3,6 +3,7 @@ import { Router } from 'express';
 
 export class Registry {
     static factories: Map<string, IModelFactory> = new Map();
+    static enums: Map<string, Object> = new Map();
     static apiRouters: Map<string, Router> = new Map();
     static validators: Map<string, IValidator> = new Map();
 
@@ -54,5 +55,12 @@ export class Registry {
         return this.validators.get(key);
     }
 
+    public static registerEnum(name: string, obj: Object) {
+        if (!this.enums.has(name)) this.enums.set(name, obj);
+    }
+
+    public static getEnum(name: string): Object {
+        return this.enums.get(name);
+    }
 
 }

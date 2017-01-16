@@ -86,6 +86,41 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
     });
 
+    it('Enums should be handled and serialized correctly', () => {
+        let mWithEnum1: MyModelRel = new MyModelRel({ p1: "propWithEnum1", pEnum: 'A' });
+        mWithEnum1.save();
+        expect(mWithEnum1.pEnum).to.be.equal(0);
+        expect(mWithEnum1.serialize().pEnum).to.be.equal('A');
+        mWithEnum1.deleteSelf();
+
+        let mWithEnum2: MyModelRel = new MyModelRel({ p1: "propWithEnum2", pEnum: 2 });
+        mWithEnum2.save();
+        expect(mWithEnum2.pEnum).to.be.equal(2);
+        expect(mWithEnum2.serialize().pEnum).to.be.equal('C');
+        mWithEnum2.deleteSelf();
+
+        let err;
+        try {
+            new MyModelRel({ p1: "propWithEnum3", pEnum: "W" }).save();
+        } catch (e) {
+            err = e;
+        } finally {
+            expect(err).to.be.not.undefined;
+            expect(err.message).to.be.equal("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.")
+        }
+        try {
+            err = undefined;
+            new MyModelRel({ p1: "propWithEnum3", pEnum: 5 }).save();
+        } catch (e) {
+            err = e;
+        } finally {
+            expect(err).to.be.not.undefined;
+            expect(err.message).to.be.equal("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.")
+        }
+
+
+    });
+
     let relId: string;
     it('Fetch instances should allow to get relations', () => {
         let db = AdminHelper.model(MyModel);

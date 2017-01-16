@@ -47,6 +47,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
     let checker = program.getTypeChecker();
 
     let classes: Map<string, ts.ClassDeclaration> = new Map();
+    let enums: Map<string, ts.EnumDeclaration> = new Map();
     let sourceFiles = program.getSourceFiles();
     // Visit every sourceFile in the program
     // first loop to load every model factories (necessary for cyclic relations)
@@ -70,7 +71,11 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
             return;
         }
 
-        if (node.kind === ts.SyntaxKind.ClassDeclaration) {
+        if (node.kind === ts.SyntaxKind.EnumDeclaration) {
+            let eName = checker.getSymbolAtLocation((<ts.EnumDeclaration>node).name).getName();
+            enums.set(eName, (<ts.EnumDeclaration>node));
+            loadEnum((<ts.EnumDeclaration>node));
+        } else if (node.kind === ts.SyntaxKind.ClassDeclaration) {
             // store classes files to manage inheritance
             let className = checker.getSymbolAtLocation((<ts.ClassDeclaration>node).name).getName();
             classes.set(className, (<ts.ClassDeclaration>node));
@@ -90,6 +95,17 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
             // This is a namespace, visit its children
             ts.forEachChild(node, visit);
         }
+    }
+
+    function loadEnum(node: ts.EnumDeclaration) {
+        let sf: ts.SourceFile = <ts.SourceFile>node.parent;
+        let symbol = checker.getSymbolAtLocation(node.name);
+        // console.log(`Symbol: ${require('util').inspect(symbol, null, 1)}`);
+        let eName = symbol.getName();
+        let fName = files[sf.fileName];
+        const e = require(fName);
+        let myEnum = e[eName];
+        Registry.registerEnum(eName, myEnum);
     }
 
     function loadModelFactories(node: ts.ClassDeclaration): ILoadedElement {
@@ -221,7 +237,11 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
                         type = type.substring(0, type.length - 2);
                     }
                     let _isReference = false;
-                    if (!isNativeType(type)) {
+
+                    let _isEnum = enums.has(type) ? type : undefined;
+                    if (_isEnum) {
+                        type = { type: 'Number' };
+                    } else if (!isNativeType(type)) {
                         type = transformPropertyType(propertyName, prop, type);
                         _isReference = true;
                     } else {
@@ -233,7 +253,8 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
                         value: type,
                         _isArray: _isArray,
                         _isReference: _isReference,
-                        _isReadonly: isReadonly(prop)
+                        _isReadonly: isReadonly(prop),
+                        _isEnum: _isEnum
                     };
                     // console.log("Member type:", res);
                     return res;
@@ -314,6 +335,10 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
 
                     if (curr._isReadonly) {
                         prev[curr.name].readOnly = true;
+                    }
+
+                    if (curr._isEnum) {
+                        prev[curr.name].isEnum = curr._isEnum;
                     }
                 }
                 return prev;
@@ -430,7 +455,9 @@ export class Compiler {
         });
         //console.log("Model files:", modelFiles)
         generateSchemaDefinitions(modelFiles, {
-            target: ts.ScriptTarget.ES5, module: ts.ModuleKind.CommonJS
+            target: ts.ScriptTarget.ES5,
+            module: ts.ModuleKind.CommonJS,
+            preserveConstEnums: true
         });
 
         for (var modelFactory of Registry.factories.values()) {

@@ -35,6 +35,10 @@ export abstract class ModelBase {
         this._db.updateValues(this, item, options);
     }
 
+    deleteSelf() {
+        this._db.deleteInstance(this);
+    }
+
     getMetadata(metadataName: string): any {
         return this._db.getMetadata(this, metadataName);
     }

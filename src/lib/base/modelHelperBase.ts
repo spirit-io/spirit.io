@@ -222,9 +222,13 @@ export abstract class ModelHelperBase implements IModelHelper {
         if (!options.ignorePostSerialization) {
             // A second loop is done for post serialization validation
             for (let [key, field] of mf.$fields) {
-                if (item[key] != null) {
+                if (item.hasOwnProperty(key)) {
                     if (!field.isVisible(instance)) {
                         delete item[key];
+                    }
+                    if (field.isEnum && typeof item[key] === 'number') {
+                        // transcript enum value
+                        item[key] = AdminHelper.enum(field.isEnum)[item[key]];
                     }
                 }
             }
@@ -251,7 +255,6 @@ export abstract class ModelHelperBase implements IModelHelper {
             if (field) {
                 if (!field.isReadOnly) {
                     trace && trace(`Update key ${key} with value: ${require('util').inspect(item[key], null, 1)}`)
-
                     // instanciate references
                     if (this.modelFactory.$references[key]) {
                         let type = this.modelFactory.getReferenceType(key);
@@ -267,6 +270,16 @@ export abstract class ModelHelperBase implements IModelHelper {
                             if (item[key]) refValue = this.modelFactory.createNew(item[key], type);
                         }
                         instance[key] = refValue;
+                    }
+                    // manage enums
+                    else if (field.isEnum) {
+                        let enu = AdminHelper.enum(field.isEnum);
+                        if (enu[item[key]] == null) throw new Error(`Invalid value for property '${key}'. It should be a value from '${field.isEnum}' enum.`)
+                        if (typeof item[key] === 'number') {
+                            instance[key] = item[key];
+                        } else {
+                            instance[key] = enu[item[key]];
+                        }
                     } else {
                         instance[key] = item[key];
                     }

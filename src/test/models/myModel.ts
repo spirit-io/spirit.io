@@ -3,14 +3,24 @@ import { ModelBase } from '../../lib/base';
 import { Request, Response, NextFunction } from 'express';
 import * as diagsHelper from '../../lib/utils';
 
+export enum TestEnum {
+    A,
+    B,
+    C,
+    D
+}
+
 @model({ datasource: 'mock' })
 export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);
     }
+
     @required
     p1: string;
+
     relinv: MyModel;
+
     relinvs: MyModel[];
 
     @invisible(true)
@@ -22,6 +32,8 @@ export class MyModelRel extends ModelBase {
     pInvisible2: string
 
     readonly readOnlyProp: string = 'readOnlyVal';
+
+    pEnum: TestEnum
 }
 
 @model()

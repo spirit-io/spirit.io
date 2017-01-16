@@ -7,4 +7,10 @@ export class AdminHelper {
         if (!modelFactory) throw new Error(`Model factory not found for '${collectionName}'`);
         return modelFactory.helper;
     }
+
+    public static enum(name: string): Object {
+        let myEnum: Object = Registry.getEnum(name);
+        if (!myEnum) throw new Error(`Enum not found for '${name}'`);
+        return myEnum;
+    }
 }

@@ -340,12 +340,15 @@ export interface IModelHelper {
 }
 
 export interface IField {
+    name: string;
+    type: string;
     isPlural: boolean;
     isReference: boolean;
     isReverse: boolean;
     isEmbedded: boolean;
     isReadOnly: boolean;
     isInsertOnly: boolean;
+    isEnum: string;
     isVisible(instance: any): boolean;
     hasMetadata(name: string): boolean;
 }
