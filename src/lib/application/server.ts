@@ -4,7 +4,10 @@ import { Contract } from "./contract";
 import { IConnector } from '../interfaces';
 import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as express from 'express';
+import * as https from 'https';
 
 // function patchExpress(app) {
 //     let _handle = app.handle.bind(app);
@@ -108,13 +111,32 @@ export class Server extends EventEmitter {
         // set default error handler
         this.middleware.setErrorHandler();
 
-        port = port || this.config.port;
+        port = port || this.config.port || (this.config.https ? 443 : 80);
         if (!port) throw new Error("HTTP port is mandatory ! It can be provided in start function parameter or in the config.");
-        // start http server
-        this.app.listen(port, () => {
+
+
+        let cbStarted = function () {
             console.log(`Server listening on port ${port}!`);
             this.emit('started');
-        });
+        };
+        if (this.config.https) {
+            if (!this.config.certs) throw new Error('`certs` config should reference certificates directory when HTTPS is enabled');
+            const certPath = path.resolve(this.config.certs);
+            const key = fs.readFileSync(path.join(certPath, 'key.pem'));
+            if (!key) throw new Error(`'key.pem' file should exist in certificate directory: ${certPath}`);
+            const cert = fs.readFileSync(path.join(certPath, 'cert.pem'));
+            if (!cert) throw new Error(`'cert.pem' file should exist in certificate directory: ${certPath}`);
+            // start https server
+            https.createServer({
+                key: key,
+                cert: cert
+            }, this.app).listen(port, cbStarted);
+        } else {
+            // start http server
+            this.app.listen(port, cbStarted);
+        }
+
+
     }
 
     /**
