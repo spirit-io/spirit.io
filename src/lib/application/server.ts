@@ -130,10 +130,10 @@ export class Server extends EventEmitter {
             https.createServer({
                 key: key,
                 cert: cert
-            }, this.app).listen(port, cbStarted);
+            }, this.app).listen(port, cbStarted.bind(this));
         } else {
             // start http server
-            this.app.listen(port, cbStarted);
+            this.app.listen(port, cbStarted.bind(this));
         }
 
 
