@@ -99,26 +99,8 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(mWithEnum2.serialize().pEnum).to.be.equal('C');
         mWithEnum2.deleteSelf();
 
-        let err;
-        try {
-            new MyModelRel({ p1: "propWithEnum3", pEnum: "W" }).save();
-        } catch (e) {
-            err = e;
-        } finally {
-            expect(err).to.be.not.undefined;
-            expect(err.message).to.be.equal("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.")
-        }
-        try {
-            err = undefined;
-            new MyModelRel({ p1: "propWithEnum3", pEnum: 5 }).save();
-        } catch (e) {
-            err = e;
-        } finally {
-            expect(err).to.be.not.undefined;
-            expect(err.message).to.be.equal("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.")
-        }
-
-
+        expect(() => new MyModelRel({ p1: "propWithEnum3", pEnum: "W" }).save()).to.throw("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.");
+        expect(() => new MyModelRel({ p1: "propWithEnum3", pEnum: 5 }).save()).to.throw("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.");
     });
 
     let relId: string;

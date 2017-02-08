@@ -30,14 +30,7 @@ describe('Spirit.io common Tests:', () => {
     });
 
     it('Try to retrieve a model factory that does not exist should raise an error', () => {
-        let err;
-        try {
-            AdminHelper.model("NotExistingModel");
-        } catch (e) {
-            err = e.message;
-        } finally {
-            expect(err).to.equal(`Model factory not found for 'NotExistingModel'`);
-        }
+        expect(() => AdminHelper.model("NotExistingModel")).to.throw(`Model factory not found for 'NotExistingModel'`);
     });
 
     it('prototype should be formatted correctly', () => {
