@@ -41,7 +41,7 @@ export interface IModelFactory {
     /**
      * The connector itself. It will be used to retrieve connections.
      */
-    connector: IConnector;
+    //   connector: IConnector;
     /**
      * A string array that contains all the class singular properties names.
      */
@@ -119,6 +119,8 @@ export interface IModelFactory {
      * When it is the case, no express routes have to be declared for this factory.
      */
     linkedFactory: string;
+
+    persistent: boolean;
     /**
      * Store the ModelActions, the ModelHelper and the ModelController locally if the factory is persistent.
      * 
@@ -362,19 +364,6 @@ export interface IRoute {
     method: string;
     path: string;
     fn: Function;
-}
-
-export interface IConnector {
-    datasource: string;
-    config: any;
-    ignoreValidators?: string[];
-    connections: Map<string, any>;
-    connect(datasourceKey: string): any;
-    getConnection(datasourceKey: string);
-    cleanDb(cds: string): void;
-    createModelFactory(name: string, myClass: any, options?: any): IModelFactory;
-    registerValidator(validator: IValidator): void;
-    getValidator(key: string): IValidator;
 }
 
 export interface IParameters {

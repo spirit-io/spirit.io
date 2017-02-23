@@ -1,27 +1,24 @@
 import { Server } from '../../lib/application';
-import { MockConnector } from './mockConnector';
-import { ConnectorHelper } from '../../lib/core';
-import { IConnector } from '../../lib/interfaces';
 import { context, run } from 'f-promise';
 import { devices } from 'f-streams';
 import { setup } from 'f-mocha';
 import * as path from 'path';
+import { Registry } from '../../lib/core';
 
 let trace;// = console.log;
 
 const port = 3001;
 const baseUrl = 'http://localhost:' + port;
 
-const config = {
+const default_config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
-    connectors: {
-        mock: {
-            datasources: {
-                "mock:1": {
-                    "autoConnect": true
-                },
-                "mock:2": {}
-            }
+    store: {
+        name: 'mongo-store',
+        connection: {
+            name: 'seneca',
+            host: 'localhost',
+            port: 27017,
+            options: {}
         }
     },
     system: {
@@ -47,24 +44,24 @@ function execRequest(method: string, url: string, data?: any, headers?: any): an
     };
 }
 
+
+function removaAllDocuments(done) {
+    Registry.factories.forEach(function (factory) {
+        if (factory.persistent) {
+            factory.actions.delete({ all$: true });
+        }
+    });
+}
+
 export class Fixtures {
-    static cleanDatabases = (connectors: IConnector[]) => {
-        connectors.forEach((c) => {
-            for (var ds of c.connections.keys()) {
-                c.cleanDb(ds);
-            }
-        })
-    }
-    static setup = (done) => {
+    static setup = (done, config?: any) => {
+        config = config || default_config;
         let firstSetup = true;
-        let connector;
         if (!context().__server) {
             let server: Server = context().__server = new Server(config);
             run(() => {
                 console.log("\n========== Initialize server begins ============");
-                connector = new MockConnector(config.connectors.mock);
-                server.addConnector(connector);
-                console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
+                // TODO : inject dependency store
                 server.init();
             }).catch(err => {
                 done(err);
@@ -72,6 +69,8 @@ export class Fixtures {
             server.on('initialized', function () {
                 run(() => {
                     console.log("========== Server initialized ============\n");
+                    removaAllDocuments(done)
+
                     server.start(port);
                 }).catch(err => {
                     done(err);
@@ -88,18 +87,17 @@ export class Fixtures {
                 });
             });
         } else {
-            firstSetup = false;
-        }
-        //
-        connector = <MockConnector>ConnectorHelper.getConnector('mock');
-        connector.cleanDb();
-        //
-        if (!firstSetup) done();
-        return context().__server;
-    }
+            run(() => {
+                removaAllDocuments(done)
+                firstSetup = false;
+                done();
+            }).catch(err => {
+                done(err);
+            });
 
-    static dumpStorage = () => {
-        return (<MockConnector>ConnectorHelper.getConnector('mock')).dumpStorage();
+        }
+
+        return context().__server;
     }
 
     static get = (url: string, headers?: any) => {

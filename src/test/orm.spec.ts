@@ -6,27 +6,11 @@ import { helper as objectHelper } from '../lib/utils';
 import * as chai from 'chai';
 const expect = chai.expect;
 
+import { setup } from 'f-mocha';
+// this call activates f-mocha wrapper.
+setup();
+
 let server: Server;
-
-function removaAllDocuments() {
-    // delete all myModelRels
-    let db = AdminHelper.model(MyModelRel);
-    let rels = db.fetchInstances();
-    rels.forEach(function (r) {
-        db.deleteInstance(r);
-    });
-    rels = db.fetchInstances();
-    expect(rels.length).to.equal(0);
-
-    // delete all myModels
-    db = AdminHelper.model(MyModel);
-    rels = db.fetchInstances();
-    rels.forEach(function (r) {
-        db.deleteInstance(r);
-    });
-    rels = db.fetchInstances();
-    expect(rels.length).to.equal(0);
-}
 
 describe('*** Spirit.io ORM Framework Tests ***', () => {
 
@@ -40,6 +24,8 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         // instanciate class with ModelBase's save method
         let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
         mRel1.save();
+
+
         expect(mRel1.p1).to.equal("prop1");
         let mRel2: MyModelRel = new MyModelRel({ p1: "prop2" });
         mRel2.save();
@@ -69,7 +55,7 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         db.updateValues(m1, null); // update with null data for test coverage
         db.saveInstance(m1, data);
 
-        expect(m1._id).to.be.a("string");
+        expect(m1.id).to.be.a("string");
         expect(m1._createdAt).to.be.a("Date");
         expect(m1._updatedAt).to.be.a("Date");
         expect(m1.serialize()).to.be.a("object");
@@ -81,9 +67,12 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(m1.aNumber).to.have.members([0, 1, 2]);
         expect(m1.aBoolean).to.have.members([false, true, false]);
         expect(m1.inv).to.be.a("object");
+
         expect(objectHelper.areEqual(m1.inv.serialize(), mRel1.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
+
+
     });
 
     it('Enums should be handled and serialized correctly', () => {
@@ -103,10 +92,11 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(() => new MyModelRel({ p1: "propWithEnum3", pEnum: 5 }).save()).to.throw("Invalid value for property 'pEnum'. It should be a value from 'TestEnum' enum.");
     });
 
-    let relId: string;
+    let relId: String;
     it('Fetch instances should allow to get relations', () => {
         let db = AdminHelper.model(MyModel);
         let rels: MyModel[] = db.fetchInstances();
+        // console.log("RELS:", rels);
         expect(rels.length).to.equal(1);
         expect(rels[0].inv).to.be.not.undefined;
         expect(rels[0].inv.p1).to.equal('prop1');
@@ -114,7 +104,7 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         expect(rels[0].rels.length).to.equal(2);
         expect(rels[0].rels[0].p1).to.equal('prop2');
         expect(rels[0].rels[1].p1).to.equal('prop3modified');
-        relId = rels[0].getMetadata('_id');
+        relId = rels[0].id;
     });
 
     it('Update instance should allow to know if a property is modified', () => {
@@ -158,20 +148,15 @@ describe('*** Spirit.io ORM Framework Tests ***', () => {
         let rel0 = db.fetchInstance("1234");
         expect(rel0).to.be.null;
 
-        let rel1 = db.fetchInstance(rels[0]._id, {});
+        let rel1 = db.fetchInstance(rels[0].id, {});
         expect(rel1).to.be.not.null;
         expect(objectHelper.areEqual(rel1, rels[0])).to.equal(true);
 
         db.deleteInstance(rel1);
-        expect(db.fetchInstance(rels[0]._id)).to.be.null;
+        expect(db.fetchInstance(rels[0].id)).to.be.null;
         expect(db.fetchInstances().length).to.equal(2);
 
-        let rel3 = db.fetchInstance(rels[2]._id, {});
+        let rel3 = db.fetchInstance(rels[2].id, {});
         expect(rel3.p1).to.equal("prop3modified");
     });
-
-    it('Delete instances should work as expected', () => {
-        removaAllDocuments();
-    });
-
 });

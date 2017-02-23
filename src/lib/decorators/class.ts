@@ -27,7 +27,7 @@ export function model(options?: IModel): any {
         if (options.persistent != null) modelFactory.persistent = options.persistent;
 
         // defines principal properties
-        helpers.addMetadata(target, '_id', { type: 'String', insertOnly: true }, { registerIn: '$properties' });
+        helpers.addMetadata(target, 'id', { type: 'String', insertOnly: true }, { registerIn: '$properties' });
         helpers.addMetadata(target, '_createdAt', { type: 'Date', insertOnly: true }, { registerIn: '$properties' });
         helpers.addMetadata(target, '_updatedAt', { type: 'Date' }, { registerIn: '$properties' });
         //

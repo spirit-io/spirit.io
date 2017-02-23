@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction, Router } from 'express';
-import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
+import { ModelActionsBase, ModelControllerBase, ModelHelperBase } from '.';
 import { Registry } from '../core';
 import { helper as objectHelper } from '../utils';
 import { InstanceError } from '../utils';
 import { run, context } from 'f-promise';
+
+import * as Seneca from 'seneca';
 import * as debug from 'debug';
+
 const factoryTrace = debug('sio:factory');
 const validatorsTrace = debug('sio:validators');
 
@@ -42,7 +46,7 @@ class Field implements IField {
                 this._invisible = metaContainer.invisible != null ? metaContainer.invisible : false;
             }
             this.metadatas = Object.keys(metaContainer).filter((key) => {
-                return ['type', 'ref', 'embedded', 'invisible', 'readOnly'].indexOf(key) === -1 && (!factory.connector || !factory.connector.ignoreValidators || factory.connector.ignoreValidators.indexOf(key) === -1);
+                return ['type', 'ref', 'embedded', 'invisible', 'readOnly'].indexOf(key) === -1;// && (!factory.connector || !factory.connector.ignoreValidators || factory.connector.ignoreValidators.indexOf(key) === -1);
             });
         }
     }
@@ -80,11 +84,12 @@ class Field implements IField {
 /**
  * This is an abstract class, so every spirit.io connector MUST provide a ModelFactory class that inherit of this base class.
  */
-export abstract class ModelFactoryBase implements IModelFactory {
+export class ModelFactoryBase implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
-    public connector: IConnector;
+    // public connector: IConnector;
+    public entity: Seneca.Entity;
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
@@ -102,11 +107,11 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public validators: IValidator[];
     public linkedFactory: string = null;
 
-    constructor(name: string, targetClass: any, connector: IConnector, options?: any) {
+    constructor(name: string, targetClass: any, options?: any) {
         options = options || {};
         this.collectionName = name;
         this.targetClass = targetClass;
-        this.connector = connector;
+        // this.connector = connector;
         this.linkedFactory = options.linkedFactory;
 
         let tempFactory = this.targetClass.__factory__[this.collectionName];
@@ -140,20 +145,24 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 validatorsTrace(`${this.collectionName}: Try to find a validator for metadata '${m}'`)
                 // consider validator if available on the connector
                 // else consider the validator if available in the registry
+
+                /*
                 let vc = this.connector && this.connector.getValidator(m);
 
                 if (vc) {
                     validatorsTrace(`Validator found on connector`);
                     this.validators.push(vc);
                 } else {
-                    let vr = Registry.getValidator(m);
-                    if (vr) {
-                        validatorsTrace(`Validator found in registry`);
-                        this.validators.push(vr);
-                    } else {
-                        validatorsTrace(`No validator found...`);
-                    }
+
+                    */
+                let vr = Registry.getValidator(m);
+                if (vr) {
+                    validatorsTrace(`Validator found in registry`);
+                    this.validators.push(vr);
+                } else {
+                    validatorsTrace(`No validator found...`);
                 }
+                // }
             });
             // register field
             this.$fields.set(key, field);
@@ -230,7 +239,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             return data;
         } else if (typeof data === 'string') {
             data = {
-                _id: data
+                id: data
             };
         }
         //console.log(`Instanciate reference ${type} with data: ${require('util').inspect(data, null, 2)}`);
@@ -253,7 +262,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 item[key].forEach((id) => {
                     let ref = mf.actions.read(id);
                     if (include.select) {
-                        let data = { _id: ref._id };
+                        let data = { id: ref.id };
                         data[include.select] = ref[include.select];
                         relValue.push(data);
                     } else {
@@ -263,7 +272,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             } else {
                 let ref = mf.actions.read(item[key]);
                 if (include.select) {
-                    let data = { _id: ref._id };
+                    let data = { id: ref.id };
                     data[include.select] = ref[include.select];
                     relValue = data;
                 } else {
@@ -282,11 +291,11 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 if (Array.isArray(transformed[key])) {
                     relValue = [];
                     transformed[key].forEach((it) => {
-                        if (typeof it === 'object' && it._id) relValue.push(it._id);
+                        if (typeof it === 'object' && it.id) relValue.push(it.id);
                         else relValue.push(it);
                     });
                 } else {
-                    if (typeof transformed[key] === 'object' && transformed[key]._id) relValue = transformed[key]._id;
+                    if (typeof transformed[key] === 'object' && transformed[key].id) relValue = transformed[key].id;
                     else relValue = transformed[key];
                 }
                 transformed[key] = relValue;
@@ -344,15 +353,17 @@ export abstract class ModelFactoryBase implements IModelFactory {
 
 
 
-    abstract setup(): void;
+    setup(): void {
+        this.init(new ModelActionsBase(this), new ModelHelperBase(this), new ModelControllerBase(this));
+    }
 
 
 }
 
 
 export class NonPersistentModelFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any, connector: IConnector) {
-        super(name, targetClass, connector);
+    constructor(name: string, targetClass: any) {
+        super(name, targetClass);
     }
     setup() {
         super.init(null, null, null);

@@ -2,6 +2,7 @@ import { wait } from 'f-promise';
 import * as ts from "typescript";
 import * as fs from "mz/fs";
 import * as path from 'path';
+import { Contract } from '../application';
 import { helper as objectHelper } from '../utils/object';
 import { Registry } from './registry';
 import { IModelFactory } from '../interfaces';
@@ -424,7 +425,7 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
 }
 
 export class Compiler {
-    static registerModels = (directories: any) => {
+    static registerModels = (contract: Contract) => {
 
         function browseDir(dir) {
             // Add each .js file to the mocha instance
@@ -445,6 +446,7 @@ export class Compiler {
                 }
             });
         }
+        let directories = contract.modelsLocations;
         //
         //
         directories = Array.isArray(directories) ? directories : [directories];

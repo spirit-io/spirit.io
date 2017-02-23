@@ -5,7 +5,7 @@ import * as diagsHelper from '../utils/diags';
 
 let trace;// = console.log;
 
-export abstract class ModelHelperBase implements IModelHelper {
+export class ModelHelperBase implements IModelHelper {
 
     public modelFactory: IModelFactory;
     constructor(modelFactory: IModelFactory) {
@@ -111,12 +111,12 @@ export abstract class ModelHelperBase implements IModelHelper {
 
     saveInstance(instance: any, data?: any, options?: IParameters, serializeOptions?: ISerializeOptions) {
         trace && trace("\n\n\n## Save instance ##");
-        if (!instance._id) instance.$isCreated = true;
+        if (!instance.id) instance.$isCreated = true;
         options = this._patchParameters(options, serializeOptions);
         if (data) this.updateValues(instance, data, { deleteMissing: options.deleteMissing || false });
         let item;
-        if (instance._id) {
-            instance.$snapshot = this.fetchInstance(instance._id);
+        if (instance.id) {
+            instance.$snapshot = this.fetchInstance(instance.id);
         } else {
             instance.$isCreated;
         }
@@ -133,7 +133,7 @@ export abstract class ModelHelperBase implements IModelHelper {
 
         if (!instance.$isCreated) {
             options.deleteReadOnly = true;
-            item = this.modelFactory.actions.update(instance._id, serialized, options);
+            item = this.modelFactory.actions.update(instance.id, serialized, options);
         } else {
             // deleteMissing will force required validation
             options.deleteMissing = true;
@@ -147,7 +147,7 @@ export abstract class ModelHelperBase implements IModelHelper {
     }
 
     deleteInstance(instance: any): any {
-        return this.modelFactory.actions.delete(instance._id);
+        return this.modelFactory.actions.delete(instance.id);
     }
 
     serialize(instance: any, parameters?: IParameters, options?: ISerializeOptions): any {
@@ -177,32 +177,32 @@ export abstract class ModelHelperBase implements IModelHelper {
 
                         item[key] = instance[key].map(function (inst) {
                             //only ids if reference serialization is not expected and it is not embedded
-                            if (notInclude && typeof inst === 'object' && inst._id && !field.isEmbedded) {
+                            if (notInclude && typeof inst === 'object' && inst.id && !field.isEmbedded) {
                                 trace && trace("Not include ref ", key);
-                                return inst._id;
+                                return inst.id;
                             }
                             // serialize reference
                             else {
                                 trace && trace("Include ref ", key);
                                 let _db = AdminHelper.model(inst.constructor);
                                 let sRef = _db.serialize(inst, null, options);
-                                if (sRef && sRef._id || field.isEmbedded) return sRef;
+                                if (sRef && sRef.id || field.isEmbedded) return sRef;
                             }
                             return null;
                         }).filter((inst) => { return inst != null });
                     } else {
                         trace && trace("Singular ", key);
                         // only ids if reference serialization is not expected and it is not embedded
-                        if (options.serializeRef && includes.indexOf(key) === -1 && instance[key]._id && !field.isEmbedded) {
+                        if (options.serializeRef && includes.indexOf(key) === -1 && instance[key].id && !field.isEmbedded) {
                             trace && trace("Not include ref ", key);
-                            item[key] = instance[key]._id;
+                            item[key] = instance[key].id;
                         }
                         // serialize reference
                         else {
                             trace && trace("Include ref ", key);
                             let _db = AdminHelper.model(instance[key].constructor);
                             let sRef = _db.serialize(instance[key], null, options);
-                            if (sRef && sRef._id || field.isEmbedded) item[key] = sRef
+                            if (sRef && sRef.id || field.isEmbedded) item[key] = sRef
                         }
                     }
                 }

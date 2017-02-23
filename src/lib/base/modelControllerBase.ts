@@ -3,7 +3,7 @@ import { IModelController, IModelFactory, IParameters } from '../interfaces';
 import { HttpError } from '../utils';
 import { run } from 'f-promise';
 
-export abstract class ModelControllerBase implements IModelController {
+export class ModelControllerBase implements IModelController {
 
     constructor(private modelFactory: IModelFactory) { }
 

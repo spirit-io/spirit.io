@@ -41,7 +41,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body.p1).to.equal("prop1");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.undefined;
-        expect(body._id).to.be.a("string");
+        expect(body.id).to.be.a("string");
         expect(body._createdAt).to.be.not.null;
         expect(body._updated).to.be.not.null;
         expect(new Date(body._createdAt)).to.be.a("Date");
@@ -81,7 +81,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body).to.be.a('array');
         expect(body.length).to.equal(4);
         body.forEach((rel) => {
-            myModelRels.push(rel._id);
+            myModelRels.push(rel.id);
         });
     });
 
@@ -105,7 +105,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body.inv).to.equal(myModelRels[0]);
         expect(body.rels).to.have.members([myModelRels[1], myModelRels[2]]);
 
-        expect(body._id).to.be.a("string");
+        expect(body.id).to.be.a("string");
         expect(body._createdAt).to.be.not.null;
         expect(body._updated).to.be.not.null;
         expect(new Date(body._createdAt)).to.be.a("Date");
@@ -132,7 +132,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
 
         let body = JSON.parse(resp.body);
         checkComplexInstance(body, 's0');
-        myModel.push(body._id);
+        myModel.push(body.id);
     });
 
     it('update complex instance with all values should work and return correct values', () => {
@@ -179,8 +179,8 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(objectHelper.areEqual(body, body2)).to.be.true;
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
-        expect(body[0].inv._id).to.equal(myModelRels[0]);
-        expect(body[0].inv._id).to.be.a("string");
+        expect(body[0].inv.id).to.equal(myModelRels[0]);
+        expect(body[0].inv.id).to.be.a("string");
         expect(body[0].inv.p1).to.equal('prop1');
         expect(body[0].inv._createdAt).to.be.not.null;
         expect(body[0].inv._updated).to.be.not.null;
@@ -194,8 +194,8 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
-        expect(body[0].inv._id).to.equal(myModelRels[0]);
-        expect(body[0].inv._id).to.be.a("string");
+        expect(body[0].inv.id).to.equal(myModelRels[0]);
+        expect(body[0].inv.id).to.be.a("string");
         expect(body[0].inv.p1).to.equal('prop1');
         expect(body[0].inv._createdAt).to.be.undefined;
         expect(body[0].inv._updated).to.be.undefined;
@@ -207,8 +207,8 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
-        expect(body[0].inv._id).to.equal(myModelRels[0]);
-        expect(body[0].inv._id).to.be.a("string");
+        expect(body[0].inv.id).to.equal(myModelRels[0]);
+        expect(body[0].inv.id).to.be.a("string");
         expect(body[0].inv.p1).to.be.undefined;
         expect(body[0].inv._createdAt).to.be.not.null;
         expect(body[0].inv._updated).to.be.undefined;
@@ -221,15 +221,15 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
-        expect(body[0].inv._id).to.equal(myModelRels[0]);
-        expect(body[0].inv._id).to.be.a("string");
+        expect(body[0].inv.id).to.equal(myModelRels[0]);
+        expect(body[0].inv.id).to.be.a("string");
         expect(body[0].inv.p1).to.equal('prop1');
         expect(body[0].inv._createdAt).to.be.undefined;
         expect(body[0].inv._updated).to.be.undefined;
 
         expect(body[0].rels).to.be.a('array');
         expect(body[0].rels.length).to.equal(2);
-        expect(body[0].rels[0]._id).to.be.a("string");
+        expect(body[0].rels[0].id).to.be.a("string");
         expect(body[0].rels[0].p1).to.equal('prop2');
         expect(body[0].rels[0]._createdAt).to.be.not.null;
         expect(body[0].rels[0]._updated).to.be.not.null;
@@ -260,7 +260,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body.rels).to.be.empty;
         expect(body.invs).to.be.empty;
 
-        expect(body._id).to.be.a("string");
+        expect(body.id).to.be.a("string");
         expect(body._createdAt).to.be.not.null;
         expect(body._updated).to.be.not.null;
         expect(new Date(body._createdAt)).to.be.a("Date");

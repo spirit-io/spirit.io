@@ -1,8 +1,6 @@
 import { Application } from 'express';
 import { Middleware } from "../core";
-import { Contract } from "./contract";
-import { IConnector } from '../interfaces';
-import { ConnectorHelper } from '../core';
+import { Contract, seneca } from "./contract";
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -94,7 +92,9 @@ export class Server extends EventEmitter {
 
         // initialize the contract
         this.contract.init();
-        this.emit('initialized');
+        seneca.ready(function () {
+            this.emit('initialized');
+        }.bind(this));
         return this;
     }
 
@@ -137,12 +137,5 @@ export class Server extends EventEmitter {
         }
 
 
-    }
-
-    /**
-     * Allows the register spirit.io connectors.
-     */
-    addConnector(connector: IConnector): void {
-        ConnectorHelper.setConnector(connector);
     }
 }

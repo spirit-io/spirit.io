@@ -13,7 +13,7 @@ let trace;// = console.log;
 let server: Server;
 
 let myModelMeta = {
-    $properties: ['_id', '_createdAt', '_updatedAt', 'pString', 'pNumber', 'pDate', 'pBoolean', 'aString', 'aNumber', 'aDate', 'aBoolean', 'inv', 'invs', 'rel', 'rels'],
+    $properties: ['id', '_createdAt', '_updatedAt', 'pString', 'pNumber', 'pDate', 'pBoolean', 'aString', 'aNumber', 'aDate', 'aBoolean', 'inv', 'invs', 'rel', 'rels'],
     $plurals: ['aString', 'aNumber', 'aDate', 'aBoolean', 'invs', 'rels']
 };
 
@@ -40,9 +40,9 @@ describe('Spirit.io common Tests:', () => {
         expect(Array.from(myModelFactory.$fields.keys())).to.have.members(myModelMeta.$properties);
         expect(myModelFactory.$plurals).to.have.members(myModelMeta.$plurals);
 
-        expect(myModelFactory.$prototype._id).to.be.a('object');
-        expect(myModelFactory.$prototype._id.type).to.equal('String');
-        expect(myModelFactory.$prototype._id.insertOnly).to.be.true;
+        expect(myModelFactory.$prototype.id).to.be.a('object');
+        expect(myModelFactory.$prototype.id.type).to.equal('String');
+        expect(myModelFactory.$prototype.id.insertOnly).to.be.true;
         expect(myModelFactory.$prototype._createdAt).to.be.a('object');
         expect(myModelFactory.$prototype._createdAt.type).to.equal('Date');
         expect(myModelFactory.$prototype._createdAt.insertOnly).to.be.true;
