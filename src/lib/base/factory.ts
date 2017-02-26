@@ -1,5 +1,5 @@
 import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
-import { ModelActionsBase, ModelControllerBase, ModelHelperBase } from '.';
+import { Actions, Controller, Helper } from '.';
 import { Registry } from '../core';
 import { helper as objectHelper } from '../utils';
 import { InstanceError } from '../utils';
@@ -84,7 +84,7 @@ class Field implements IField {
 /**
  * This is an abstract class, so every spirit.io connector MUST provide a ModelFactory class that inherit of this base class.
  */
-export class ModelFactoryBase implements IModelFactory {
+export class Factory implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
@@ -284,20 +284,13 @@ export class ModelFactoryBase implements IModelFactory {
 
 
     setup(): void {
-        this.init(new ModelActionsBase(this), new ModelHelperBase(this), new ModelControllerBase(this));
+        if (this.persistent) {
+            this.init(new Actions(this), new Helper(this), new Controller(this));
+        } else {
+            this.init(null, null, new Controller(this));
+        }
         Seneca.instance.use(orm, { factory: this });
     }
 
 
-}
-
-
-export class NonPersistentModelFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any) {
-        super(name, targetClass);
-    }
-    setup() {
-        super.init(null, null, new ModelControllerBase(this));
-        Seneca.instance.use(orm, { factory: this });
-    }
 }

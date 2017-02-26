@@ -10,7 +10,7 @@ function ensureId(item: any) {
     item.id = item.id || uuid.v4();
 }
 */
-export class ModelActionsBase implements IModelActions {
+export class Actions implements IModelActions {
 
     constructor(private modelFactory: IModelFactory) { }
 

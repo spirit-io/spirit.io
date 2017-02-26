@@ -5,7 +5,7 @@ import * as diagsHelper from '../utils/diags';
 
 let trace;// = console.log;
 
-export class ModelHelperBase implements IModelHelper {
+export class Helper implements IModelHelper {
 
     public modelFactory: IModelFactory;
     constructor(modelFactory: IModelFactory) {

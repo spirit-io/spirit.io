@@ -6,7 +6,7 @@ import { Contract } from '../application';
 import { helper as objectHelper } from '../utils/object';
 import { Registry } from './registry';
 import { IModelFactory } from '../interfaces';
-import { ConnectorHelper } from '../core/connectorHelper';
+import { Factory } from '../base';
 
 import * as debug from 'debug';
 let trace = debug('sio:compiler');
@@ -19,14 +19,14 @@ interface ILoadedElement {
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
     // Manage fatories
-    let f: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass);
+    let f: IModelFactory = new Factory(collectionName, myClass);
     trace(" => Release building model factory: ", f.collectionName);
     Registry.setFactory(f);
 
     // Register same factory with super class name if the class is expected to replace super class
     let linkedFactoryName: string = myClass.__factory__[collectionName]._linkToFactory;
     if (linkedFactoryName) {
-        let linkedFactory: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass, {
+        let linkedFactory: IModelFactory = new Factory(collectionName, myClass, {
             linkedFactory: linkedFactoryName
         });
         Registry.setFactory(linkedFactory, true);
