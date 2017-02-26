@@ -12,17 +12,9 @@ const baseUrl = 'http://localhost:' + port;
 
 const default_config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
-    store: {
-        name: 'mongo-store',
-        connection: {
-            name: 'seneca',
-            host: 'localhost',
-            port: 27017,
-            options: {}
-        }
-    },
+
     system: {
-        exposeStack: false
+        exposeStack: true
     }
 };
 

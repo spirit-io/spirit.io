@@ -1,10 +1,6 @@
-//import { ConnectorHelper } from '../core/connectorHelper';
-import * as Seneca from 'seneca';
-
-import { Compiler } from "../core";
+import { Compiler, Seneca } from "../core";
 import { context } from 'f-promise';
 
-export const seneca: Seneca.Instance = Seneca();
 /**
  * The spirit.io application contract is responsible for managing datasources and their connection.
  * It allows also to manage classes models locations that would be used by the typescript compiler.
@@ -45,13 +41,6 @@ export class Contract {
         }
         */
 
-
-        seneca.use('basic').use('entity');
-        if (this.config.store) {
-            seneca.use(this.config.store.name, this.config.store.connection);
-        }
-
-
         // set models locations
         if (this.config.modelsLocation) {
             this.config.modelsLocation = Array.isArray(this.config.modelsLocation) ? this.config.modelsLocation : [this.config.modelsLocation]
@@ -60,8 +49,11 @@ export class Contract {
             });
         }
 
-
+        // Init seneca stores
+        Seneca.init(this.config);
         Compiler.registerModels(this);
+
+
     };
 
     /**

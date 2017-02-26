@@ -1,6 +1,6 @@
 import { Application } from 'express';
-import { Middleware } from "../core";
-import { Contract, seneca } from "./contract";
+import { Middleware, Seneca } from "../core";
+import { Contract } from "./contract";
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -92,7 +92,7 @@ export class Server extends EventEmitter {
 
         // initialize the contract
         this.contract.init();
-        seneca.ready(function () {
+        Seneca.instance.ready(function () {
             this.emit('initialized');
         }.bind(this));
         return this;

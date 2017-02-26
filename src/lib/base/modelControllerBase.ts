@@ -112,4 +112,39 @@ export class ModelControllerBase implements IModelController {
             next(e);
         });
     };
+
+    executeMethod = (req: Request, res: Response, next: NextFunction): void => {
+        run(() => {
+            let _id: string = req.params['_id'];
+            let _name: string = req.params['_name'];
+            let inst = this.modelFactory.helper.fetchInstance(_id);
+            if (this.modelFactory.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
+                res.sendStatus(404);
+                return;
+            }
+
+            let params = req.body;
+            let result = inst[_name](params);
+            res.json(result);
+            next();
+        }).catch(e => {
+            next(e);
+        });
+    };
+
+    executeService = (req: Request, res: Response, next: NextFunction): void => {
+        run(() => {
+            let _name: string = req.params['_name'];
+            if (this.modelFactory.$statics.indexOf(_name) === -1 || !this.modelFactory.targetClass[_name]) {
+                res.sendStatus(404);
+                return;
+            }
+            let params = req.body;
+            let result = this.modelFactory.targetClass[_name](params);
+            res.json(result);
+            next();
+        }).catch(e => {
+            next(e);
+        });
+    };
 } 

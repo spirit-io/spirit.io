@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction, Router } from 'express';
 import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
 import { ModelActionsBase, ModelControllerBase, ModelHelperBase } from '.';
 import { Registry } from '../core';
 import { helper as objectHelper } from '../utils';
 import { InstanceError } from '../utils';
-import { run, context } from 'f-promise';
-
-import * as Seneca from 'seneca';
+import { context } from 'f-promise';
+import { orm } from './plugin';
+import * as SNS from 'seneca';
+import { Seneca } from '../core';
 import * as debug from 'debug';
 
 const factoryTrace = debug('sio:factory');
@@ -89,7 +89,7 @@ export class ModelFactoryBase implements IModelFactory {
     public targetClass: any;
     public collectionName: string;
     // public connector: IConnector;
-    public entity: Seneca.Entity;
+    public entity: SNS.Entity;
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
@@ -168,53 +168,16 @@ export class ModelFactoryBase implements IModelFactory {
             this.$fields.set(key, field);
         });
 
-        if (this.persistent) {
-            this.actions = actions;
-            this.helper = helper;
-            this.controller = controller;
-        }
+        this.actions = actions;
+        this.helper = helper;
+        this.controller = controller;
 
         factoryTrace(`============= Model registered '${this.linkedFactory || this.collectionName}' on datasource '${this.datasource}:${this.collectionName}' =============`);
         factoryTrace(`Prototype: ${require('util').inspect(this.$prototype, null, 2)}`);
-        // Register express routes
-        this.setRoutes();
         factoryTrace("=========================================================================");
     }
 
-    private setRoutes() {
-        // Do not register any route for linked factory
-        if (this.linkedFactory) return;
 
-        let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
-        let v1: Router = Registry.getApiRouter('v1');
-
-        if (this.persistent) {
-            if (this.actions) {
-                factoryTrace(`--> Register routes: /${routeName}`);
-                // handle main requests
-                v1.get(`/${routeName}`, this.controller.query);
-                v1.get(`/${routeName}/:_id`, this.controller.read);
-                v1.post(`/${routeName}`, this.controller.create);
-                v1.put(`/${routeName}/:_id`, this.controller.update);
-                v1.patch(`/${routeName}/:_id`, this.controller.patch);
-                v1.delete(`/${routeName}/:_id`, this.controller.delete);
-                // handle references requests
-                v1.get(`/${routeName}/:_id/:_ref`, this.controller.read);
-                v1.put(`/${routeName}/:_id/:_ref`, this.controller.update);
-                v1.patch(`/${routeName}/:_id/:_ref`, this.controller.patch);
-            }
-
-            // handle instance functions
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.executeMethod.bind(this) as any);
-        }
-
-        // handle static functions (available also on non persistent classes)
-        v1.post(`/${routeName}/([\$])service/:_name`, this.executeService.bind(this) as any);
-        this.$routes.forEach((route: IRoute) => {
-            let path = `/${routeName}${route.path}`;
-            v1[route.method](path, route.fn);
-        });
-    }
 
     getModelFactoryByPath(path: string): IModelFactory {
         let _treeEntry = this.$prototype[path];
@@ -316,45 +279,13 @@ export class ModelFactoryBase implements IModelFactory {
         }
     }
 
-    private executeService(req: Request, res: Response, next: NextFunction): void {
-        run(() => {
-            let _name: string = req.params['_name'];
-            if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
-                res.sendStatus(404);
-                return;
-            }
-            let params = req.body;
-            let result = this.targetClass[_name](params);
-            res.json(result);
-            next();
-        }).catch(e => {
-            next(e);
-        });
-    }
 
-    private executeMethod(req: Request, res: Response, next: NextFunction): void {
-        run(() => {
-            let _id: string = req.params['_id'];
-            let _name: string = req.params['_name'];
-            let inst = this.helper.fetchInstance(_id);
-            if (this.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
-                res.sendStatus(404);
-                return;
-            }
-
-            let params = req.body;
-            let result = inst[_name](params);
-            res.json(result);
-            next();
-        }).catch(e => {
-            next(e);
-        });
-    }
 
 
 
     setup(): void {
         this.init(new ModelActionsBase(this), new ModelHelperBase(this), new ModelControllerBase(this));
+        Seneca.instance.use(orm, { factory: this });
     }
 
 
@@ -366,6 +297,7 @@ export class NonPersistentModelFactory extends ModelFactoryBase implements IMode
         super(name, targetClass);
     }
     setup() {
-        super.init(null, null, null);
+        super.init(null, null, new ModelControllerBase(this));
+        Seneca.instance.use(orm, { factory: this });
     }
 }

@@ -1,6 +1,6 @@
 import { IModelFactory, IModelActions, IParameters } from '../interfaces';
 import { wait } from 'f-promise';
-import { seneca } from '../application';
+import { Seneca } from '../core';
 import * as bluebird from "bluebird";
 /*
 
@@ -23,7 +23,7 @@ export class ModelActionsBase implements IModelActions {
     }
 
     private makeEntity() {
-        let entity = seneca.make(`${this.modelFactory.collectionName}`);
+        let entity = Seneca.instance.make(`${this.modelFactory.collectionName}`);
         entity.list$ = bluebird.promisify(entity.list$, { context: entity });
         entity.load$ = bluebird.promisify(entity.load$, { context: entity });
         entity.save$ = bluebird.promisify(entity.save$, { context: entity });

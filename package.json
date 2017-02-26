@@ -8,7 +8,7 @@
     "watch": "tsc -p src -w",
     "build": "tsc -p src",
     "prepublish": "rm -rf lib && rm -Rf test && npm run build",
-    "test": "npm run build && node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha --opts mocha.opts",
+    "test": "npm run build && node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha --opts mocha.opts --seneca.log.quiet",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Teddy Chambard",

@@ -2,8 +2,6 @@ import { ModelFactoryBase, NonPersistentModelFactory } from '../base';
 import { IModelFactory } from '../interfaces';
 
 export class ConnectorHelper {
-
-
     public static createModelFactory(name: string, modelClass: any, options?: any): IModelFactory {
         let tempFactory = modelClass.__factory__[name];
         if (tempFactory.persistent === false) {
@@ -15,4 +13,6 @@ export class ConnectorHelper {
             return new ModelFactoryBase(name, modelClass, options);
         }
     }
+
+
 }

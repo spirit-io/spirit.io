@@ -226,6 +226,14 @@ export interface IModelController {
      * The request handler that list records.
      */
     query: express.RequestHandler;
+    /**
+     * The request handler that execute model's static method records.
+     */
+    executeService: express.RequestHandler;
+    /**
+     * The request handler that execute model instance's method.
+     */
+    executeMethod: express.RequestHandler;
 }
 
 /**
