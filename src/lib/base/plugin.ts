@@ -109,11 +109,12 @@ export function orm(options: any) {
         run(() => {
             let _name: string = msg.name;
             if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
-                throw new HttpError(400, `Service '${msg.name}' does not exist on model '${this.collectionName}'`);
+                throw new HttpError(404, `Service '${msg.name}' does not exist on model '${this.collectionName}'`);
             }
             let result = this.targetClass[_name](msg.body);
             done(result);
         }).catch(e => {
+            e.error = e.message;
             done(e);
         });
     }
@@ -123,13 +124,14 @@ export function orm(options: any) {
             let _id: string = msg.id;
             let _name: string = msg.name;
             let inst = this.helper.fetchInstance(_id);
-            if (!inst) throw new HttpError(400, `Instance not found`);
+            if (!inst) throw new HttpError(404, `Instance not found`);
             if (this.$methods.indexOf(_name) === -1 || !inst[_name]) {
-                throw new HttpError(400, `Method '${msg.name}' does not exist on model '${this.collectionName}'`);
+                throw new HttpError(404, `Method '${msg.name}' does not exist on model '${this.collectionName}'`);
             }
             let result = inst[_name](msg.body);
             done(result);
         }).catch(e => {
+            e.error = e.message;
             done(e);
         });
     }
@@ -150,7 +152,7 @@ export function orm(options: any) {
                 v1.post(`/${routeName}`, factory.controller.create);
                 v1.put(`/${routeName}/:_id`, factory.controller.update);
                 v1.patch(`/${routeName}/:_id`, factory.controller.patch);
-                v1.delete(`/${routeName}/:_id`, factory.controller.delete);
+                v1.delete(`/${routeName}/:_id`, factory.controller.remove);
                 // handle references requests
                 v1.get(`/${routeName}/:_id/:_ref`, factory.controller.read);
                 v1.put(`/${routeName}/:_id/:_ref`, factory.controller.update);
@@ -173,18 +175,18 @@ export function orm(options: any) {
     let factory: IModelFactory = options.factory;
 
     if (factory.persistent) {
-        this.add({ orm: factory.collectionName, action: 'query' }, query.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'read' }, read.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'create' }, create.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'update' }, update.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'patch' }, patch.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'delete' }, remove.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'execute' }, executeMethod.bind(factory));
-        this.add({ orm: factory.collectionName, action: 'invoke' }, executeService.bind(factory));
+        this.add({ model: factory.collectionName, action: 'query' }, query.bind(factory));
+        this.add({ model: factory.collectionName, action: 'read' }, read.bind(factory));
+        this.add({ model: factory.collectionName, action: 'create' }, create.bind(factory));
+        this.add({ model: factory.collectionName, action: 'update' }, update.bind(factory));
+        this.add({ model: factory.collectionName, action: 'patch' }, patch.bind(factory));
+        this.add({ model: factory.collectionName, action: 'remove' }, remove.bind(factory));
+        this.add({ model: factory.collectionName, action: 'execute' }, executeMethod.bind(factory));
+        this.add({ model: factory.collectionName, action: 'invoke' }, executeService.bind(factory));
     }
 
     setupRoutes();
 
-    return `ORM:${factory.collectionName}`;
+    return `model:${factory.collectionName}`;
 }
 

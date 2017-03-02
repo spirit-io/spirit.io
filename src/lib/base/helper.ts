@@ -1,6 +1,7 @@
 import { IModelFactory, IModelHelper, IParameters, ISerializeOptions, IField } from '../interfaces';
 import { AdminHelper } from '../core';
 import { helper as objectHelper } from '../utils/object';
+import { HttpError } from '../utils';
 import * as diagsHelper from '../utils/diags';
 
 let trace;// = console.log;
@@ -62,7 +63,7 @@ export class Helper implements IModelHelper {
             try {
                 includes = JSON.parse(includes);
             } catch (err) {
-                throw new Error('JSON includes filter is not valid');
+                throw new HttpError(400, 'JSON includes filter is not valid');
             }
         }
 
@@ -274,7 +275,7 @@ export class Helper implements IModelHelper {
                     // manage enums
                     else if (field.isEnum) {
                         let enu = AdminHelper.enum(field.isEnum);
-                        if (enu[item[key]] == null) throw new Error(`Invalid value for property '${key}'. It should be a value from '${field.isEnum}' enum.`)
+                        if (enu[item[key]] == null) throw new HttpError(400, `Invalid value for property '${key}'. It should be a value from '${field.isEnum}' enum.`)
                         if (typeof item[key] === 'number') {
                             instance[key] = item[key];
                         } else {
@@ -287,7 +288,7 @@ export class Helper implements IModelHelper {
                     diagsHelper.addInstanceDiagnose(instance, 'warn', `Property '${key}' is readOnly and can't be modified. New value ignored: '${item[key]}'; Old value kept: '${instance[key]}'`);
                 }
             } else if (key.indexOf('_') !== 0 && key.indexOf('$') !== 0) {
-                throw new Error(`Property '${key}' does not exist on model '${mf.collectionName}'`);
+                throw new HttpError(400, `Property '${key}' does not exist on model '${mf.collectionName}'`);
             }
         }
         // reinitialize deleted values

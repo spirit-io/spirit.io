@@ -17,7 +17,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     it('query with invalid where filter should throw an error', () => {
         let resp = Fixtures.get('/api/v1/myModel?where=badJson');
         let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(500);
+        expect(resp.status).to.equal(400);
         expect(body.$diagnoses[0].$message).to.equal(`Invalid where filter: badJson`);
     });
 
@@ -88,7 +88,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     it('not expected property should raise an error on creation', () => {
         let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", p2: "prop2" });
         let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(500);
+        expect(resp.status).to.equal(400);
         expect(body.$diagnoses[0].$message).to.equal(`Property 'p2' does not exist on model 'MyModelRel'`);
     });
 
@@ -239,7 +239,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         // bad object include should throw an error
         resp = Fixtures.get('/api/v1/myModel?includes={wrong}}');
         body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(500);
+        expect(resp.status).to.equal(400);
         expect(body.$diagnoses[0].$message).to.equal(`JSON includes filter is not valid`);
     });
 

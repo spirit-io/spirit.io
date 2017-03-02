@@ -217,7 +217,7 @@ export interface IModelController {
     /**
      * The request handler that delete a record.
      */
-    delete: express.RequestHandler;
+    remove: express.RequestHandler;
     /**
      * The request handler that read a record.
      */

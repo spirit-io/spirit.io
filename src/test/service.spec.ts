@@ -17,22 +17,22 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('query with invalid where filter should throw an error', () => {
-        expect(() => Seneca.act('orm:MyModel,action:query', { where: 'badJson' })).to.throw('Invalid where filter: badJson');
+        expect(() => Seneca.act('model:MyModel,action:query', { where: 'badJson' })).to.throw('Invalid where filter: badJson');
     });
 
     it('query should return empty array', () => {
-        let body = Seneca.act('orm:MyModel,action:query');
+        let body = Seneca.act('model:MyModel,action:query');
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
     });
 
     it('read should return not found', () => {
-        expect(() => Seneca.act('orm:MyModel,action:read', { id: '1234' })).to.throw('resource not found');
+        expect(() => Seneca.act('model:MyModel,action:read', { id: '1234' })).to.throw('resource not found');
 
     });
 
     it('create simple instance should work', () => {
-        let body = Seneca.act('orm:MyModelRel,action:create', { body: { p1: "prop1", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
+        let body = Seneca.act('model:MyModelRel,action:create', { body: { p1: "prop1", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
         expect(body.p1).to.equal("prop1");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.undefined;
@@ -45,17 +45,17 @@ describe('*** Spirit.io seneca services Tests ***', () => {
 
     it('create simple instance with invisible fields should work and return values according to conditions', () => {
         // create 2 more
-        let body = Seneca.act('orm:MyModelRel,action:create', { body: { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
+        let body = Seneca.act('model:MyModelRel,action:create', { body: { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
         expect(body.p1).to.equal("prop2");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.equal('invisible2'); // invisible field only when p1 equals 'prop1'
 
-        Seneca.act('orm:MyModelRel,action:create', { body: { p1: "prop3" } });
+        Seneca.act('model:MyModelRel,action:create', { body: { p1: "prop3" } });
     });
 
     it('create simple instance with readonly field modified should ignore it and raise a warning diagnose', () => {
         // create 1 more
-        let body = Seneca.act('orm:MyModelRel,action:create', { body: { p1: "prop4", readOnlyProp: "testModifyReadOnlyVal" } });
+        let body = Seneca.act('model:MyModelRel,action:create', { body: { p1: "prop4", readOnlyProp: "testModifyReadOnlyVal" } });
         expect(body.readOnlyProp).to.be.equal("readOnlyVal");
         expect(body.$diagnoses).to.be.not.null;
         expect(body.$diagnoses.length).to.be.equal(1);
@@ -67,7 +67,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     let myModelRels = [];
 
     it('query should return the four created elements', () => {
-        let body = Seneca.act('orm:MyModelRel,action:query');
+        let body = Seneca.act('model:MyModelRel,action:query');
         expect(body).to.be.a('array');
         expect(body.length).to.equal(4);
         body.forEach((rel) => {
@@ -76,7 +76,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('not expected property should raise an error on creation', () => {
-        expect(() => Seneca.act('orm:MyModelRel,action:create', { body: { p1: "prop1", p2: "prop2" } })).to.throw(`Property 'p2' does not exist on model 'MyModelRel'`);;
+        expect(() => Seneca.act('model:MyModelRel,action:create', { body: { p1: "prop1", p2: "prop2" } })).to.throw(`Property 'p2' does not exist on model 'MyModelRel'`);;
     });
 
 
@@ -114,43 +114,43 @@ describe('*** Spirit.io seneca services Tests ***', () => {
             "inv": myModelRels[0],
             "rels": [myModelRels[1], myModelRels[2]]
         };
-        let body = Seneca.act('orm:MyModel,action:create', { body: data });
+        let body = Seneca.act('model:MyModel,action:create', { body: data });
         checkComplexInstance(body, 's0');
         myModel.push(body.id);
     });
 
     it('update complex instance with all values should work and return correct values', () => {
         data.pString = "s0updated";
-        let body = Seneca.act('orm:MyModel,action:update', { id: myModel[0], body: data });
+        let body = Seneca.act('model:MyModel,action:update', { id: myModel[0], body: data });
         checkComplexInstance(body, 's0updated');
     });
 
     it('read updated instance should return correct values', () => {
-        let body = Seneca.act('orm:MyModel,action:read', { id: myModel[0] });
+        let body = Seneca.act('model:MyModel,action:read', { id: myModel[0] });
         checkComplexInstance(body, 's0updated');
     });
 
     it('patch complex instance with only one property should work and return correct values', () => {
-        let body = Seneca.act('orm:MyModel,action:patch', { id: myModel[0], body: { pString: "s0patched" } });
+        let body = Seneca.act('model:MyModel,action:patch', { id: myModel[0], body: { pString: "s0patched" } });
         checkComplexInstance(body, 's0patched');
     });
 
     it('read singular reference should work and return correct values', () => {
-        let body = Seneca.act('orm:MyModel,action:read', {
+        let body = Seneca.act('model:MyModel,action:read', {
             id: myModel[0],
             ref: 'inv'
         });
-        let ref = Seneca.act('orm:MyModelRel,action:read', { id: myModelRels[0] });
+        let ref = Seneca.act('model:MyModelRel,action:read', { id: myModelRels[0] });
         expect(objectHelper.areEqual(body, ref)).to.equal(true);
     });
 
     it('query with includes should return expected elements and references', () => {
         // simple string include
-        let body = Seneca.act('orm:MyModel,action:query', {
+        let body = Seneca.act('model:MyModel,action:query', {
             includes: 'inv'
         });
         // simple object include
-        let body2 = Seneca.act('orm:MyModel,action:query', {
+        let body2 = Seneca.act('model:MyModel,action:query', {
             includes: { path: "inv" }
         });
 
@@ -167,7 +167,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
         expect(new Date(body[0].inv._updated)).to.be.a("Date");
 
         // string include with select
-        body = Seneca.act('orm:MyModel,action:query', {
+        body = Seneca.act('model:MyModel,action:query', {
             includes: 'inv.p1'
         });
         expect(body).to.be.a('array');
@@ -180,7 +180,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
         expect(body[0].inv._updated).to.be.undefined;
 
         // object include with select
-        body = Seneca.act('orm:MyModel,action:query', {
+        body = Seneca.act('model:MyModel,action:query', {
             includes: { path: "inv", select: "_createdAt" }
         });
         expect(body).to.be.a('array');
@@ -194,7 +194,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
         expect(new Date(body[0].inv._createdAt)).to.be.a("Date");
 
         // multiple include with select on one of them
-        body = Seneca.act('orm:MyModel,action:query', {
+        body = Seneca.act('model:MyModel,action:query', {
             includes: 'inv.p1,rels'
         });
         expect(body).to.be.a('array');
@@ -216,13 +216,13 @@ describe('*** Spirit.io seneca services Tests ***', () => {
         expect(new Date(body[0].rels[0]._updated)).to.be.a("Date");
 
         // bad object include should throw an error
-        expect(() => Seneca.act('orm:MyModel,action:query', {
+        expect(() => Seneca.act('model:MyModel,action:query', {
             includes: '{wrong}'
         })).to.throw('JSON includes filter is not valid');
     });
 
     it('update complex instance with only one property should work and return only provided values', () => {
-        let body = Seneca.act('orm:MyModel,action:update', {
+        let body = Seneca.act('model:MyModel,action:update', {
             id: myModel[0],
             body: { pString: "s0updatedAgain", pNumber: 0, aString: ['a'] }
         });
@@ -247,18 +247,18 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('execute instance method should work and saved instance should be updated', () => {
-        let body = Seneca.act('orm:MyModel,action:execute', {
+        let body = Seneca.act('model:MyModel,action:execute', {
             id: myModel[0],
             name: 'aMethod',
             body: { pString: "pString updated by aMethod call", anotherParam: 'test' }
         });
         // TODO: manage responses structure with diagnoses maybe ?
-        body = Seneca.act('orm:MyModel,action:read', { id: myModel[0] });
+        body = Seneca.act('model:MyModel,action:read', { id: myModel[0] });
         expect(body.pString).to.equal("pString updated by aMethod call");
     });
 
     it('execute instance method that throw an exception should return diagnoses', () => {
-        expect(() => Seneca.act('orm:MyModel,action:execute', {
+        expect(() => Seneca.act('model:MyModel,action:execute', {
             id: myModel[0],
             name: 'aMethodThatThrow',
             body: {}
@@ -266,7 +266,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('execute instance method that does not exist should throw an error', () => {
-        expect(() => Seneca.act('orm:MyModel,action:execute', {
+        expect(() => Seneca.act('model:MyModel,action:execute', {
             id: myModel[0],
             name: 'aMethodThatDoesNotExists',
             body: {}
@@ -274,7 +274,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('execute instance method on an instance that does not exist should throw an error', () => {
-        expect(() => Seneca.act('orm:MyModel,action:execute', {
+        expect(() => Seneca.act('model:MyModel,action:execute', {
             id: '1234',
             name: 'aaa',
             body: {}
@@ -282,7 +282,7 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('execute model service should work and return expected value', () => {
-        let body = Seneca.act('orm:MyModel,action:invoke', {
+        let body = Seneca.act('model:MyModel,action:invoke', {
             name: 'aService',
             body: { a: 2.22, b: 3.33 }
         });
@@ -290,44 +290,44 @@ describe('*** Spirit.io seneca services Tests ***', () => {
     });
 
     it('execute model service that throw an exception should return diagnoses', () => {
-        expect(() => Seneca.act('orm:MyModel,action:invoke', {
+        expect(() => Seneca.act('model:MyModel,action:invoke', {
             name: 'aServiceThatThrow',
             body: {}
         })).to.throw(`Test error`);
     });
 
     it('execute model service that does not exist should throw an error', () => {
-        expect(() => Seneca.act('orm:MyModel,action:invoke', {
+        expect(() => Seneca.act('model:MyModel,action:invoke', {
             name: 'aServiceThatDoesNotExists',
             body: {}
         })).to.throw(`Service 'aServiceThatDoesNotExists' does not exist on model 'MyModel'`);
     });
 
     it('deleting non exiting document should return not found', () => {
-        expect(() => Seneca.act('orm:MyModel,action:delete', {
+        expect(() => Seneca.act('model:MyModel,action:remove', {
             id: '1'
         })).to.throw('resource not found');
     });
 
     it('query should return nothing after deleting all elements', () => {
         myModelRels.forEach((r) => {
-            Seneca.act('orm:MyModelRel,action:delete', {
+            Seneca.act('model:MyModelRel,action:remove', {
                 id: r
             });
         });
 
 
-        let body = Seneca.act('orm:MyModelRel,action:query');
+        let body = Seneca.act('model:MyModelRel,action:query');
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
 
         myModel.forEach((m) => {
-            Seneca.act('orm:MyModel,action:delete', {
+            Seneca.act('model:MyModel,action:remove', {
                 id: m
             });
         });
 
-        body = Seneca.act('orm:MyModel,action:query');
+        body = Seneca.act('model:MyModel,action:query');
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
     });
