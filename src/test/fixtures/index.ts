@@ -7,7 +7,7 @@ import { Registry } from '../../lib/core';
 
 let trace;// = console.log;
 
-const port = 8000;
+const port = 3000;
 
 const default_config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
