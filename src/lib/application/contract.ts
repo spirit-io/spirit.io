@@ -1,5 +1,4 @@
-import { ConnectorHelper } from '../core/connectorHelper';
-import { Compiler } from "../core";
+import { Compiler, Service } from "../core";
 import { context } from 'f-promise';
 
 /**
@@ -10,6 +9,8 @@ export class Contract {
 
     /** Datasources Map identified by a string that could contains a colon `:` separator. */
     public datasources: Map<string, any>;
+
+
     /** A string array that contains all the models paths registered. */
     private _modelsLocation: string[] = [];
 
@@ -28,6 +29,8 @@ export class Contract {
      * See configuration file documentation for mode details.
      */
     public init() {
+
+        /*
         for (let key in this.config.connectors) {
             let datasources = this.config.connectors[key].datasources;
             for (let ds in datasources) {
@@ -36,6 +39,7 @@ export class Contract {
                 if (datasources[ds].autoConnect) ConnectorHelper.getConnector(dsId).connect(ds);
             }
         }
+        */
 
         // set models locations
         if (this.config.modelsLocation) {
@@ -45,8 +49,11 @@ export class Contract {
             });
         }
 
+        // Init seneca stores
+        Service.init(this.config);
+        Compiler.registerModels(this);
 
-        Compiler.registerModels(this.modelsLocations);
+
     };
 
     /**
@@ -54,6 +61,7 @@ export class Contract {
      * @param string An absolute path
      */
     public registerModelsByPath(path: string) {
+        console.log("Register models by path:", path);
         if (this._modelsLocation.indexOf(path) === -1) this._modelsLocation.push(path);
     }
 
@@ -68,3 +76,4 @@ export class Contract {
 
 }
 Object.seal(Contract);
+

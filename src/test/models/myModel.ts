@@ -1,7 +1,7 @@
 import { model, required, reverse, embedded, insertonly, hook, route, invisible } from '../../lib/decorators';
 import { ModelBase } from '../../lib/base';
-import { Request, Response, NextFunction } from 'express';
 import * as diagsHelper from '../../lib/utils';
+import { IActionParameters } from '../../lib/interfaces';
 
 export enum TestEnum {
     A,
@@ -106,19 +106,17 @@ export class MyModel extends ModelBase {
 @model({ persistent: false })
 export class MyNotPersistentModel {
     @route('get', '/sumWithQueryStringParams')
-    myGetFunc(req: Request, res: Response, next: NextFunction) {
-        let a = parseFloat(req.query.a);
-        let b = parseFloat(req.query.b);
-        res.status(200).send({ sum: Math.round((a + b) * 100) / 100 });
-        next();
+    myGetFunc(params: IActionParameters) {
+        let a = parseFloat(params.query.a);
+        let b = parseFloat(params.query.b);
+        params.res$.status(200).send({ sum: Math.round((a + b) * 100) / 100 });
     }
 
     @route('post', '/sumWithBodyParams')
-    myPostFunc(req: Request, res: Response, next: NextFunction) {
-        let a = req.body.a;
-        let b = req.body.b;
-        res.status(200).send({ sum: Math.round((a + b) * 100) / 100 });
-        next();
+    myPostFunc(params: IActionParameters) {
+        let a = params.body.a;
+        let b = params.body.b;
+        params.res$.status(200).send({ sum: Math.round((a + b) * 100) / 100 });
     }
 }
 

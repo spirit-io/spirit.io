@@ -5,39 +5,34 @@ import { setup } from 'f-mocha';
 import * as chai from 'chai';
 const expect = chai.expect;
 
+import { Service } from '../lib/core';
+
 // this call activates f-mocha wrapper.
 setup();
 
-describe('*** Spirit.io REST Express routes Tests ***', () => {
+describe('*** Spirit.io seneca services Tests ***', () => {
     before(function (done) {
         this.timeout(10000);
         Fixtures.setup(done);
     });
 
     it('query with invalid where filter should throw an error', () => {
-        let resp = Fixtures.get('/api/v1/myModel?where=badJson');
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(400);
-        expect(body.$diagnoses[0].$message).to.equal(`Invalid where filter: badJson`);
+        expect(() => Service.act('model:MyModel,action:query', { where: 'badJson' })).to.throw('Invalid where filter: badJson');
     });
 
     it('query should return empty array', () => {
-        let resp = Fixtures.get('/api/v1/myModel');
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        let body = Service.act('model:MyModel,action:query', {});
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
     });
 
     it('read should return not found', () => {
-        let resp = Fixtures.get('/api/v1/myModel/1234');
-        expect(resp.status).to.equal(404);
+        expect(() => Service.act('model:MyModel,action:read', { id: '1234' })).to.throw('resource not found');
+
     });
 
     it('create simple instance should work', () => {
-        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", pInvisible1: "invisble1", pInvisible2: "invisible2" });
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(201);
+        let body = Service.act('model:MyModelRel,action:create', { params: { p1: "prop1", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
         expect(body.p1).to.equal("prop1");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.undefined;
@@ -50,20 +45,17 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
 
     it('create simple instance with invisible fields should work and return values according to conditions', () => {
         // create 2 more
-        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" });
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(201);
+        let body = Service.act('model:MyModelRel,action:create', { params: { p1: "prop2", pInvisible1: "invisble1", pInvisible2: "invisible2" } });
         expect(body.p1).to.equal("prop2");
         expect(body.pInvisible1).to.be.undefined;
         expect(body.pInvisible2).to.be.equal('invisible2'); // invisible field only when p1 equals 'prop1'
 
-        Fixtures.post('/api/v1/myModelRel', { p1: "prop3" });
+        Service.act('model:MyModelRel,action:create', { params: { p1: "prop3" } });
     });
 
     it('create simple instance with readonly field modified should ignore it and raise a warning diagnose', () => {
         // create 1 more
-        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop4", readOnlyProp: "testModifyReadOnlyVal" });
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModelRel,action:create', { params: { p1: "prop4", readOnlyProp: "testModifyReadOnlyVal" } });
         expect(body.readOnlyProp).to.be.equal("readOnlyVal");
         expect(body.$diagnoses).to.be.not.null;
         expect(body.$diagnoses.length).to.be.equal(1);
@@ -75,9 +67,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     let myModelRels = [];
 
     it('query should return the four created elements', () => {
-        let resp = Fixtures.get('/api/v1/myModelRel');
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        let body = Service.act('model:MyModelRel,action:query', {});
         expect(body).to.be.a('array');
         expect(body.length).to.equal(4);
         body.forEach((rel) => {
@@ -86,10 +76,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     });
 
     it('not expected property should raise an error on creation', () => {
-        let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", p2: "prop2" });
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(400);
-        expect(body.$diagnoses[0].$message).to.equal(`Property 'p2' does not exist on model 'MyModelRel'`);
+        expect(() => Service.act('model:MyModelRel,action:create', { params: { p1: "prop1", p2: "prop2" } })).to.throw(`Property 'p2' does not exist on model 'MyModelRel'`);;
     });
 
 
@@ -127,54 +114,46 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
             "inv": myModelRels[0],
             "rels": [myModelRels[1], myModelRels[2]]
         };
-        let resp = Fixtures.post('/api/v1/myModel', data);
-        expect(resp.status).to.equal(201);
-
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:create', { params: data });
         checkComplexInstance(body, 's0');
         myModel.push(body.id);
     });
 
     it('update complex instance with all values should work and return correct values', () => {
         data.pString = "s0updated";
-        let resp = Fixtures.put('/api/v1/myModel/' + myModel[0], data);
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:update', { id: myModel[0], params: data });
         checkComplexInstance(body, 's0updated');
     });
 
     it('read updated instance should return correct values', () => {
-        let resp = Fixtures.get('/api/v1/myModel/' + myModel[0]);
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:read', { id: myModel[0] });
         checkComplexInstance(body, 's0updated');
     });
 
     it('patch complex instance with only one property should work and return correct values', () => {
-        let resp = Fixtures.patch('/api/v1/myModel/' + myModel[0], { pString: "s0patched" });
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:patch', { id: myModel[0], params: { pString: "s0patched" } });
         checkComplexInstance(body, 's0patched');
     });
 
     it('read singular reference should work and return correct values', () => {
-        let resp = Fixtures.get('/api/v1/myModel/' + myModel[0] + '/inv');
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
-        let ref = JSON.parse(Fixtures.get('/api/v1/myModelRel/' + myModelRels[0]).body);
+        let body = Service.act('model:MyModel,action:read', {
+            id: myModel[0],
+            ref: 'inv'
+        });
+        let ref = Service.act('model:MyModelRel,action:read', { id: myModelRels[0] });
         expect(objectHelper.areEqual(body, ref)).to.equal(true);
     });
 
     it('query with includes should return expected elements and references', () => {
         // simple string include
-        let resp = Fixtures.get('/api/v1/myModel?includes=inv');
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
-
+        let body = Service.act('model:MyModel,action:query', {
+            includes: 'inv'
+        });
         // simple object include
-        resp = Fixtures.get('/api/v1/myModel?includes={"path": "inv"}');
-        let body2 = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        let body2 = Service.act('model:MyModel,action:query', {
+            includes: { path: "inv" }
+        });
+
         expect(body).to.be.a('array');
         expect(objectHelper.areEqual(body, body2)).to.be.true;
         expect(body.length).to.equal(1);
@@ -188,9 +167,9 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(new Date(body[0].inv._updated)).to.be.a("Date");
 
         // string include with select
-        resp = Fixtures.get('/api/v1/myModel?includes=inv.p1');
-        body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        body = Service.act('model:MyModel,action:query', {
+            includes: 'inv.p1'
+        });
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
@@ -201,9 +180,9 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(body[0].inv._updated).to.be.undefined;
 
         // object include with select
-        resp = Fixtures.get('/api/v1/myModel?includes={"path": "inv", "select": "_createdAt"}');
-        body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        body = Service.act('model:MyModel,action:query', {
+            includes: { path: "inv", select: "_createdAt" }
+        });
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
@@ -215,9 +194,9 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(new Date(body[0].inv._createdAt)).to.be.a("Date");
 
         // multiple include with select on one of them
-        resp = Fixtures.get('/api/v1/myModel?includes=inv.p1,rels');
-        body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        body = Service.act('model:MyModel,action:query', {
+            includes: 'inv.p1,rels'
+        });
         expect(body).to.be.a('array');
         expect(body.length).to.equal(1);
         expect(body[0].inv).to.be.a('object');
@@ -237,16 +216,16 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         expect(new Date(body[0].rels[0]._updated)).to.be.a("Date");
 
         // bad object include should throw an error
-        resp = Fixtures.get('/api/v1/myModel?includes={wrong}}');
-        body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(400);
-        expect(body.$diagnoses[0].$message).to.equal(`JSON includes filter is not valid`);
+        expect(() => Service.act('model:MyModel,action:query', {
+            includes: '{wrong}'
+        })).to.throw('JSON includes filter is not valid');
     });
 
     it('update complex instance with only one property should work and return only provided values', () => {
-        let resp = Fixtures.put('/api/v1/myModel/' + myModel[0], { pString: "s0updatedAgain", pNumber: 0, aString: ['a'] });
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:update', {
+            id: myModel[0],
+            params: { pString: "s0updatedAgain", pNumber: 0, aString: ['a'] }
+        });
 
         expect(body.pString).to.equal("s0updatedAgain");
         expect(body.pNumber).to.equal(0);
@@ -268,81 +247,86 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     });
 
     it('execute instance method should work and saved instance should be updated', () => {
-        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0] + '/$execute/aMethod', { pString: "pString updated by aMethod call", anotherParam: 'test' });
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:execute', {
+            id: myModel[0],
+            name: 'aMethod',
+            params: { pString: "pString updated by aMethod call", anotherParam: 'test' }
+        });
         // TODO: manage responses structure with diagnoses maybe ?
-        resp = Fixtures.get('/api/v1/myModel/' + myModel[0]);
-        expect(resp.status).to.equal(200);
-        body = JSON.parse(resp.body);
+        body = Service.act('model:MyModel,action:read', { id: myModel[0] });
         expect(body.pString).to.equal("pString updated by aMethod call");
     });
 
     it('execute instance method that throw an exception should return diagnoses', () => {
-        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0] + '/$execute/aMethodThatThrow', {});
-        expect(resp.status).to.equal(500);
-        let body = JSON.parse(resp.body);
-        expect(body.$diagnoses).to.be.not.null;
-        expect(body.$diagnoses.length).to.be.equal(1);
-        expect(body.$diagnoses[0].$severity).to.be.equal('error');
-        expect(body.$diagnoses[0].$message).to.be.equal(`Test error`);
-        expect(body.$diagnoses[0].$stack).to.be.not.null;
+        expect(() => Service.act('model:MyModel,action:execute', {
+            id: myModel[0],
+            name: 'aMethodThatThrow',
+            params: {}
+        })).to.throw(`Test error`);
     });
 
-    it('execute instance method that does not exist should return 404', () => {
-        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0] + '/$execute/aMethodThatDoesNotExists', {});
-        expect(resp.status).to.equal(404);
+    it('execute instance method that does not exist should throw an error', () => {
+        expect(() => Service.act('model:MyModel,action:execute', {
+            id: myModel[0],
+            name: 'aMethodThatDoesNotExists',
+            params: {}
+        })).to.throw(`Method 'aMethodThatDoesNotExists' does not exist on model 'MyModel'`);
+    });
+
+    it('execute instance method on an instance that does not exist should throw an error', () => {
+        expect(() => Service.act('model:MyModel,action:execute', {
+            id: '1234',
+            name: 'aaa',
+            params: {}
+        })).to.throw(`Instance not found`);
     });
 
     it('execute model service should work and return expected value', () => {
-        let resp = Fixtures.post('/api/v1/myModel/$service/aService', { a: 2.22, b: 3.33 });
-        expect(resp.status).to.equal(200);
-        let body = JSON.parse(resp.body);
+        let body = Service.act('model:MyModel,action:invoke', {
+            name: 'aService',
+            params: { a: 2.22, b: 3.33 }
+        });
         expect(body.c).to.equal('5.55');
     });
 
     it('execute model service that throw an exception should return diagnoses', () => {
-        let resp = Fixtures.post('/api/v1/myModel/$service/aServiceThatThrow', {});
-        expect(resp.status).to.equal(500);
-        let body = JSON.parse(resp.body);
-        expect(body.$diagnoses).to.be.not.null;
-        expect(body.$diagnoses.length).to.be.equal(1);
-        expect(body.$diagnoses[0].$severity).to.be.equal('error');
-        expect(body.$diagnoses[0].$message).to.be.equal(`Test error`);
-        expect(body.$diagnoses[0].$stack).to.be.not.null;
+        expect(() => Service.act('model:MyModel,action:invoke', {
+            name: 'aServiceThatThrow',
+            params: {}
+        })).to.throw(`Test error`);
     });
 
-    it('execute model service that does not exist should return 404', () => {
-        let resp = Fixtures.post('/api/v1/myModel/$service/aServiceThatDoesNotExists', {});
-        expect(resp.status).to.equal(404);
+    it('execute model service that does not exist should throw an error', () => {
+        expect(() => Service.act('model:MyModel,action:invoke', {
+            name: 'aServiceThatDoesNotExists',
+            params: {}
+        })).to.throw(`Service 'aServiceThatDoesNotExists' does not exist on model 'MyModel'`);
     });
 
     it('deleting non exiting document should return not found', () => {
-        let resp = Fixtures.delete('/api/v1/myModelRel/1');
-        expect(resp.status).to.equal(404);
+        expect(() => Service.act('model:MyModel,action:remove', {
+            id: '1'
+        })).to.throw('resource not found');
     });
 
     it('query should return nothing after deleting all elements', () => {
         myModelRels.forEach((r) => {
-            let resp = Fixtures.delete('/api/v1/myModelRel/' + r);
-            expect(resp.status).to.equal(204);
+            Service.act('model:MyModelRel,action:remove', {
+                id: r
+            });
         });
 
-
-        let resp = Fixtures.get('/api/v1/myModelRel');
-        let body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        let body = Service.act('model:MyModelRel,action:query', {});
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
 
         myModel.forEach((m) => {
-            let resp = Fixtures.delete('/api/v1/myModel/' + m);
-            expect(resp.status).to.equal(204);
+            Service.act('model:MyModel,action:remove', {
+                id: m
+            });
         });
 
-        resp = Fixtures.get('/api/v1/myModel');
-        body = JSON.parse(resp.body);
-        expect(resp.status).to.equal(200);
+        body = Service.act('model:MyModel,action:query', {});
         expect(body).to.be.a('array');
         expect(body.length).to.equal(0);
     });
@@ -363,4 +347,6 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
         let body = JSON.parse(resp.body);
         expect(body.sum).to.be.equal(5.55);
     });
+
+
 });

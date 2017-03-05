@@ -5,7 +5,7 @@ import * as diagsHelper from '../../lib/utils';
 
 export abstract class ModelBase {
     @insertonly
-    _id: String;
+    id: String;
     @insertonly
     _createdAt: Date;
     _updatedAt: Date;

@@ -2,10 +2,11 @@ import { wait } from 'f-promise';
 import * as ts from "typescript";
 import * as fs from "mz/fs";
 import * as path from 'path';
+import { Contract } from '../application';
 import { helper as objectHelper } from '../utils/object';
 import { Registry } from './registry';
 import { IModelFactory } from '../interfaces';
-import { ConnectorHelper } from '../core/connectorHelper';
+import { Factory } from '../base';
 
 import * as debug from 'debug';
 let trace = debug('sio:compiler');
@@ -18,14 +19,14 @@ interface ILoadedElement {
 
 function releaseBuildingFactory(collectionName: string, myClass: any): IModelFactory {
     // Manage fatories
-    let f: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass);
+    let f: IModelFactory = new Factory(collectionName, myClass);
     trace(" => Release building model factory: ", f.collectionName);
     Registry.setFactory(f);
 
     // Register same factory with super class name if the class is expected to replace super class
     let linkedFactoryName: string = myClass.__factory__[collectionName]._linkToFactory;
     if (linkedFactoryName) {
-        let linkedFactory: IModelFactory = ConnectorHelper.createModelFactory(collectionName, myClass, {
+        let linkedFactory: IModelFactory = new Factory(collectionName, myClass, {
             linkedFactory: linkedFactoryName
         });
         Registry.setFactory(linkedFactory, true);
@@ -424,13 +425,13 @@ function generateSchemaDefinitions(files: any, options: ts.CompilerOptions): voi
 }
 
 export class Compiler {
-    static registerModels = (directories: any) => {
+    static registerModels = (contract: Contract) => {
 
         function browseDir(dir) {
             // Add each .js file to the mocha instance
-            wait(fs.readdir(dir)).forEach(function (file) {
+            (<any>wait(fs.readdir(dir))).forEach(function (file) {
                 let filePath = path.join(dir, file);
-                var stats = wait(fs.stat(filePath));
+                var stats: any = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
                     browseDir(filePath);
                 } else if (stats.isFile() && /\.js.map$/.test(file)) {
@@ -445,6 +446,7 @@ export class Compiler {
                 }
             });
         }
+        let directories = contract.modelsLocations;
         //
         //
         directories = Array.isArray(directories) ? directories : [directories];

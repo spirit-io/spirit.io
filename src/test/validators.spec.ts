@@ -81,7 +81,7 @@ describe('*** Spirit.io validators Tests ***', () => {
             let resp = Fixtures.post('/api/v1/myModelRel', { p1: "testPutMissingProp" });
             expect(resp.status).to.equal(201);
             let body = JSON.parse(resp.body);
-            let id = body._id;
+            let id = body.id;
 
             resp = Fixtures.put('/api/v1/myModelRel/' + id, { p1: null });
             body = JSON.parse(resp.body);
@@ -98,7 +98,7 @@ describe('*** Spirit.io validators Tests ***', () => {
             let resp = Fixtures.post('/api/v1/myModelRel', { p1: "testPatchMissingProp" });
             expect(resp.status).to.equal(201);
             let body = JSON.parse(resp.body);
-            let id = body._id;
+            let id = body.id;
 
             resp = Fixtures.patch('/api/v1/myModelRel/' + id, { p1: null });
             body = JSON.parse(resp.body);
@@ -131,7 +131,7 @@ describe('*** Spirit.io validators Tests ***', () => {
             let resp = Fixtures.post('/api/v1/MyModelRelExtend', { p1: "value2", p2: "insertOnlyVal" });
             expect(resp.status).to.equal(201);
             let body = JSON.parse(resp.body);
-            let id = body._id;
+            let id = body.id;
 
             resp = Fixtures.put('/api/v1/MyModelRelExtend/' + id, { p1: "value2", p2: "modifiedVal" });
             body = JSON.parse(resp.body);
@@ -148,7 +148,7 @@ describe('*** Spirit.io validators Tests ***', () => {
             let resp = Fixtures.post('/api/v1/MyModelRelExtend', { p1: "value3", p2: "insertOnlyVal" });
             expect(resp.status).to.equal(201);
             let body = JSON.parse(resp.body);
-            let id = body._id;
+            let id = body.id;
 
             resp = Fixtures.patch('/api/v1/MyModelRelExtend/' + id, { p2: "modifiedValue" });
             body = JSON.parse(resp.body);

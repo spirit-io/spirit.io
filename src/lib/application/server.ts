@@ -1,8 +1,6 @@
 import { Application } from 'express';
-import { Middleware } from "../core";
+import { Middleware, Service } from "../core";
 import { Contract } from "./contract";
-import { IConnector } from '../interfaces';
-import { ConnectorHelper } from '../core';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -91,10 +89,17 @@ export class Server extends EventEmitter {
         // patchExpress(this.app);
         // patchRouter(router)
         this.middleware = new Middleware(this);
+        // configure middleware standard rules
+        this.middleware.configure();
+
 
         // initialize the contract
         this.contract.init();
-        this.emit('initialized');
+
+        // wait for seneca stores to be ready
+        Service.instance.ready(function () {
+            this.emit('initialized');
+        }.bind(this));
         return this;
     }
 
@@ -104,8 +109,6 @@ export class Server extends EventEmitter {
      * And finally starts the HTTP server regarding the HTTP config elements.
      */
     start(port?: number) {
-        // configure middleware standard rules
-        this.middleware.configure();
         // initialize versioned api routes
         this.middleware.setApiRoutes();
         // set default error handler
@@ -137,12 +140,5 @@ export class Server extends EventEmitter {
         }
 
 
-    }
-
-    /**
-     * Allows the register spirit.io connectors.
-     */
-    addConnector(connector: IConnector): void {
-        ConnectorHelper.setConnector(connector);
     }
 }

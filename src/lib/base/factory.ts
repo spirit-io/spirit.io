@@ -1,10 +1,14 @@
-import { Request, Response, NextFunction, Router } from 'express';
-import { IConnector, IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
+import { IModelActions, IModelHelper, IModelController, IModelFactory, IField, IRoute, IParameters, IValidator } from '../interfaces'
+import { Actions, Controller, Helper } from '.';
 import { Registry } from '../core';
 import { helper as objectHelper } from '../utils';
 import { InstanceError } from '../utils';
-import { run, context } from 'f-promise';
+import { context } from 'f-promise';
+import { orm } from './plugin';
+import * as SNS from 'seneca';
+import { Service } from '../core';
 import * as debug from 'debug';
+
 const factoryTrace = debug('sio:factory');
 const validatorsTrace = debug('sio:validators');
 
@@ -42,7 +46,7 @@ class Field implements IField {
                 this._invisible = metaContainer.invisible != null ? metaContainer.invisible : false;
             }
             this.metadatas = Object.keys(metaContainer).filter((key) => {
-                return ['type', 'ref', 'embedded', 'invisible', 'readOnly'].indexOf(key) === -1 && (!factory.connector || !factory.connector.ignoreValidators || factory.connector.ignoreValidators.indexOf(key) === -1);
+                return ['type', 'ref', 'embedded', 'invisible', 'readOnly'].indexOf(key) === -1;// && (!factory.connector || !factory.connector.ignoreValidators || factory.connector.ignoreValidators.indexOf(key) === -1);
             });
         }
     }
@@ -80,11 +84,12 @@ class Field implements IField {
 /**
  * This is an abstract class, so every spirit.io connector MUST provide a ModelFactory class that inherit of this base class.
  */
-export abstract class ModelFactoryBase implements IModelFactory {
+export class Factory implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
-    public connector: IConnector;
+    // public connector: IConnector;
+    public entity: SNS.Entity;
     public $properties: string[];
     public $statics: string[];
     public $methods: string[];
@@ -102,11 +107,11 @@ export abstract class ModelFactoryBase implements IModelFactory {
     public validators: IValidator[];
     public linkedFactory: string = null;
 
-    constructor(name: string, targetClass: any, connector: IConnector, options?: any) {
+    constructor(name: string, targetClass: any, options?: any) {
         options = options || {};
         this.collectionName = name;
         this.targetClass = targetClass;
-        this.connector = connector;
+        // this.connector = connector;
         this.linkedFactory = options.linkedFactory;
 
         let tempFactory = this.targetClass.__factory__[this.collectionName];
@@ -140,72 +145,39 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 validatorsTrace(`${this.collectionName}: Try to find a validator for metadata '${m}'`)
                 // consider validator if available on the connector
                 // else consider the validator if available in the registry
+
+                /*
                 let vc = this.connector && this.connector.getValidator(m);
 
                 if (vc) {
                     validatorsTrace(`Validator found on connector`);
                     this.validators.push(vc);
                 } else {
-                    let vr = Registry.getValidator(m);
-                    if (vr) {
-                        validatorsTrace(`Validator found in registry`);
-                        this.validators.push(vr);
-                    } else {
-                        validatorsTrace(`No validator found...`);
-                    }
+
+                    */
+                let vr = Registry.getValidator(m);
+                if (vr) {
+                    validatorsTrace(`Validator found in registry`);
+                    this.validators.push(vr);
+                } else {
+                    validatorsTrace(`No validator found...`);
                 }
+                // }
             });
             // register field
             this.$fields.set(key, field);
         });
 
-        if (this.persistent) {
-            this.actions = actions;
-            this.helper = helper;
-            this.controller = controller;
-        }
+        this.actions = actions;
+        this.helper = helper;
+        this.controller = controller;
 
         factoryTrace(`============= Model registered '${this.linkedFactory || this.collectionName}' on datasource '${this.datasource}:${this.collectionName}' =============`);
         factoryTrace(`Prototype: ${require('util').inspect(this.$prototype, null, 2)}`);
-        // Register express routes
-        this.setRoutes();
         factoryTrace("=========================================================================");
     }
 
-    private setRoutes() {
-        // Do not register any route for linked factory
-        if (this.linkedFactory) return;
 
-        let routeName = this.collectionName.substring(0, 1).toLowerCase() + this.collectionName.substring(1);
-        let v1: Router = Registry.getApiRouter('v1');
-
-        if (this.persistent) {
-            if (this.actions) {
-                factoryTrace(`--> Register routes: /${routeName}`);
-                // handle main requests
-                v1.get(`/${routeName}`, this.controller.query);
-                v1.get(`/${routeName}/:_id`, this.controller.read);
-                v1.post(`/${routeName}`, this.controller.create);
-                v1.put(`/${routeName}/:_id`, this.controller.update);
-                v1.patch(`/${routeName}/:_id`, this.controller.patch);
-                v1.delete(`/${routeName}/:_id`, this.controller.delete);
-                // handle references requests
-                v1.get(`/${routeName}/:_id/:_ref`, this.controller.read);
-                v1.put(`/${routeName}/:_id/:_ref`, this.controller.update);
-                v1.patch(`/${routeName}/:_id/:_ref`, this.controller.patch);
-            }
-
-            // handle instance functions
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, this.executeMethod.bind(this) as any);
-        }
-
-        // handle static functions (available also on non persistent classes)
-        v1.post(`/${routeName}/([\$])service/:_name`, this.executeService.bind(this) as any);
-        this.$routes.forEach((route: IRoute) => {
-            let path = `/${routeName}${route.path}`;
-            v1[route.method](path, route.fn);
-        });
-    }
 
     getModelFactoryByPath(path: string): IModelFactory {
         let _treeEntry = this.$prototype[path];
@@ -230,7 +202,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             return data;
         } else if (typeof data === 'string') {
             data = {
-                _id: data
+                id: data
             };
         }
         //console.log(`Instanciate reference ${type} with data: ${require('util').inspect(data, null, 2)}`);
@@ -253,7 +225,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 item[key].forEach((id) => {
                     let ref = mf.actions.read(id);
                     if (include.select) {
-                        let data = { _id: ref._id };
+                        let data = { id: ref.id };
                         data[include.select] = ref[include.select];
                         relValue.push(data);
                     } else {
@@ -263,7 +235,7 @@ export abstract class ModelFactoryBase implements IModelFactory {
             } else {
                 let ref = mf.actions.read(item[key]);
                 if (include.select) {
-                    let data = { _id: ref._id };
+                    let data = { id: ref.id };
                     data[include.select] = ref[include.select];
                     relValue = data;
                 } else {
@@ -282,11 +254,11 @@ export abstract class ModelFactoryBase implements IModelFactory {
                 if (Array.isArray(transformed[key])) {
                     relValue = [];
                     transformed[key].forEach((it) => {
-                        if (typeof it === 'object' && it._id) relValue.push(it._id);
+                        if (typeof it === 'object' && it.id) relValue.push(it.id);
                         else relValue.push(it);
                     });
                 } else {
-                    if (typeof transformed[key] === 'object' && transformed[key]._id) relValue = transformed[key]._id;
+                    if (typeof transformed[key] === 'object' && transformed[key].id) relValue = transformed[key].id;
                     else relValue = transformed[key];
                 }
                 transformed[key] = relValue;
@@ -307,54 +279,19 @@ export abstract class ModelFactoryBase implements IModelFactory {
         }
     }
 
-    private executeService(req: Request, res: Response, next: NextFunction): void {
-        run(() => {
-            let _name: string = req.params['_name'];
-            if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
-                res.sendStatus(404);
-                return;
-            }
-            let params = req.body;
-            let result = this.targetClass[_name](params);
-            res.json(result);
-            next();
-        }).catch(e => {
-            next(e);
-        });
-    }
 
-    private executeMethod(req: Request, res: Response, next: NextFunction): void {
-        run(() => {
-            let _id: string = req.params['_id'];
-            let _name: string = req.params['_name'];
-            let inst = this.helper.fetchInstance(_id);
-            if (this.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
-                res.sendStatus(404);
-                return;
-            }
 
-            let params = req.body;
-            let result = inst[_name](params);
-            res.json(result);
-            next();
-        }).catch(e => {
-            next(e);
-        });
+
+
+    setup(): void {
+        if (this.persistent) {
+            this.init(new Actions(this), new Helper(this), new Controller(this));
+        } else {
+            this.init(null, null, new Controller(this));
+        }
+        Service.instance.use(orm, { factory: this });
+        this.controller.setupRoutes()
     }
 
 
-
-    abstract setup(): void;
-
-
-}
-
-
-export class NonPersistentModelFactory extends ModelFactoryBase implements IModelFactory {
-    constructor(name: string, targetClass: any, connector: IConnector) {
-        super(name, targetClass, connector);
-    }
-    setup() {
-        super.init(null, null, null);
-    }
 }
