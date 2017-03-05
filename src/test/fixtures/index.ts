@@ -7,47 +7,33 @@ import { Registry } from '../../lib/core';
 
 let trace;// = console.log;
 
-const port = 3001;
-const baseUrl = 'http://localhost:' + port;
+const port = 8000;
 
 const default_config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
-
+    port: port,
     system: {
         exposeStack: true
     }
 };
 
-
-function execRequest(method: string, url: string, data?: any, headers?: any): any {
-    headers = headers || {
-        'content-type': 'application/json'
-    };
-    trace && trace("HTTP " + method + " " + baseUrl + url);
-    let resp = devices.http.client({
-        url: baseUrl + url,
-        method: method,
-        headers: headers
-    }).proxyConnect().end(data ? JSON.stringify(data) : undefined).response();
-    return {
-        status: resp.statusCode,
-        headers: resp.headers,
-        body: resp.readAll()
-    };
-}
-
-
-function removaAllDocuments(done) {
-    Registry.factories.forEach(function (factory) {
-        if (factory.persistent) {
-            factory.actions.delete({ all$: true });
-        }
-    });
-}
+let config;
 
 export class Fixtures {
-    static setup = (done, config?: any) => {
-        config = config || default_config;
+    static removaAllDocuments() {
+        Registry.factories.forEach(function (factory) {
+            if (factory.persistent) {
+                factory.actions.delete({ all$: true });
+            }
+        });
+    }
+
+    static init = (_config) => {
+        config = _config || default_config;
+    }
+
+    static setup = (done, _config?: any) => {
+        Fixtures.init(_config);
         let firstSetup = true;
         if (!context().__server) {
             let server: Server = context().__server = new Server(config);
@@ -61,7 +47,7 @@ export class Fixtures {
             server.on('initialized', function () {
                 run(() => {
                     console.log("========== Server initialized ============\n");
-                    removaAllDocuments(done)
+                    Fixtures.removaAllDocuments()
 
                     server.start(port);
                 }).catch(err => {
@@ -80,7 +66,7 @@ export class Fixtures {
             });
         } else {
             run(() => {
-                removaAllDocuments(done)
+                Fixtures.removaAllDocuments()
                 firstSetup = false;
                 done();
             }).catch(err => {
@@ -92,24 +78,43 @@ export class Fixtures {
         return context().__server;
     }
 
+
+    private static execRequest = (method: string, url: string, data?: any, headers?: any): any => {
+        headers = headers || {
+            'content-type': 'application/json'
+        };
+        const baseUrl = 'http://localhost:' + config.port;
+
+        trace && trace("HTTP " + method + " " + baseUrl + url);
+        let resp = devices.http.client({
+            url: baseUrl + url,
+            method: method,
+            headers: headers
+        }).proxyConnect().end(data ? JSON.stringify(data) : undefined).response();
+        return {
+            status: resp.statusCode,
+            headers: resp.headers,
+            body: resp.readAll()
+        };
+    }
     static get = (url: string, headers?: any) => {
-        return execRequest('GET', url, null, headers);
+        return Fixtures.execRequest('GET', url, null, headers);
     }
 
     static post = (url: string, data: any, headers?: any) => {
-        return execRequest('POST', url, data, headers);
+        return Fixtures.execRequest('POST', url, data, headers);
     }
 
     static put = (url: string, data: any, headers?: any) => {
-        return execRequest('PUT', url, data, headers);
+        return Fixtures.execRequest('PUT', url, data, headers);
     }
 
     static delete = (url: string, headers?: any) => {
-        return execRequest('DELETE', url, null, headers);
+        return Fixtures.execRequest('DELETE', url, null, headers);
     }
 
     static patch = (url: string, headers?: any) => {
-        return execRequest('PATCH', url, headers);
+        return Fixtures.execRequest('PATCH', url, headers);
     }
 }
 

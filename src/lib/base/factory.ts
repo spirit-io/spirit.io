@@ -6,7 +6,7 @@ import { InstanceError } from '../utils';
 import { context } from 'f-promise';
 import { orm } from './plugin';
 import * as SNS from 'seneca';
-import { Seneca } from '../core';
+import { Service } from '../core';
 import * as debug from 'debug';
 
 const factoryTrace = debug('sio:factory');
@@ -289,7 +289,8 @@ export class Factory implements IModelFactory {
         } else {
             this.init(null, null, new Controller(this));
         }
-        Seneca.instance.use(orm, { factory: this });
+        Service.instance.use(orm, { factory: this });
+        this.controller.setupRoutes()
     }
 
 

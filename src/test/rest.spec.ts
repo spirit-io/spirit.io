@@ -290,7 +290,7 @@ describe('*** Spirit.io REST Express routes Tests ***', () => {
     });
 
     it('execute instance method that does not exist should return 404', () => {
-        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0].id + '/$execute/aMethodThatDoesNotExists', {});
+        let resp = Fixtures.post('/api/v1/myModel/' + myModel[0] + '/$execute/aMethodThatDoesNotExists', {});
         expect(resp.status).to.equal(404);
     });
 

@@ -1,4 +1,4 @@
-import { Compiler, Seneca } from "../core";
+import { Compiler, Service } from "../core";
 import { context } from 'f-promise';
 
 /**
@@ -50,7 +50,7 @@ export class Contract {
         }
 
         // Init seneca stores
-        Seneca.init(this.config);
+        Service.init(this.config);
         Compiler.registerModels(this);
 
 
@@ -61,6 +61,7 @@ export class Contract {
      * @param string An absolute path
      */
     public registerModelsByPath(path: string) {
+        console.log("Register models by path:", path);
         if (this._modelsLocation.indexOf(path) === -1) this._modelsLocation.push(path);
     }
 

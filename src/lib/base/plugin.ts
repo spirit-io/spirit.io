@@ -1,5 +1,4 @@
-import { Router } from 'express';
-import { Registry } from '../core';
+
 import { IModelFactory, IParameters, IRoute } from '../interfaces';
 import { HttpError } from '../utils';
 import { run } from 'f-promise';
@@ -47,7 +46,7 @@ export function orm(options: any) {
 
     function create(msg: any, done: Function): void {
         run(() => {
-            let item: any = msg.body;
+            let item: any = msg.params;
             let inst = new this.targetClass.prototype.constructor();
             let result = this.helper.saveInstance(inst, item, null, { serializeRef: true });
             done(result);
@@ -60,7 +59,7 @@ export function orm(options: any) {
         run(() => {
             let _id: string = msg.id;
             let _ref: string = msg.ref;
-            let item: any = msg.body;
+            let item: any = msg.params;
 
             let data;
             if (!_ref) {
@@ -111,7 +110,7 @@ export function orm(options: any) {
             if (this.$statics.indexOf(_name) === -1 || !this.targetClass[_name]) {
                 throw new HttpError(404, `Service '${msg.name}' does not exist on model '${this.collectionName}'`);
             }
-            let result = this.targetClass[_name](msg.body);
+            let result = this.targetClass[_name](msg.params);
             done(result);
         }).catch(e => {
             e.error = e.message;
@@ -128,7 +127,7 @@ export function orm(options: any) {
             if (this.$methods.indexOf(_name) === -1 || !inst[_name]) {
                 throw new HttpError(404, `Method '${msg.name}' does not exist on model '${this.collectionName}'`);
             }
-            let result = inst[_name](msg.body);
+            let result = inst[_name](msg.params);
             done(result);
         }).catch(e => {
             e.error = e.message;
@@ -136,38 +135,21 @@ export function orm(options: any) {
         });
     }
 
-
-    function setupRoutes() {
-        // Do not register any route for linked factory
-        if (factory.linkedFactory) return;
-
-        let routeName = factory.collectionName.substring(0, 1).toLowerCase() + factory.collectionName.substring(1);
-        let v1: Router = Registry.getApiRouter('v1');
-
-        if (factory.persistent) {
-            if (factory.actions) {
-                // handle main requests
-                v1.get(`/${routeName}`, factory.controller.query);
-                v1.get(`/${routeName}/:_id`, factory.controller.read);
-                v1.post(`/${routeName}`, factory.controller.create);
-                v1.put(`/${routeName}/:_id`, factory.controller.update);
-                v1.patch(`/${routeName}/:_id`, factory.controller.patch);
-                v1.delete(`/${routeName}/:_id`, factory.controller.remove);
-                // handle references requests
-                v1.get(`/${routeName}/:_id/:_ref`, factory.controller.read);
-                v1.put(`/${routeName}/:_id/:_ref`, factory.controller.update);
-                v1.patch(`/${routeName}/:_id/:_ref`, factory.controller.patch);
-            }
-
-            // handle instance functions
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, factory.controller.executeMethod.bind(this) as any);
-        }
-
-        // handle static functions (available also on non persistent classes)
-        v1.post(`/${routeName}/([\$])service/:_name`, factory.controller.executeService.bind(this) as any);
-        factory.$routes.forEach((route: IRoute) => {
-            let path = `/${routeName}${route.path}`;
-            v1[route.method](path, route.fn);
+    function executeRequest(msg: any, done: Function): void {
+        run(() => {
+            let fn: Function = msg.fn;
+            let result = fn.call(this, {
+                query: msg.query,
+                params: msg.params,
+                body: msg.body,
+                req$: msg.req$,
+                res$: msg.res$,
+                next$: msg.next$
+            });
+            done(result);
+        }).catch(e => {
+            e.error = e.message;
+            done(e);
         });
     }
 
@@ -182,10 +164,14 @@ export function orm(options: any) {
         this.add({ model: factory.collectionName, action: 'patch' }, patch.bind(factory));
         this.add({ model: factory.collectionName, action: 'remove' }, remove.bind(factory));
         this.add({ model: factory.collectionName, action: 'execute' }, executeMethod.bind(factory));
-        this.add({ model: factory.collectionName, action: 'invoke' }, executeService.bind(factory));
     }
+    this.add({ model: factory.collectionName, action: 'invoke' }, executeService.bind(factory));
 
-    setupRoutes();
+    // register special routes
+    factory.$routes.forEach((route: IRoute) => {
+        this.add({ model: factory.collectionName, action: 'request' }, executeRequest.bind(factory));
+
+    });
 
     return `model:${factory.collectionName}`;
 }

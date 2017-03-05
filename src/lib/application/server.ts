@@ -1,5 +1,5 @@
 import { Application } from 'express';
-import { Middleware, Seneca } from "../core";
+import { Middleware, Service } from "../core";
 import { Contract } from "./contract";
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
@@ -89,10 +89,15 @@ export class Server extends EventEmitter {
         // patchExpress(this.app);
         // patchRouter(router)
         this.middleware = new Middleware(this);
+        // configure middleware standard rules
+        this.middleware.configure();
+
 
         // initialize the contract
         this.contract.init();
-        Seneca.instance.ready(function () {
+
+        // wait for seneca stores to be ready
+        Service.instance.ready(function () {
             this.emit('initialized');
         }.bind(this));
         return this;
@@ -104,8 +109,6 @@ export class Server extends EventEmitter {
      * And finally starts the HTTP server regarding the HTTP config elements.
      */
     start(port?: number) {
-        // configure middleware standard rules
-        this.middleware.configure();
         // initialize versioned api routes
         this.middleware.setApiRoutes();
         // set default error handler

@@ -79,10 +79,13 @@ export function addHook(target: Symbol, propertyKey: string, name: string) {
 }
 
 export function addRoute(target: Symbol, propertyKey: string, method: string, path: string) {
+    // use prototype for static methods
+    let constructor = target.toString().match(/\w+/g)[1] === 'Object' ? target.constructor : target['prototype'].constructor;
     // Get model factory
-    let factory: IModelFactory = initFactory(target.constructor);
+    let factory: IModelFactory = initFactory(constructor);
     // Set hook
     factory.$routes.push({
+        name: propertyKey,
         method: method,
         path: path,
         fn: target[propertyKey]

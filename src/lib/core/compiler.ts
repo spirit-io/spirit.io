@@ -429,9 +429,9 @@ export class Compiler {
 
         function browseDir(dir) {
             // Add each .js file to the mocha instance
-            wait(fs.readdir(dir)).forEach(function (file) {
+            (<any>wait(fs.readdir(dir))).forEach(function (file) {
                 let filePath = path.join(dir, file);
-                var stats = wait(fs.stat(filePath));
+                var stats: any = wait(fs.stat(filePath));
                 if (stats.isDirectory()) {
                     browseDir(filePath);
                 } else if (stats.isFile() && /\.js.map$/.test(file)) {

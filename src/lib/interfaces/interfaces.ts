@@ -1,4 +1,4 @@
-import * as express from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 
 /**
  * Every ModelFactory class MUST implements this interface.
@@ -125,7 +125,7 @@ export interface IModelFactory {
      * Store the ModelActions, the ModelHelper and the ModelController locally if the factory is persistent.
      * 
      * It also initialize express requests handlers defined in ModelController for CRUD operations.
-     * @param Map<string, express.Router> Several express Routers could be passed here, but ModelFactoryBase implementation only use `v1` Router created by the Middleware.
+     * @param Map<string, Router> Several express Routers could be passed here, but ModelFactoryBase implementation only use `v1` Router created by the Middleware.
      * @param IModelActions An IModelActions instance which is responsible for datasource CRUD operations.
      * @param IModelHelper An IModelHelper instance which is reponsible for integrity and synchronization 
      * after receiving or before sending data when calling IModelActions operations.
@@ -136,7 +136,7 @@ export interface IModelFactory {
      * MUST be implemented by connectors ModelFactory to handle specific needs related to the connector itself.
      * 
      * Usually initializes connection with a remote server.
-     * @param Map<string, express.Router> Several express Routers could be passed here.
+     * @param Map<string, Router> Several express Routers could be passed here.
      */
     setup();
     /**
@@ -205,35 +205,39 @@ export interface IModelController {
     /**
      * The request handler that create a record.
      */
-    create: express.RequestHandler;
+    create: RequestHandler;
     /**
      * The request handler that update a record (deleting missing properties).
      */
-    update: express.RequestHandler;
+    update: RequestHandler;
     /**
      * The request handler that update a record (keeping missing properties).
      */
-    patch: express.RequestHandler;
+    patch: RequestHandler;
     /**
      * The request handler that delete a record.
      */
-    remove: express.RequestHandler;
+    remove: RequestHandler;
     /**
      * The request handler that read a record.
      */
-    read: express.RequestHandler;
+    read: RequestHandler;
     /**
      * The request handler that list records.
      */
-    query: express.RequestHandler;
+    query: RequestHandler;
     /**
      * The request handler that execute model's static method records.
      */
-    executeService: express.RequestHandler;
+    executeService: RequestHandler;
     /**
      * The request handler that execute model instance's method.
      */
-    executeMethod: express.RequestHandler;
+    executeMethod: RequestHandler;
+    /**
+     * Setup all CRUD routes
+     */
+    setupRoutes(): void;
 }
 
 /**
@@ -369,6 +373,7 @@ export interface IValidator {
 }
 
 export interface IRoute {
+    name: string;
     method: string;
     path: string;
     fn: Function;
@@ -379,6 +384,15 @@ export interface IParameters {
     ref?: string;
     deleteMissing?: boolean;
     deleteReadOnly?: boolean;
+}
+
+export interface IActionParameters {
+    query?: any;
+    params?: any;
+    body?: any;
+    req$?: Request;
+    res$?: Response;
+    next$?: NextFunction;
 }
 
 export interface ISerializeOptions {
