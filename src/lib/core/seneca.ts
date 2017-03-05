@@ -10,7 +10,8 @@ const trace = debug('sio:service');
 export class Service {
     private static initialized: boolean = false;
     public static instance: sns.Instance;
-    private static _acts: Map<String, Function> = new Map();
+    public static clients: Map<String, sns.Instance> = new Map();
+
     public static init(config: any) {
         if (this.initialized) return;
 
@@ -21,14 +22,21 @@ export class Service {
         if (config.store) {
             this.instance.use(config.store.name, config.store.connection);
         }
-
-        this._acts.set('local', bluebird.promisify(this.instance.act, { context: this.instance }));
+        this.instance['actAsync'] = bluebird.promisify(this.instance.act, { context: this.instance })
+        this.clients.set('local', this.instance);
         this.listen(config);
 
 
         if (config.services) Object.keys(config.services).forEach((name) => {
-            let client = sns().client(config.services[name])
-            this._acts.set(name, bluebird.promisify(client.act, { context: client }))
+            let inst = sns().client(config.services[name]);
+            inst['actAsync'] = bluebird.promisify(inst.act, { context: inst });
+            this.clients.set(name, inst);
+        });
+
+        if (config['services-mock']) Object.keys(config['services-mock']).forEach((name) => {
+            let inst = config['services-mock'][name]();
+            inst['actAsync'] = bluebird.promisify(inst.act, { context: inst });
+            this.clients.set(name, inst);
         });
 
         this.initialized = true;
@@ -62,8 +70,8 @@ export class Service {
     public static act(pattern: String | Object, msg: Object, service?: String): any {
         service = service || 'local';
         msg = msg || {};
-        let act = this._acts.get(service);
-        if (!act) throw new Error(`Service ${service} not configured`);
-        return wait(act(pattern, msg));
+        let client = this.clients.get(service);
+        if (!client) throw new Error(`Service ${service} not configured`);
+        return wait((<any>client).actAsync(pattern, msg));
     }
 }
