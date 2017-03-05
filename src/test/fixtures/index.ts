@@ -12,10 +12,15 @@ const port = 3000;
 const default_config = {
     modelsLocation: path.resolve(path.join(__dirname, '../models')),
     port: port,
+    https: true,
+    certs: path.resolve(path.join(__dirname, '../../certs')),
     system: {
         exposeStack: true
     }
 };
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // Avoids DEPTH_ZERO_SELF_SIGNED_CERT error for self-signed certs
+
 
 let config;
 
@@ -83,7 +88,7 @@ export class Fixtures {
         headers = headers || {
             'content-type': 'application/json'
         };
-        const baseUrl = 'http://localhost:' + config.port;
+        const baseUrl = (config.https ? 'https' : 'http') + '://localhost:' + config.port;
 
         trace && trace("HTTP " + method + " " + baseUrl + url);
         let resp = devices.http.client({
