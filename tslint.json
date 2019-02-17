@@ -1,0 +1,30 @@
+{
+  "extends": ["tslint:latest", "tslint-config-airbnb"],
+  "rulesDirectory": "tslint-microsoft-contrib",
+  "rules": {
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "ter-indent": [true, 4],
+    "object-literal-key-quotes": [true, "as-needed"],
+    "object-literal-sort-keys": false,
+    "ordered-imports": false,
+    "quotemark": [true, "single", "avoid-escape"],
+    "max-line-length": [true, 160],
+    "align": true,
+    "variable-name": false,
+    "function-name": false,
+    "no-var-requires": false,
+    "object-shorthand-properties-first": false,
+    "max-classes-per-file": [false],
+    "no-trailing-whitespace": false,
+    "no-implicit-dependencies": false,
+    "ban-types": false,
+    "no-param-reassign": false,
+    "no-increment-decrement": false,
+    "no-unused-expression": [true, "allow-fast-null-checks"],
+    "no-boolean-literal-compare": false,
+    "strict-boolean-expressions": false,
+    "no-object-literal-type-assertion": false,
+    "array-type": ["array"],
+    "mocha-avoid-only": true
+  }
+}

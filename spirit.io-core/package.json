@@ -1,0 +1,73 @@
+{
+  "name": "spirit.io-core",
+  "version": "1.0.0",
+  "description": "Spriti.io core package responsible for prototype generation from Typescript classes",
+  "main": "index.js",
+  "scripts": {
+    "pre-publish": "npm run clean-compile",
+    "clean": "rimraf build",
+    "clean-compile": "npm run clean && npm run compile",
+    "compile": "tsc -v && tsc --pretty",
+    "compile-watch": "tsc --pretty -w",
+    "coverage": "nyc mocha --require source-map-support/register --require ts-node/register --recursive 'src/**/*.spec.ts'",
+    "lint": "tslint --format verbose \"src/**/*.ts\"",
+    "lint-fix": "npm run lint -- --fix",
+    "test": "npm run clean-compile && mocha --full-trace --recursive --require source-map-support/register 'build/**/test/**/*.spec.js'"
+  },
+  "keywords": [],
+  "author": "CommunauteBack1@bee-buzziness.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^4.1.6",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^10.12.26",
+    "chai": "^4.2.0",
+    "f-mocha": "^1.1.4",
+    "mocha": "^5.2.0",
+    "nyc": "^13.3.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "debug": "^4.1.1",
+    "express": "^4.16.4",
+    "express-authentication": "^0.3.2",
+    "f-promise": "^1.4.0",
+    "f-streams": "^2.3.0",
+    "fs-extra": "^7.0.1",
+    "source-map-support": "^0.5.9",
+    "typescript": "^3.3.3",
+    "uuid": "^3.3.2"
+  },
+  "beeDependencies": {},
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "include": [
+      "src"
+    ],
+    "exclude": [
+      "src/test"
+    ],
+    "reporter": [
+      "text",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true,
+    "lines": 90,
+    "statements": 0,
+    "functions": 0,
+    "branches": 0,
+    "all": true,
+    "cache": false
+  },
+  "bb": {
+    "prePublishCondition": {
+      "include": [
+        "src/*"
+      ],
+      "exclude": []
+    }
+  }
+}

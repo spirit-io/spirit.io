@@ -1,0 +1,14 @@
+{
+  "name": "spirit.io",
+  "build": {
+    "docker": {
+        "registries": {
+            "unstable": "",
+            "testing": "",
+            "stable": ""
+        },
+        "cmd": "docker build -t $$REGISTRY$$/$$NAME$$:$$VERSION$$ ."
+    }
+  },
+  "buildPkgVersionGlobal": true
+}

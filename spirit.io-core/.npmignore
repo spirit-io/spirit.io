@@ -1,0 +1,9 @@
+package-lock.json
+.npmignore
+.gitignore
+tslint.json
+tsconfig.json
+/src/test
+/node_modules
+/build/test
+.scripts.sh

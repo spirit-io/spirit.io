@@ -1,3 +1,0 @@
---full-trace
---bail
-test/**/*.spec.js
